@@ -4,204 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>成長型塔防遊戲 - Growth Tower Defense</title>
-  <!--
-  ================================================================================
-                                  程式碼項目目錄
-  ================================================================================
-  1. HTML 全局結構與 CSS 樣式 (Style Sheet)
-  2. 全局變數與遊戲狀態設定 (Global Variables & Configs)
-  3. 輔助函式與音效系統 (Helper Functions & Audio System)
-  4. UI 彈窗、敵人圖鑑與浮動文字系統 (UI Modals, Encyclopedia & Floating Texts)
-  5. 存檔與載入系統 (LocalStorage & Checkpoint System)
-  6. 建造與選取邏輯 (Tower Placement & Selection Management)
-  7. 波次生成與敵人邏輯 (Wave Management & Enemy Spawning)
-  8. 主動技能系統 (Active Skills Management)
-  9. 全局科技樹與敵人圖鑑邏輯 (Global Tech Tree & Enemy Codex)
-  10. 遊戲核心主迴圈與狀態更新 (Game Loop & State Updates)
-  11. 遊戲畫面繪製與視覺特效 (Rendering Engine & VFX)
-  12. 遊戲初始化與事件監聽 (Initialization & Event Listeners)
-  ================================================================================
-  -->
-  
-  <!-- ==========================================================================
-       1. HTML 全局結構與 CSS 樣式 (Style Sheet)
-       ========================================================================== -->
   <style>
     :root {
-      --bg-color: #12131C;
-      --panel-bg: #1e1f29;
-      --card-bg: #282a36;
-      --border-color: #44475a;
-      --primary: #50fa7b;
-      --danger: #ff5555;
-      --purple: #bd93f9;
-      --cyan: #8be9fd;
-      --yellow: #f1fa8c;
-      --orange: #ffb86c;
-      --white: #fff;
+      --bg-color: #12131C; --panel-bg: #1e1f29; --card-bg: #282a36; --border-color: #44475a;
+      --primary: #50fa7b; --danger: #ff5555; --purple: #bd93f9; --cyan: #8be9fd;
+      --yellow: #f1fa8c; --orange: #ffb86c; --white: #fff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background: var(--bg-color); color: var(--white);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh; padding: 10px;
-    }
+    body { background: var(--bg-color); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; }
     #game-header, #controls-bar, #panel-container { width: 100%; max-width: 1000px; }
-        
-    #game-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 20px; background: var(--panel-bg); border-radius: 8px;
-      margin-bottom: 10px; border: 1px solid var(--card-bg); z-index: 250; position: relative;
-    }
+    #game-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--panel-bg); border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--card-bg); z-index: 250; position: relative; }
     .res-item { display: flex; align-items: center; font-size: 15px; font-weight: bold; }
     .res-icon { font-size: 18px; margin-right: 6px; }
-    #game-container {
-      position: relative; width: 1000px; height: 600px;
-      background: #111; border-radius: 8px; overflow: hidden; touch-action: none;
-    }
+    #game-container { position: relative; width: 1000px; height: 600px; background: #111; border-radius: 8px; overflow: hidden; touch-action: none; }
     canvas { display: block; cursor: crosshair; }
-    /* Boss 血條 */
-    #boss-hp-container {
-      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-      width: 460px; background: rgba(0, 0, 0, 0.85); border: 2px solid var(--danger);
-      border-radius: 10px; padding: 8px 14px; display: none; text-align: center;
-      z-index: 30; pointer-events: none;
-    }
+    #boss-hp-container { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 460px; background: rgba(0, 0, 0, 0.85); border: 2px solid var(--danger); border-radius: 10px; padding: 8px 14px; display: none; text-align: center; z-index: 30; pointer-events: none; }
     #boss-hp-title { font-size: 14px; color: var(--danger); font-weight: bold; margin-bottom: 4px; }
     #boss-hp-bar-bg { width: 100%; height: 14px; background: #411; border-radius: 7px; overflow: hidden; border: 1px solid #f66; }
     #boss-hp-bar-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f11, #f70); transition: width 0.1s linear; }
     #boss-hp-text { font-size: 12px; margin: 2px 0 4px; font-family: monospace; }
     #boss-traits { font-size: 11px; color: var(--cyan); line-height: 1.3; }
-    /* Toast 訊息 */
     #toast-container { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 260; pointer-events: none; }
     .toast { background: rgba(20, 20, 30, 0.95); border-left: 4px solid var(--orange); padding: 10px 15px; border-radius: 4px; font-size: 13px; }
-    /* 敵人介紹彈窗 */
-    #enemy-intro-popup {
-      position: absolute; bottom: 15px; right: 15px; width: 280px;
-      background: rgba(20, 20, 30, 0.95); border: 2px solid var(--purple);
-      border-radius: 8px; padding: 12px; z-index: 260; display: none;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    #enemy-intro-popup .close-btn {
-      position: absolute; top: 6px; right: 10px; color: var(--danger);
-      font-weight: bold; cursor: pointer; font-size: 16px;
-    }
+    #enemy-intro-popup { position: absolute; bottom: 15px; right: 15px; width: 280px; background: rgba(20, 20, 30, 0.95); border: 2px solid var(--purple); border-radius: 8px; padding: 12px; z-index: 260; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    #enemy-intro-popup .close-btn { position: absolute; top: 6px; right: 10px; color: var(--danger); font-weight: bold; cursor: pointer; font-size: 16px; }
     #enemy-intro-title { font-weight: bold; font-size: 14px; color: var(--primary); margin-bottom: 6px; padding-right: 15px; }
     #enemy-intro-desc { font-size: 12px; color: #f8f8f2; line-height: 1.4; white-space: pre-line; }
-    /* UI 按鈕與控制列 */
     #controls-bar { display: flex; gap: 10px; margin-top: 10px; z-index: 50; position: relative; }
-    .btn {
-      position: relative;
-      background: var(--card-bg); color: #f8f8f2; border: 1px solid var(--border-color);
-      padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;
-      transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
+    .btn { position: relative; background: var(--card-bg); color: #f8f8f2; border: 1px solid var(--border-color); padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .btn:hover { background: var(--border-color); }
     .btn:active { transform: scale(0.96); }
     .btn-primary { background: var(--primary); color: #181920; border: none; }
     .btn-primary:hover { background: #70fa9b; }
-    .btn-primary.disabled-wave {
-      filter: grayscale(100%);
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    .btn-primary.disabled-wave { filter: grayscale(100%); opacity: 0.6; cursor: not-allowed; }
     .btn-danger { background: var(--danger); color: var(--white); border: none; }
     .btn-danger:hover { background: #ff7777; }
     .btn-active { border: 2px solid var(--primary); box-shadow: 0 0 8px rgba(80, 250, 123, 0.6); }
-    
-    #trash-cancel-btn {
-      display: none;
-      background: var(--danger);
-      color: var(--white);
-      border: none;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: transform 0.2s ease, background-color 0.2s ease;
-      align-items: center;
-      justify-content: center;
-    }
-    #trash-cancel-btn:hover {
-      transform: scale(1.2);
-      background: #ff3333;
-    }
-
-    /* [需求5] 按鈕驚嘆號提示 */
-    .btn-alert-badge {
-      position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff;
-      font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%;
-      display: flex; justify-content: center; align-items: center; box-shadow: 0 0 6px rgba(255,0,0,0.8);
-      pointer-events: none;
-    }
-
-    /* 面板與卡片 */
+    #trash-cancel-btn { display: none; background: var(--danger); color: var(--white); border: none; border-radius: 6px; padding: 10px 14px; font-size: 16px; cursor: pointer; transition: transform 0.2s, background-color 0.2s; align-items: center; justify-content: center; }
+    #trash-cancel-btn:hover { transform: scale(1.2); background: #ff3333; }
+    .btn-alert-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 6px rgba(255,0,0,0.8); pointer-events: none; }
     #panel-container { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 10px; margin-top: 10px; z-index: 50; position: relative; }
     .panel { background: var(--panel-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--card-bg); }
     .panel-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--cyan); border-bottom: 1px solid var(--card-bg); padding-bottom: 6px; }
     .grid-shop { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
-    .card {
-      position: relative; background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.2s;
-      display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
-    }
+    .card { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
     .card:hover { border-color: var(--purple); transform: translateY(-2px); }
     .card-name { font-weight: bold; font-size: 13px; margin-bottom: 2px; }
     .card-stats { font-size: 10px; color: var(--cyan); margin-bottom: 4px; line-height: 1.3; }
     .card-desc { font-size: 10px; color: var(--yellow); margin-bottom: 6px; }
     .card-cost { font-size: 11px; color: var(--orange); font-weight: bold; }
-    .skill-lock-overlay {
-      position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88);
-      display: flex; justify-content: center; align-items: center;
-      color: var(--danger); font-size: 12px; font-weight: bold; z-index: 10; backdrop-filter: blur(2px);
-    }
-    /* 升級面板與彈窗 */
-    #tower-upgrade-overlay {
-      position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95);
-      border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 330px; display: none; z-index: 60;
-    }
+    .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 10; backdrop-filter: blur(2px); }
+    #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 330px; display: none; z-index: 60; }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
-    #confirm-placement-bar {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary);
-      padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70;
-    }
-    .modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      display: none; justify-content: center; align-items: center; z-index: 200;
-      pointer-events: auto;
-    }
-    .modal-content {
-      background: var(--panel-bg); border-radius: 10px; padding: 20px;
-      width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-    }
-    .mode-toggle-btn {
-      background: #333; color: #fff; border: 1px solid var(--purple);
-      padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 4px;
-    }
+    #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 200; pointer-events: auto; }
+    .modal-content { background: var(--panel-bg); border-radius: 10px; padding: 20px; width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.8); }
+    .mode-toggle-btn { background: #333; color: #fff; border: 1px solid var(--purple); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 4px; }
     .mode-toggle-btn:hover { background: var(--purple); color: #000; }
-
-    /* 圖鑑專用樣式 */
     .codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
-    .codex-card {
-      position: relative; background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center;
-      cursor: pointer; transition: transform 0.2s;
-    }
+    .codex-card { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
     .codex-card:hover { transform: translateY(-3px); border-color: var(--cyan); }
     .codex-card-icon-canvas { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
     .codex-card-name { font-size: 11px; font-weight: bold; text-align: center; color: var(--white); }
-    .codex-card-overlay {
-      position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); border-radius: 8px;
-      display: flex; justify-content: center; align-items: center; font-size: 24px; color: #888;
-    }
-    .codex-card-exclamation {
-      position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff;
-      font-size: 12px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%;
-      display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8);
-    }
+    .codex-card-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #888; }
+    .codex-card-exclamation { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 12px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8); }
   </style>
 </head>
 <body>
@@ -218,7 +84,7 @@
       <div id="boss-hp-title">⚠️ 強敵 BOSS 登場 ⚠️</div>
       <div id="boss-hp-bar-bg"><div id="boss-hp-bar-fill"></div></div>
       <div id="boss-hp-text">0 / 0</div>
-      <div id="boss-traits">抗性：冰凍 (原始 <span id="boss-freeze-val">100%</span>) | 擊退承受 (<span id="boss-kb-val">100%</span>)<br><span id="boss-skills-desc"></span></div>
+      <div id="boss-traits">抗性：冰凍 (<span id="boss-freeze-val">100%</span>) | 麻痺 (<span id="boss-paralyze-val">0%</span>) | 擊退承受 (<span id="boss-kb-val">100%</span>)<br><span id="boss-skills-desc"></span></div>
     </div>
     <div id="toast-container"></div>
     <div id="enemy-intro-popup">
@@ -231,7 +97,6 @@
         <h4 id="tu-name" style="color:var(--primary);">防禦塔</h4>
         <button id="tu-close" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold; font-size:16px;">✕</button>
       </div>
-            
       <div id="tu-base-upgrades">
         <div class="upg-row">
           <span>攻擊: <b id="tu-dmg-val" style="color:var(--cyan);">0</b> (Lv.<span id="tu-dmg-lv">1</span>)</span>
@@ -246,13 +111,10 @@
           <button class="btn" id="tu-spd-btn" onclick="upgradeTowerStat('spd')" style="padding:4px 8px; font-size:11px;">+5% 💰<span id="tu-spd-cost">60</span></button>
         </div>
       </div>
-      
-      <!-- 地獄之塔型態切換區域 -->
       <div id="tu-inferno-mode-container" style="display:none; margin-bottom:8px; border-top:1px dashed var(--border-color); padding-top:6px;">
         <div style="font-size:11px; color:var(--yellow); margin-bottom:4px;">當前型態: <span id="tu-inferno-mode-text" style="color:var(--primary); font-weight:bold;">🔥 單體漸增</span></div>
         <button class="mode-toggle-btn" onclick="toggleInfernoMode()">🔄 切換型態 (🔥單體 / 💥多體)</button>
       </div>
-
       <div class="upg-row" style="border-top:1px dashed var(--border-color); padding-top:6px; margin-top:4px;">
         <div>
           <span id="tu-spec-label" style="color:var(--yellow);">專屬天賦:</span>
@@ -274,8 +136,6 @@
         <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
-    
-    <!-- 敵人圖鑑選單彈窗 -->
     <div class="modal" id="codex-modal">
       <div class="modal-content">
         <h3 style="color:var(--purple); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">📖 敵人圖鑑</h3>
@@ -283,8 +143,6 @@
         <button class="btn" onclick="document.getElementById('codex-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
-
-    <!-- 敵人詳細數據彈窗 -->
     <div class="modal" id="codex-detail-modal" style="z-index: 210;">
       <div class="modal-content" style="width: 360px;">
         <h3 id="cd-title" style="color:var(--primary); text-align:center; margin-bottom:10px;"></h3>
@@ -300,7 +158,6 @@
         <button class="btn" onclick="document.getElementById('codex-detail-modal').style.display='none'" style="width:100%;">關閉</button>
       </div>
     </div>
-
     <div class="modal" id="gameover-modal">
       <div class="modal-content" style="text-align:center;">
         <h2 id="go-title" style="color:var(--danger); margin-bottom:10px;">🏰 主城失守！</h2>
@@ -331,37 +188,32 @@
       <div class="grid-shop" id="skills-list" style="grid-template-columns: 1fr 1fr;"></div>
     </div>
   </div>
-<script>
 
+<script>
 // ============================================================================
-// 2. 全局變數與遊戲狀態設定 (Global Variables & Configs)
+// 全局變數與設定
 // ============================================================================
 let canvas, ctx;
 let gameSpeed = 1, isPaused = false, autoWave = false, waveInProgress = false;
 let currentWave = 0, hp = 100, maxHp = 100, gold = 300, crystals = 0;
 let spawnTimer = 0, spawnInterval = 1.0;
 let stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
-let checkpointState = null;
-let seenEnemyTypes = new Set();
-let unlockedCodexEnemies = new Set();
-let newCodexAlerts = new Set();
-let isMouseInput = false;
+let checkpointState = null, isMouseInput = false;
 
-const MAX_TOWER_COUNT = 15;
-const STORAGE_KEY = 'GrowthTD_SaveData_v2';
+let seenEnemyTypes = new Set(), unlockedCodexEnemies = new Set(), newCodexAlerts = new Set();
 
+const MAX_TOWER_COUNT = 15, STORAGE_KEY = 'GrowthTD_SaveData_v2';
 const getUpgradeCost = (base, rate, lv) => Math.floor(base * Math.pow(rate, lv - 1));
 
-// [需求8改動] 精準尖塔改名為精準箭塔
 const TOWER_TYPES = {
-  arrow:     { name: '精準箭塔', cost: 100, range: 140, damage: 25, cd: 0.6, color: '#50fa7b', specName: '遠距增傷', desc: '單體遠程。距離每+10px傷害提高' },
+  arrow:     { name: '精準箭塔', cost: 100, range: 140, damage: 30, cd: 0.6, color: '#50fa7b', specName: '遠距增傷', desc: '單體遠程。距離每+10px傷害提高' },
   cannon:    { name: '重型砲塔', cost: 160, range: 110, damage: 55, cd: 1.4, color: '#ff5555', specName: '爆炸範圍', desc: '範圍爆破傷害。初始範圍40，專屬升級+5' },
   frost:     { name: '寒冰法塔', cost: 130, range: 120, damage: 12, cd: 0.9, color: '#8be9fd', specName: '冰凍時間', desc: '減速敵人。專屬升級每次+0.5秒冰凍時間' },
-  tesla:     { name: '特斯拉電塔', cost: 220, range: 130, damage: 40, cd: 1.1, color: '#bd93f9', specName: '連鎖彈跳', desc: '能發射在敵人間彈跳的閃電，專屬升級+1次彈跳' },
+  tesla:     { name: '特斯拉電塔', cost: 220, range: 130, damage: 40, cd: 1.1, color: '#bd93f9', specName: '連鎖彈跳', desc: '發射可彈跳的閃電，命中麻痺敵人0.2秒，專屬升級+1次彈跳' },
   gold:      { name: '點金之塔', cost: 200, range: 0,   damage: 0,  cd: 4.0, color: '#f1fa8c', specName: '產金量提升', desc: '戰鬥中持續生產金幣 (限建5座)' },
-  knockback: { name: '震盪重錘', cost: 320, range: 40,  damage: 180, cd: 2.5, color: '#ffb86c', specName: '擊退距離', desc: '高傷慢速向下重壓，能擊退範圍內的所有敵人。升級+1距離' },
+  knockback: { name: '震盪重錘', cost: 320, range: 40,  damage: 180, cd: 2.5, color: '#ffb86c', specName: '擊退距離', desc: '高傷慢速向下重壓擊退範圍敵人。升級+1距離' },
   inferno:   { name: '地獄之塔', cost: 400, range: 110, damage: 16, cd: 0.4, color: '#ff0055', specName: '型態專屬', desc: '每0.4s傷害。型態1漸增傷害；型態2多條射線' },
-  builder:   { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 1.0, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱瘓防禦塔。免疫負面狀態，升級+15%工人移速' }
+  builder:   { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 1.0, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱瘓防禦塔。免疫負面狀態' }
 };
 
 const talents = {
@@ -375,53 +227,48 @@ const activeSkills = {
   meteor:   { name: '流星雨', cd: 20, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 0, desc: '全螢幕重創敵人', val: 300 },
   blizzard: { name: '暴風雪', cd: 25, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 0, desc: '冰封小怪/大減速Boss', val: 3 },
   warDrum:  { name: '戰鼓激勵', cd: 30, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 6, desc: '全塔攻速x2', val: 3 },
-  barrier:  { name: '大地障礙', cd: 40, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 11, desc: '召喚高血量障礙(10倍反擊)', val: 500 }
+  barrier:  { name: '大地障礙', cd: 40, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 11, desc: '召喚高血量障礙', val: 500 }
 };
 
 const ENEMY_CODEX_DATA = [
-  { id: 'normal', name: '0號敵人', group: '0號' },
-  { id: 'scout',  name: '0號刺客', group: '0號' },
-  { id: 'heavy',  name: '0號坦克', group: '0號' },
-  { id: 'priest', name: '★ 牧師', group: '1星' },
-  { id: 'monk',   name: '★ 祭司', group: '1星' },
-  { id: 'boss',   name: 'BOSS 強敵', group: 'Boss' }
+  { id: 'normal', name: '0號士兵', group: '0號' }, { id: 'scout', name: '0號刺客', group: '0號' },
+  { id: 'heavy', name: '0號坦克', group: '0號' }, 
+  { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' },
+  { id: 'heavy1', name: '1號坦克', group: '1號' },
+  { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }
 ];
 
-const path = [
-  {x: 0, y: 180}, {x: 250, y: 180}, {x: 250, y: 420}, {x: 550, y: 420},
-  {x: 550, y: 120}, {x: 820, y: 120}, {x: 820, y: 300}, {x: 930, y: 300}
-];
-
+const path = [{x:0,y:180},{x:250,y:180},{x:250,y:420},{x:550,y:420},{x:550,y:120},{x:820,y:120},{x:820,y:300},{x:930,y:300}];
 let towers = [], enemies = [], waveSpawnQueue = [], projectiles = [], floatingTexts = [], barriers = [];
 let shockwaves = [], bossBeams = [], cannonExplosions = [], activeVisualEffects = [];
 let placingType = null, dragPos = {x: -100, y: -100}, selectedTower = null;
 
+// 每種敵人的累積生成計數器（用於波次中交替替換）
+let enemySpawnCounters = { soldier: 0, scout: 0, heavy: 0 };
+
 // ============================================================================
-// 3. 輔助函式與音效系統 (Helper Functions & Audio System)
+// 音效與輔助系統
 // ============================================================================
 function toTwoSigFigsTrunc(val) {
   if (val <= 0) return 0;
-  let exponent = Math.floor(Math.log10(val));
-  let scale = Math.pow(10, exponent - 1);
+  let exp = Math.floor(Math.log10(val));
+  let scale = Math.pow(10, exp - 1);
   return Math.floor(val / scale) * scale;
 }
 
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-let humOsc = null, humGain = null;
+let audioCtx = null, humOsc = null, humGain = null;
 
 function startHumSound(freq = 120, gainVal = 0.04) {
   try {
     if (!audioCtx) audioCtx = new AudioCtx();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     if (!humOsc) {
-      humOsc = audioCtx.createOscillator();
-      humGain = audioCtx.createGain();
+      humOsc = audioCtx.createOscillator(); humGain = audioCtx.createGain();
       humOsc.type = 'triangle';
       humOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
       humGain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
-      humOsc.connect(humGain);
-      humGain.connect(audioCtx.destination);
+      humOsc.connect(humGain); humGain.connect(audioCtx.destination);
       humOsc.start();
     } else {
       humOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
@@ -431,13 +278,9 @@ function startHumSound(freq = 120, gainVal = 0.04) {
 }
 
 function stopHumSound() {
-  if (humOsc) {
-    try { humOsc.stop(); humOsc.disconnect(); } catch(e){}
-    humOsc = null; humGain = null;
-  }
+  if (humOsc) { try { humOsc.stop(); humOsc.disconnect(); } catch(e){} humOsc = null; humGain = null; }
 }
 
-// [需求8改動] 箭塔射箭音效
 function playSound(type) {
   try {
     if (!audioCtx) audioCtx = new AudioCtx();
@@ -445,55 +288,21 @@ function playSound(type) {
     const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.connect(gain); gain.connect(audioCtx.destination);
     let now = audioCtx.currentTime;
-    if (type === 'shoot') {
-      osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-      gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
-      osc.start(now); osc.stop(now + 0.1);
-    } else if (type === 'bowShoot') {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-      osc.start(now); osc.stop(now + 0.12);
-    } else if (type === 'hit') {
-      osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
-      gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-      osc.start(now); osc.stop(now + 0.12);
-    } else if (type === 'skill') {
-      osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.3);
-      gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
-      osc.start(now); osc.stop(now + 0.3);
-    } else if (type === 'zap') {
-      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
-      gain.gain.setValueAtTime(0.12, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-      osc.start(now); osc.stop(now + 0.08);
-    } else if (type === 'hammerImpact') {
-      osc.type = 'square'; osc.frequency.setValueAtTime(80, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.25);
-      gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
-      osc.start(now); osc.stop(now + 0.25);
-    } else if (type === 'gearRotate') {
-      osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(150, now + 0.15);
-      gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
-      osc.start(now); osc.stop(now + 0.15);
-    } else if (type === 'infernoPromote') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
-      osc.start(now); osc.stop(now + 0.2);
-    } else if (type === 'repairHammer') {
-      osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
-      gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-      osc.start(now); osc.stop(now + 0.08);
-    }
+    const soundProfiles = {
+      shoot: () => { osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); },
+      bowShoot: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(60, now + 0.12); gain.gain.setValueAtTime(0.12, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12); osc.start(now); osc.stop(now + 0.12); },
+      hit: () => { osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.12); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12); osc.start(now); osc.stop(now + 0.12); },
+      skill: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.3); gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); },
+      zap: () => { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.08); gain.gain.setValueAtTime(0.12, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08); osc.start(now); osc.stop(now + 0.08); },
+      hammerImpact: () => { osc.type = 'square'; osc.frequency.setValueAtTime(80, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.25); gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.25); osc.start(now); osc.stop(now + 0.25); },
+      gearRotate: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(150, now + 0.15); gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15); osc.start(now); osc.stop(now + 0.15); },
+      infernoPromote: () => { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.2); gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2); osc.start(now); osc.stop(now + 0.2); },
+      repairHammer: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.08); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08); osc.start(now); osc.stop(now + 0.08); }
+    };
+    if (soundProfiles[type]) soundProfiles[type]();
   } catch(e) {}
 }
 
-// ============================================================================
-// 4. UI 彈窗、敵人圖鑑與浮動文字系統 (UI Modals, Codex & Floating)
-// ============================================================================
 function showToast(msg) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -505,65 +314,38 @@ function showToast(msg) {
 
 function showEnemyIntro(type) {
   const popup = document.getElementById('enemy-intro-popup');
-  const titleElem = document.getElementById('enemy-intro-title');
-  const descElem = document.getElementById('enemy-intro-desc');
-  
-  let title = '', desc = '';
-  if (type === 'normal') {
-    title = '0號';
-    desc = '普通基礎敵人，各項能力均衡。';
-  } else if (type === 'scout') {
-    title = '0號刺客';
-    desc = '特色：移動速度較快、生命值較低、僅受80%冰凍效果。';
-  } else if (type === 'heavy') {
-    title = '0號坦克';
-    desc = '特色：移動速度較慢、生命值較高。';
-  } else if (type === 'priest') {
-    title = '★ 牧師';
-    desc = '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒為周圍單位恢復生命值。';
-  } else if (type === 'monk') {
-    title = '★ 祭司';
-    desc = '特色：一星敵人。移動速度0.60，生命值為0號的3.5倍。\n技能【祝福】：每8秒為範圍內敵人解除並免疫負面狀態1.5秒。';
-  }
-  
-  if (title) {
-    titleElem.innerText = title;
-    descElem.innerText = desc;
+  const intros = {
+    normal: ['0號士兵', '普通基礎敵人，各項能力均衡。'],
+    scout: ['0號刺客', '特色：移動速度較快、生命值較低、僅受80%冰凍效果。'],
+    heavy: ['0號坦克', '特色：移動速度較慢、生命值較高、免疫麻痺。'],
+    soldier1: ['1號士兵', '特色：生命值為0號士兵的1.2倍。\n技能：每4秒淨化並免疫負面狀態1秒。'],
+    scout1: ['1號刺客', '特色：生命值為0號刺客的1.2倍。\n技能【閃避】：受到傷害時有50%機率完全免疫傷害。'],
+    heavy1: ['1號坦克', '特色：生命值為0號坦克的1.2倍，免疫麻痺。\n技能【自癒】：每秒恢復2%最大生命值。'],
+    priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒為周圍單位恢復生命值。'],
+    monk: ['★ 祭司', '特色：一星敵人。移動速度0.60，生命值為0號的3.5倍。\n技能【祝福】：每8秒為範圍內敵人解除並免疫負面狀態1.5秒。']
+  };
+  if (intros[type]) {
+    document.getElementById('enemy-intro-title').innerText = intros[type][0];
+    document.getElementById('enemy-intro-desc').innerText = intros[type][1];
     popup.style.display = 'block';
   }
 }
 
-function closeEnemyIntro() {
-  document.getElementById('enemy-intro-popup').style.display = 'none';
-}
-
-function addFloatingText(x, y, text, color = '#fff', fontSize = 12) {
-  floatingTexts.push({ x, y, text, color, alpha: 1.0, fontSize });
-}
+function closeEnemyIntro() { document.getElementById('enemy-intro-popup').style.display = 'none'; }
+function addFloatingText(x, y, text, color = '#fff', fontSize = 12) { floatingTexts.push({ x, y, text, color, alpha: 1.0, fontSize }); }
 
 // ============================================================================
-// 5. 存檔與載入系統 (LocalStorage & Checkpoint System)
+// 存檔與 UI 控制
 // ============================================================================
 function saveGameToLocalStorage() {
   const saveData = {
-    currentWave, hp, gold, crystals, stats,
-    talents: Object.keys(talents).reduce((acc, k) => { acc[k] = talents[k].lv; return acc; }, {}),
-    activeSkills: Object.keys(activeSkills).reduce((acc, k) => {
-      acc[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv };
-      return acc;
-    }, {}),
-    towers: towers.map(t => ({
-      type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv, infernoMode: t.infernoMode || 1
-    })),
-    // [需求3改動] 敵人圖鑑解鎖進度寫入存檔
-    seenEnemyTypes: Array.from(seenEnemyTypes),
-    unlockedCodexEnemies: Array.from(unlockedCodexEnemies),
-    newCodexAlerts: Array.from(newCodexAlerts),
-    checkpointState
+    currentWave, hp, gold, crystals, stats, checkpointState,
+    talents: Object.keys(talents).reduce((a, k) => (a[k] = talents[k].lv, a), {}),
+    activeSkills: Object.keys(activeSkills).reduce((a, k) => (a[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv }, a), {}),
+    towers: towers.map(t => ({ type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv, infernoMode: t.infernoMode || 1 })),
+    seenEnemyTypes: [...seenEnemyTypes], unlockedCodexEnemies: [...unlockedCodexEnemies], newCodexAlerts: [...newCodexAlerts]
   };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-  } catch(e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData)); } catch(e) {}
 }
 
 function loadGameFromLocalStorage() {
@@ -571,27 +353,15 @@ function loadGameFromLocalStorage() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
-    currentWave = data.currentWave || 0;
-    hp = data.hp ?? 100;
-    gold = data.gold ?? 300;
-    crystals = data.crystals ?? 0;
+    currentWave = data.currentWave || 0; hp = data.hp ?? 100; gold = data.gold ?? 300; crystals = data.crystals ?? 0;
     if (data.stats) stats = data.stats;
     if (data.checkpointState) checkpointState = data.checkpointState;
     if (data.seenEnemyTypes) seenEnemyTypes = new Set(data.seenEnemyTypes);
     if (data.unlockedCodexEnemies) unlockedCodexEnemies = new Set(data.unlockedCodexEnemies);
     if (data.newCodexAlerts) newCodexAlerts = new Set(data.newCodexAlerts);
 
-    if (data.talents) {
-      Object.keys(data.talents).forEach(k => { if (talents[k]) talents[k].lv = data.talents[k]; });
-    }
-    if (data.activeSkills) {
-      Object.keys(data.activeSkills).forEach(k => {
-        if (activeSkills[k]) {
-          activeSkills[k].valLv = data.activeSkills[k].valLv;
-          activeSkills[k].cdLv = data.activeSkills[k].cdLv;
-        }
-      });
-    }
+    if (data.talents) Object.keys(data.talents).forEach(k => talents[k] && (talents[k].lv = data.talents[k]));
+    if (data.activeSkills) Object.keys(data.activeSkills).forEach(k => activeSkills[k] && (activeSkills[k].valLv = data.activeSkills[k].valLv, activeSkills[k].cdLv = data.activeSkills[k].cdLv));
     if (Array.isArray(data.towers)) {
       towers = data.towers.map(t => ({
         id: Date.now() + Math.random(), type: t.type, x: t.x, y: t.y,
@@ -604,9 +374,6 @@ function loadGameFromLocalStorage() {
   } catch(e) {}
 }
 
-// ============================================================================
-// 6. 建造與選取邏輯 (Tower Placement & Selection Management)
-// ============================================================================
 function toggleAutoWave() {
   autoWave = !autoWave;
   const btn = document.getElementById('auto-wave-btn');
@@ -621,10 +388,7 @@ function togglePause() {
 }
 
 function toggleSpeed() {
-  if (gameSpeed === 1) gameSpeed = 2;
-  else if (gameSpeed === 2) gameSpeed = 4;
-  else if (gameSpeed === 4) gameSpeed = 8;
-  else gameSpeed = 1;
+  gameSpeed = gameSpeed === 1 ? 2 : (gameSpeed === 2 ? 4 : (gameSpeed === 4 ? 8 : 1));
   document.getElementById('speed-btn').innerText = `⚡ ${gameSpeed}x 速度`;
 }
 
@@ -638,30 +402,24 @@ function updateUI() {
   document.getElementById('tower-count-val').innerText = towers.length;
   document.getElementById('wave-val').innerText = currentWave;
 
-  // [需求5改動] 更新敵人圖鑑按鈕驚嘆號提示
   const codexBadge = document.getElementById('codex-btn-badge');
-  if (codexBadge) {
-    codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
-  }
+  if (codexBadge) codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
   
   const startBtn = document.getElementById('start-wave-btn');
-  if (waveInProgress) startBtn.classList.add('disabled-wave');
-  else startBtn.classList.remove('disabled-wave');
+  startBtn.classList.toggle('disabled-wave', waveInProgress);
 }
 
+// ============================================================================
+// 防禦塔放置與升級管理
+// ============================================================================
 function startPlacement(type) {
   if (towers.length >= MAX_TOWER_COUNT) return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`);
   if (type === 'gold' && towers.filter(t => t.type === 'gold').length >= 5) return showToast('點金之塔上限為 5 座！');
   if (gold < TOWER_TYPES[type].cost) return showToast('金幣不足！');
   placingType = type; dragPos = { x: 500, y: 300 };
   
-  if (isMouseInput) {
-    document.getElementById('confirm-placement-bar').style.display = 'none';
-    document.getElementById('trash-cancel-btn').style.display = 'inline-flex';
-  } else {
-    document.getElementById('confirm-placement-bar').style.display = 'flex';
-    document.getElementById('trash-cancel-btn').style.display = 'none';
-  }
+  document.getElementById('confirm-placement-bar').style.display = isMouseInput ? 'none' : 'flex';
+  document.getElementById('trash-cancel-btn').style.display = isMouseInput ? 'inline-flex' : 'none';
 }
 
 function cancelPlacement() {
@@ -672,10 +430,7 @@ function cancelPlacement() {
 
 function confirmPlacement() {
   if (!placingType) return;
-  if (towers.length >= MAX_TOWER_COUNT) {
-    cancelPlacement();
-    return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`);
-  }
+  if (towers.length >= MAX_TOWER_COUNT) { cancelPlacement(); return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`); }
   if (!isValidPlacement(dragPos.x, dragPos.y)) return showToast('該位置無效（不能重疊道路或其它塔）！');
   
   gold -= TOWER_TYPES[placingType].cost;
@@ -685,27 +440,17 @@ function confirmPlacement() {
     disableTimer: 0, drumTimer: 0, hammerState: 'idle', hammerHeight: 0, hammerRot: 0, hammerScale: 1, attackTickCount: 0,
     workerState: 'idle', workerPos: { x: dragPos.x, y: dragPos.y }, workerTargetTowerId: null, workerActionTimer: 0
   };
-  
-  if (placingType === 'inferno') {
-    newTower.infernoMode = 1;
-    newTower.targetLockId = null;
-    newTower.lockTime = 0;
-    newTower.infernoStage = 0;
-  }
+  if (placingType === 'inferno') { newTower.infernoMode = 1; newTower.targetLockId = null; newTower.lockTime = 0; newTower.infernoStage = 0; }
   
   towers.push(newTower);
   showToast('建造成功！');
-  saveGameToLocalStorage();
-  cancelPlacement(); updateUI();
+  saveGameToLocalStorage(); cancelPlacement(); updateUI();
 }
 
 function isValidPlacement(x, y) {
   if (x < 30 || x > 900 || y < 30 || y > 570) return false;
   if (towers.some(t => Math.hypot(t.x - x, t.y - y) < 38)) return false;
-  for (let i = 0; i < path.length - 1; i++) {
-    if (distToSegment({x, y}, path[i], path[i+1]) < 35) return false;
-  }
-  return true;
+  return !path.some((p, i) => i < path.length - 1 && distToSegment({x, y}, p, path[i+1]) < 35);
 }
 
 function distToSegment(p, v, w) {
@@ -721,12 +466,8 @@ function handleMove(clientX, clientY) {
   if (placingType) dragPos = { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// [需求9改動] 點金之塔專屬升級費用成長倍率改為 1.5 倍
 function getTowerSpecRate(type) {
-  if (type === 'tesla' || type === 'inferno') return 2.5;
-  if (type === 'knockback') return 2.8;
-  if (type === 'gold') return 1.5;
-  return 1.6;
+  return (type === 'tesla' || type === 'inferno') ? 2.5 : (type === 'knockback' ? 2.8 : (type === 'gold' ? 1.5 : 1.6));
 }
 
 function getTowerSpecTotalSpent(tower) {
@@ -738,83 +479,55 @@ function getTowerSpecTotalSpent(tower) {
 function toggleInfernoMode() {
   if (!selectedTower || selectedTower.type !== 'inferno') return;
   selectedTower.infernoMode = selectedTower.infernoMode === 1 ? 2 : 1;
-  selectedTower.targetLockId = null;
-  selectedTower.lockTime = 0;
-  selectedTower.infernoStage = 0;
+  selectedTower.targetLockId = null; selectedTower.lockTime = 0; selectedTower.infernoStage = 0;
   showToast(`地獄之塔切換為：${selectedTower.infernoMode === 1 ? '🔥 單體漸增型態' : '💥 多體散射型態'}`);
-  saveGameToLocalStorage();
-  openTowerOverlay();
+  saveGameToLocalStorage(); openTowerOverlay();
 }
 
 function openTowerOverlay() {
   if (!selectedTower) return;
-  const overlay = document.getElementById('tower-upgrade-overlay');
-  overlay.style.display = 'block';
+  document.getElementById('tower-upgrade-overlay').style.display = 'block';
   const tInfo = TOWER_TYPES[selectedTower.type];
   document.getElementById('tu-name').innerText = tInfo.name;
   
-  const baseUpgradesElem = document.getElementById('tu-base-upgrades');
-  const infernoModeContainer = document.getElementById('tu-inferno-mode-container');
   const isDisable = selectedTower.disableTimer > 0;
-  
+  const infernoContainer = document.getElementById('tu-inferno-mode-container');
+  infernoContainer.style.display = selectedTower.type === 'inferno' ? 'block' : 'none';
   if (selectedTower.type === 'inferno') {
-    infernoModeContainer.style.display = 'block';
     document.getElementById('tu-inferno-mode-text').innerText = selectedTower.infernoMode === 1 ? '🔥 單體漸增' : '💥 多體散射';
-  } else {
-    infernoModeContainer.style.display = 'none';
   }
 
-  if (selectedTower.type === 'gold') {
-    baseUpgradesElem.style.display = 'none';
-  } else {
-    baseUpgradesElem.style.display = 'block';
-    
-    let curDmg = (tInfo.damage * (1 + (selectedTower.dmgLv - 1) * 0.1) * (1 + talents.baseAtk.lv * 0.05)).toFixed(0);
-    let curRng = (tInfo.range * (1 + (selectedTower.rngLv - 1) * 0.05)).toFixed(0);
-    let curSpd = ((1 / tInfo.cd) * (1 + (selectedTower.spdLv - 1) * 0.05)).toFixed(2);
-    document.getElementById('tu-dmg-val').innerText = curDmg;
+  const baseUpg = document.getElementById('tu-base-upgrades');
+  baseUpg.style.display = selectedTower.type === 'gold' ? 'none' : 'block';
+  if (selectedTower.type !== 'gold') {
+    document.getElementById('tu-dmg-val').innerText = (tInfo.damage * (1 + (selectedTower.dmgLv - 1) * 0.1) * (1 + talents.baseAtk.lv * 0.05)).toFixed(0);
     document.getElementById('tu-dmg-lv').innerText = selectedTower.dmgLv;
     document.getElementById('tu-dmg-cost').innerText = getUpgradeCost(50, 1.5, selectedTower.dmgLv);
-    document.getElementById('tu-rng-val').innerText = curRng;
+    document.getElementById('tu-rng-val').innerText = (tInfo.range * (1 + (selectedTower.rngLv - 1) * 0.05)).toFixed(0);
     document.getElementById('tu-rng-lv').innerText = selectedTower.rngLv;
     document.getElementById('tu-rng-cost').innerText = getUpgradeCost(40, 1.5, selectedTower.rngLv);
-    document.getElementById('tu-spd-val').innerText = `${curSpd}/s`;
+    document.getElementById('tu-spd-val').innerText = `${((1 / tInfo.cd) * (1 + (selectedTower.spdLv - 1) * 0.05)).toFixed(2)}/s`;
     document.getElementById('tu-spd-lv').innerText = selectedTower.spdLv;
     document.getElementById('tu-spd-cost').innerText = getUpgradeCost(60, 1.5, selectedTower.spdLv);
     ['dmg', 'rng', 'spd'].forEach(k => document.getElementById(`tu-${k}-btn`).disabled = isDisable);
   }
   document.getElementById('tu-spec-btn').disabled = (selectedTower.type !== 'gold' && isDisable);
   
-  let specNameStr = tInfo.specName;
-  if (selectedTower.type === 'inferno') {
-    specNameStr = selectedTower.infernoMode === 1 ? '傷害上限' : '射線數量';
-  }
+  let specNameStr = selectedTower.type === 'inferno' ? (selectedTower.infernoMode === 1 ? '傷害上限' : '射線數量') : tInfo.specName;
   document.getElementById('tu-spec-label').innerText = `${specNameStr} (Lv.${selectedTower.specLv}):`;
   
-  let specDesc = '';
-  if (selectedTower.type === 'arrow') specDesc = `距離加成: +${(selectedTower.specLv * 1).toFixed(1)}%/10px`;
-  else if (selectedTower.type === 'cannon') specDesc = `爆炸範圍: ${40 + (selectedTower.specLv - 1) * 5}px`;
-  else if (selectedTower.type === 'frost') specDesc = `冰凍時間: ${(1.5 + (selectedTower.specLv - 1) * 0.5).toFixed(1)}s`;
-  else if (selectedTower.type === 'tesla') specDesc = `彈跳次數: ${selectedTower.specLv} 次`;
-  else if (selectedTower.type === 'knockback') specDesc = `擊退距離: ${5 + (selectedTower.specLv - 1)}px (範圍擊退)`;
-  else if (selectedTower.type === 'builder') specDesc = `工人移速: +${(selectedTower.specLv - 1) * 15}%`;
-  else if (selectedTower.type === 'inferno') {
-    if (selectedTower.infernoMode === 1) {
-      let maxMult = 300 + (selectedTower.specLv - 1) * 40;
-      specDesc = `型態一(單體): 最高增傷 ${maxMult}% (4.5秒達上限)`;
-    } else {
-      let rayCount = 4 + (selectedTower.specLv - 1);
-      specDesc = `型態二(散射): 同時發射 ${rayCount} 條射線`;
-    }
-  }
-  else if (selectedTower.type === 'gold') {
-    let earned = 15 + (selectedTower.specLv - 1) * 10;
-    specDesc = `產金週期: 💰${earned} / ${tInfo.cd.toFixed(1)}s`;
-  }
-  
-  document.getElementById('tu-spec-val').innerText = specDesc;
-  let specRate = getTowerSpecRate(selectedTower.type);
-  document.getElementById('tu-spec-cost').innerText = getUpgradeCost(100, specRate, selectedTower.specLv);
+  const specDescs = {
+    arrow: `距離加成: +${(selectedTower.specLv * 1).toFixed(1)}%/10px`,
+    cannon: `爆炸範圍: ${40 + (selectedTower.specLv - 1) * 5}px`,
+    frost: `冰凍時間: ${(1.5 + (selectedTower.specLv - 1) * 0.5).toFixed(1)}s`,
+    tesla: `彈跳次數: ${selectedTower.specLv} 次`,
+    knockback: `擊退距離: ${5 + (selectedTower.specLv - 1)}px (範圍擊退)`,
+    builder: `工人移速: +${(selectedTower.specLv - 1) * 15}%`,
+    gold: `產金週期: 💰${15 + (selectedTower.specLv - 1) * 10} / ${tInfo.cd.toFixed(1)}s`,
+    inferno: selectedTower.infernoMode === 1 ? `型態一(單體): 最高增傷 ${300 + (selectedTower.specLv - 1) * 40}% (4.5秒達上限)` : `型態二(散射): 同時發射 ${4 + (selectedTower.specLv - 1)} 條射線`
+  };
+  document.getElementById('tu-spec-val').innerText = specDescs[selectedTower.type];
+  document.getElementById('tu-spec-cost').innerText = getUpgradeCost(100, getTowerSpecRate(selectedTower.type), selectedTower.specLv);
   let totalSpent = tInfo.cost + (selectedTower.dmgLv-1)*50 + (selectedTower.rngLv-1)*40 + getTowerSpecTotalSpent(selectedTower);
   document.getElementById('tu-sell-val').innerText = Math.floor(totalSpent * 0.6);
 }
@@ -828,8 +541,7 @@ function upgradeTowerStat(stat) {
   let cost = getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]);
   if (gold >= cost) {
     gold -= cost; selectedTower[lvProp]++;
-    saveGameToLocalStorage();
-    updateUI(); openTowerOverlay();
+    saveGameToLocalStorage(); updateUI(); openTowerOverlay();
   } else showToast('金幣不足！');
 }
 
@@ -840,13 +552,12 @@ function sellTower() {
     gold += parseInt(document.getElementById('tu-sell-val').innerText);
     towers.splice(idx, 1); selectedTower = null;
     document.getElementById('tower-upgrade-overlay').style.display = 'none';
-    saveGameToLocalStorage();
-    updateUI(); showToast('防禦塔已出售');
+    saveGameToLocalStorage(); updateUI(); showToast('防禦塔已出售');
   }
 }
 
 // ============================================================================
-// 7. 波次生成與敵人邏輯 (Wave Management & Enemy Spawning)
+// 波次生成與敵人邏輯
 // ============================================================================
 function getEnemyStatsForWave(type, wave) {
   let w = Math.max(1, wave);
@@ -856,42 +567,27 @@ function getEnemyStatsForWave(type, wave) {
   let hp = baseHp, atk = baseAtk, speed = 0.85;
   let resistances = '無', skills = '無';
 
-  // [需求11改動] 牧師生命值為 0 號 4 倍；祭司生命值為 0 號 3.5 倍、移速 0.60
-  if (type === 'normal') {
-    hp = baseHp; atk = baseAtk; speed = 0.85;
-  } else if (type === 'scout') {
-    hp = baseHp * 0.4; atk = baseAtk * 0.7; speed = 0.85 * 3;
-    resistances = '80% 冰凍時間';
-  } else if (type === 'heavy') {
-    hp = baseHp * 3; atk = baseAtk * 1.5; speed = 0.85 * 0.5;
-  } else if (type === 'priest') {
-    hp = baseHp * 4.0; atk = baseAtk * 1.2; speed = 0.70;
-    skills = '【治癒】每5秒治療範圍35內盟友15%最大生命值';
-  } else if (type === 'monk') {
-    hp = baseHp * 3.5; atk = baseAtk * 1.5; speed = 0.60;
-    let radius = Math.min(55, 30 + Math.floor((w - 31) / 5) * 5);
-    skills = `【祝福】每8秒解除並免疫範圍${radius}內盟友負面狀態1.5秒`;
-  } else if (type === 'boss') {
+  if (type === 'normal') { hp = baseHp; atk = baseAtk; speed = 0.85; }
+  else if (type === 'soldier1') { hp = baseHp * 1.2; atk = baseAtk; speed = 0.85; skills = '【淨化免疫】每4秒解除負面狀態並免疫所有負面狀態1秒'; }
+  else if (type === 'scout') { hp = baseHp * 0.4; atk = baseAtk * 0.7; speed = 2.55; resistances = '80% 冰凍時間'; }
+  else if (type === 'scout1') { hp = baseHp * 0.4 * 1.2; atk = baseAtk * 0.7; speed = 2.55; resistances = '80% 冰凍時間'; skills = '【閃避】受傷時 50% 機率完全免疫傷害'; }
+  else if (type === 'heavy') { hp = baseHp * 3; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; }
+  else if (type === 'heavy1') { hp = baseHp * 3 * 1.2; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; skills = '【自癒】每秒恢復 2% 最大生命值'; }
+  else if (type === 'priest') { hp = baseHp * 4.0; atk = baseAtk * 1.2; speed = 0.70; skills = '【治癒】每5秒治療範圍35內盟友15%最大生命值'; }
+  else if (type === 'monk') { hp = baseHp * 3.5; atk = baseAtk * 1.5; speed = 0.60; skills = `【祝福】每8秒為範圍內敵人解除並免疫負面狀態1.5秒`; }
+  else if (type === 'boss') {
     hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
+    if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
+    else if (w >= 31) hp *= (1 + 0.8 + (w - 30) * 0.095);
     
-    // [需求7改動] 微幅下降 Boss 從 31 波以後生命值的增長幅度（但仍微高於前30波）
-    if (w >= 21 && w <= 30) {
-      hp *= (1 + (w - 20) * 0.08);
-    } else if (w >= 31) {
-      hp *= (1 + 10 * 0.08 + (w - 30) * 0.095);
-    }
-    
-    hp = toTwoSigFigsTrunc(hp);
-    atk = baseAtk * 3.0; speed = 0.6;
-    
+    hp = toTwoSigFigsTrunc(hp); atk = baseAtk * 3.0; speed = 0.6;
     let freezeEffect = Math.max(0.40, 0.75 - Math.floor((w - 5) / 5) * 0.05);
-    let freezePct = Math.round((1.0 - freezeEffect) * 100);
-    let kbPct = 100;
-    if (w >= 15) {
-      let kbEffect = Math.max(0.40, 0.70 - Math.floor((w - 15) / 5) * 0.05);
-      kbPct = Math.round(kbEffect * 100);
-    }
-    resistances = `冰凍承受 ${freezePct}% | 擊退承受 ${kbPct}%`;
+    // Boss 麻痺抗性：第 15 波起解鎖，初始縮短 20%，每 5 波增加 5%，上限 70%
+    let paralyzeReduce = w >= 15 ? Math.min(0.70, 0.20 + Math.floor((w - 15) / 5) * 0.05) : 0;
+    // Boss 擊退承受上限改為 50%（最低承受值為 0.50）
+    let kbEffect = w >= 15 ? Math.max(0.50, 0.70 - Math.floor((w - 15) / 5) * 0.05) : 1.0;
+    
+    resistances = `冰凍承受 ${Math.round((1.0 - freezeEffect) * 100)}% | 麻痺減免 ${Math.round(paralyzeReduce * 100)}% | 擊退承受 ${Math.round(kbEffect * 100)}%`;
 
     let shockRadius = Math.min(110, 50 + Math.floor((w - 10) / 5) * 8);
     let skillArr = [];
@@ -905,42 +601,24 @@ function getEnemyStatsForWave(type, wave) {
 
 function startWave() {
   if (waveInProgress) return;
-  waveInProgress = true;
-  currentWave++;
-  updateUI();
-  updateSkillUI();
+  waveInProgress = true; currentWave++; updateUI(); updateSkillUI();
   waveSpawnQueue = [];
   
   let count = Math.floor(8 + currentWave * 1.5 + Math.pow(currentWave, 1.1) * 0.2);
-  let maxWaveDuration = 55;
-  spawnInterval = Math.max(0.2, Math.min(1.0, maxWaveDuration / count));
+  spawnInterval = Math.max(0.2, Math.min(1.0, 55 / count));
   
-  let isBossWave = (currentWave % 5 === 0);
-  
-  let priestNum = 0;
-  if (currentWave >= 21) priestNum = Math.floor((currentWave - 21) / 10) + 1;
-  let monkNum = 0;
-  if (currentWave >= 31) monkNum = Math.min(10, Math.floor((currentWave - 31) / 5) + 1);
+  let priestNum = currentWave >= 21 ? Math.floor((currentWave - 21) / 10) + 1 : 0;
+  let monkNum = currentWave >= 31 ? Math.min(10, Math.floor((currentWave - 31) / 5) + 1) : 0;
 
-  let totalSpecial = priestNum + monkNum;
-  let specialIndicesMap = new Map();
-
+  let totalSpecial = priestNum + monkNum, specialIndicesMap = new Map();
   if (totalSpecial > 0) {
-    let specialTypes = [];
-    let pCount = priestNum, mCount = monkNum;
+    let specialTypes = [], pCount = priestNum, mCount = monkNum;
     for (let k = 0; k < totalSpecial; k++) {
-      if (k % 2 === 0) {
-        if (pCount > 0) { specialTypes.push('priest'); pCount--; }
-        else { specialTypes.push('monk'); mCount--; }
-      } else {
-        if (mCount > 0) { specialTypes.push('monk'); mCount--; }
-        else { specialTypes.push('priest'); pCount--; }
-      }
+      if (k % 2 === 0) { specialTypes.push(pCount > 0 ? 'priest' : 'monk'); if (pCount > 0) pCount--; else mCount--; }
+      else { specialTypes.push(mCount > 0 ? 'monk' : 'priest'); if (mCount > 0) mCount--; else pCount--; }
     }
-
     for (let k = 1; k <= totalSpecial; k++) {
-      let targetPos = Math.round((k / (totalSpecial + 1)) * count);
-      targetPos = Math.max(1, Math.min(count - 1, targetPos));
+      let targetPos = Math.max(1, Math.min(count - 1, Math.round((k / (totalSpecial + 1)) * count)));
       while (specialIndicesMap.has(targetPos) && targetPos < count - 1) targetPos++;
       specialIndicesMap.set(targetPos, specialTypes[k - 1]);
     }
@@ -950,51 +628,52 @@ function startWave() {
     if (specialIndicesMap.has(i)) {
       let sType = specialIndicesMap.get(i);
       let stats = getEnemyStatsForWave(sType, currentWave);
-      if (sType === 'priest') {
-        waveSpawnQueue.push({
-          type: 'priest', hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * 2,
-          healTimer: 0, healRadius: 35, isStar: true
-        });
-      } else if (sType === 'monk') {
-        let monkRadius = Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5);
-        waveSpawnQueue.push({
-          type: 'monk', hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * 2.5,
-          blessTimer: 0, blessRadius: monkRadius, isStar: true
-        });
-      }
+      waveSpawnQueue.push({
+        type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * (sType === 'priest' ? 2 : 2.5),
+        healTimer: 0, healRadius: 35, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5), isStar: true
+      });
       continue;
     }
+    
+    // 決定基礎敵人類別 (heavy, scout, normal)
+    let baseCategory = (currentWave >= 11 && Math.random() < 0.3) ? 'heavy' : ((currentWave >= 6 && Math.random() < 0.35) ? 'scout' : 'normal');
+    let finalType = baseCategory;
 
-    let type = 'normal';
-    if (currentWave >= 11 && Math.random() < 0.3) type = 'heavy';
-    else if (currentWave >= 6 && Math.random() < 0.35) type = 'scout';
-
-    let stats = getEnemyStatsForWave(type, currentWave);
-    waveSpawnQueue.push({ type, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: 15 + currentWave * 2 });
-  }
-  
-  if (isBossWave) {
-    let stats = getEnemyStatsForWave('boss', currentWave);
-    let freezeEffect = Math.max(0.40, 0.75 - Math.floor((currentWave - 5) / 5) * 0.05);
-    let knockbackEffectiveness = 1.0;
-    if (currentWave >= 15) {
-      knockbackEffectiveness = Math.max(0.40, 0.70 - Math.floor((currentWave - 15) / 5) * 0.05);
+    // 依據波次條件及出現計數替換為 1 號敵人（每兩個的第二個替換）
+    if (baseCategory === 'normal') {
+      enemySpawnCounters.soldier++;
+      if (currentWave >= 51 && (enemySpawnCounters.soldier % 2 === 0)) finalType = 'soldier1';
+    } else if (baseCategory === 'scout') {
+      enemySpawnCounters.scout++;
+      if (currentWave >= 56 && (enemySpawnCounters.scout % 2 === 0)) finalType = 'scout1';
+    } else if (baseCategory === 'heavy') {
+      enemySpawnCounters.heavy++;
+      if (currentWave >= 61 && (enemySpawnCounters.heavy % 2 === 0)) finalType = 'heavy1';
     }
 
-    let shockRadius = Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8);
-
+    let stats = getEnemyStatsForWave(finalType, currentWave);
+    waveSpawnQueue.push({ 
+      type: finalType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: 15 + currentWave * 2,
+      paralyzeImmunity: (finalType === 'heavy' || finalType === 'heavy1')
+    });
+  }
+  
+  if (currentWave % 5 === 0) {
+    let stats = getEnemyStatsForWave('boss', currentWave);
+    let paralyzeReduce = currentWave >= 15 ? Math.min(0.70, 0.20 + Math.floor((currentWave - 15) / 5) * 0.05) : 0;
     waveSpawnQueue.push({
       type: 'boss', hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * 3,
-      freezeEffectiveness: freezeEffect, knockbackEffectiveness,
-      shockTimer: 0, shockInterval: 10, shockRadius,
-      beamTimer: 0, stopTimer: 0
+      freezeEffectiveness: Math.max(0.40, 0.75 - Math.floor((currentWave - 5) / 5) * 0.05),
+      paralyzeEffectiveness: 1.0 - paralyzeReduce,
+      knockbackEffectiveness: currentWave >= 15 ? Math.max(0.50, 0.70 - Math.floor((currentWave - 15) / 5) * 0.05) : 1.0,
+      shockTimer: 0, shockInterval: 10, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0
     });
   }
   saveGameToLocalStorage();
 }
 
 // ============================================================================
-// 8. 主動技能系統 (Active Skills Management)
+// 主動技能與全局科技
 // ============================================================================
 function updateSkillUI() {
   const container = document.getElementById('skills-list');
@@ -1002,21 +681,16 @@ function updateSkillUI() {
   container.innerHTML = '';
   Object.keys(activeSkills).forEach(key => {
     const s = activeSkills[key];
-    const card = document.createElement('div');
-    card.className = 'card';
     const isUnlocked = currentWave >= s.reqWave;
     const cdText = s.timer > 0 ? `(${s.timer.toFixed(1)}s)` : '';
+    let infoVal = key === 'meteor' ? `傷害: ${s.val + (s.valLv-1)*150}` : (key === 'blizzard' ? `凍結: ${(s.val + (s.valLv-1)*1).toFixed(1)}s` : (key === 'warDrum' ? `加速: ${(s.val + (s.valLv-1)*1).toFixed(1)}s` : `血量: ${s.val + (s.valLv-1)*250}`));
+    let valLabel = key === 'meteor' ? '傷害' : (key === 'barrier' ? '血量' : '時間');
     
-    let infoVal = '', valLabel = '';
-    if (key === 'meteor') { infoVal = `傷害: ${s.val + (s.valLv-1)*150}`; valLabel = '傷害'; }
-    else if (key === 'blizzard') { infoVal = `凍結: ${(s.val + (s.valLv-1)*1).toFixed(1)}s`; valLabel = '時間'; }
-    else if (key === 'warDrum') { infoVal = `加速: ${(s.val + (s.valLv-1)*1).toFixed(1)}s`; valLabel = '時間'; }
-    else if (key === 'barrier') { infoVal = `血量: ${s.val + (s.valLv-1)*250}`; valLabel = '血量'; }
-    
-    let curCd = Math.max(2, s.cd - (s.cdLv - 1) * 0.5);
+    const card = document.createElement('div');
+    card.className = 'card';
     card.innerHTML = `
       <div class="card-name" style="color:#ffb86c">${s.name} <span id="cd-display-${key}" style="color:var(--danger)">${cdText}</span></div>
-      <div class="card-stats">${infoVal} | CD: ${curCd.toFixed(1)}s</div>
+      <div class="card-stats">${infoVal} | CD: ${Math.max(2, s.cd - (s.cdLv - 1) * 0.5).toFixed(1)}s</div>
       <button class="btn btn-primary" style="padding:3px 6px; font-size:10px; width:100%; margin-bottom:4px;" onclick="useSkill('${key}')">施放</button>
       <div style="display:flex; gap:4px;">
         <button class="btn" style="padding:2px 4px; font-size:9px; background:var(--purple); color:#000; flex:1;" onclick="upgradeSkill('${key}', 'val')">+${valLabel} (Lv.${s.valLv}) 💎${s.cost + s.valLv - 1}</button>
@@ -1024,8 +698,7 @@ function updateSkillUI() {
       </div>`;
     if (!isUnlocked) {
       const lockOverlay = document.createElement('div');
-      lockOverlay.className = 'skill-lock-overlay';
-      lockOverlay.innerHTML = `🔒 第 ${s.reqWave} 波解鎖`;
+      lockOverlay.className = 'skill-lock-overlay'; lockOverlay.innerHTML = `🔒 第 ${s.reqWave} 波解鎖`;
       card.appendChild(lockOverlay);
     }
     container.appendChild(card);
@@ -1036,9 +709,9 @@ function useSkill(key) {
   const s = activeSkills[key];
   if (currentWave < s.reqWave) return showToast(`🔒 【${s.name}】需達到第 ${s.reqWave} 波方可解鎖！`);
   if (s.timer > 0) return showToast('技能正在冷卻中！');
-  let curCd = Math.max(2, s.cd - (s.cdLv - 1) * 0.5);
-  s.timer = curCd;
+  s.timer = Math.max(2, s.cd - (s.cdLv - 1) * 0.5);
   playSound('skill');
+  
   if (key === 'meteor') {
     let dmg = s.val + (s.valLv - 1) * 150;
     enemies.forEach(e => takeDamage(e, dmg));
@@ -1046,9 +719,7 @@ function useSkill(key) {
     showToast(`☄ 流星雨造成了 ${dmg} 點範圍爆破傷害！`);
   } else if (key === 'blizzard') {
     let dur = s.val + (s.valLv - 1) * 1;
-    enemies.forEach(e => {
-      if (!e.immuneTimer) e.freezeTimer = dur;
-    });
+    enemies.forEach(e => !e.immuneTimer && (e.freezeTimer = dur));
     activeVisualEffects.push({ type: 'blizzard', life: dur, maxLife: dur });
     showToast(`❄ 暴風雪降臨！全場敵軍冰封 ${dur.toFixed(1)} 秒！`);
   } else if (key === 'warDrum') {
@@ -1073,26 +744,17 @@ function upgradeSkill(key, type) {
     crystals -= reqCost;
     if (type === 'val') { s.valLv++; showToast(`【${s.name}】數值效果已提升！`); }
     else { s.cdLv++; showToast(`【${s.name}】冷卻時間已縮短！`); }
-    saveGameToLocalStorage();
-    updateSkillUI(); updateUI();
+    saveGameToLocalStorage(); updateSkillUI(); updateUI();
   } else showToast('鑽石不足！');
 }
 
-// ============================================================================
-// 9. 全局科技樹與敵人圖鑑邏輯 (Global Tech Tree & Codex Management)
-// ============================================================================
 function updateTechUI() {
   const container = document.getElementById('tech-list');
   if (!container) return;
   container.innerHTML = '';
   Object.keys(talents).forEach(key => {
     const t = talents[key];
-    let totalValStr = '';
-    if (key === 'goldBonus') totalValStr = `目前加成: +${t.lv * 10}% 金幣`;
-    else if (key === 'baseAtk') totalValStr = `目前加成: +${t.lv * 5}% 基礎攻擊`;
-    else if (key === 'maxHpBonus') totalValStr = `目前加成: +${t.lv * 20} 主城血量上限`;
-    else if (key === 'castleRegen') totalValStr = `目前回復: 波次結束 +${t.lv * 5} 血量`;
-
+    let totalValStr = key === 'goldBonus' ? `加成: +${t.lv * 10}% 金幣` : (key === 'baseAtk' ? `加成: +${t.lv * 5}% 基礎攻擊` : (key === 'maxHpBonus' ? `加成: +${t.lv * 20} 主城血量上限` : `回復: 波次結束 +${t.lv * 5} 血量`));
     const div = document.createElement('div');
     div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--border-color);';
     div.innerHTML = `
@@ -1113,24 +775,39 @@ function buyTalent(key) {
     crystals -= reqCost; t.lv++;
     if (key === 'maxHpBonus') hp += 20;
     showToast(`成功升級【${t.name}】！`);
-    saveGameToLocalStorage();
-    updateTechUI(); updateUI();
+    saveGameToLocalStorage(); updateTechUI(); updateUI();
   } else showToast('鑽石不足！');
 }
 
-// [需求2改動] 畫布上精準繪製敵人真實外觀 (供圖鑑使用)
+// ============================================================================
+// 敵人圖鑑系統
+// ============================================================================
 function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
-  let size = enemyType === 'boss' ? 18 : (enemyType === 'scout' ? 7 : (enemyType === 'heavy' ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10))));
-  let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'scout' ? '#f1fa8c' : (enemyType === 'heavy' ? '#bd93f9' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c'))));
-
-  cCtx.fillStyle = color;
-  cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
+  let size = enemyType === 'boss' ? 18 : ((enemyType === 'scout' || enemyType === 'scout1') ? 7 : ((enemyType === 'heavy' || enemyType === 'heavy1') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10))));
+  let color = enemyType === 'boss' ? '#ff5555' : ((enemyType === 'scout' || enemyType === 'scout1') ? '#f1fa8c' : ((enemyType === 'heavy' || enemyType === 'heavy1') ? '#bd93f9' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c'))));
+  
+  cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
+  
+  // 華麗外觀細節繪製 (同圖鑑與實體)
+  if (enemyType === 'soldier1') {
+    cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 1.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
+    cCtx.strokeStyle = '#ffffff'; cCtx.lineWidth = 1; cCtx.beginPath(); cCtx.arc(cx, cy, size - 2, 0, Math.PI * 2); cCtx.stroke();
+  } else if (enemyType === 'scout1') {
+    cCtx.strokeStyle = '#00ffff'; cCtx.lineWidth = 1.5; cCtx.beginPath(); cCtx.arc(cx - 2, cy - 2, size + 1, 0, Math.PI * 2); cCtx.stroke();
+    cCtx.fillStyle = '#00ffff'; cCtx.beginPath(); cCtx.arc(cx, cy, 3, 0, Math.PI * 2); cCtx.fill();
+  } else if (enemyType === 'heavy1') {
+    cCtx.strokeStyle = '#8a2be2'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
+    cCtx.strokeStyle = '#d8bfd8'; cCtx.lineWidth = 1.5; ctxStrokeShieldCross(cCtx, cx, cy, size);
+  }
 
   if (enemyType === 'priest' || enemyType === 'monk') {
-    cCtx.fillStyle = '#f1fa8c';
-    cCtx.font = 'bold 12px sans-serif';
-    cCtx.fillText('★', cx - 5, cy + 4);
+    cCtx.fillStyle = '#f1fa8c'; cCtx.font = 'bold 12px sans-serif'; cCtx.fillText('★', cx - 5, cy + 4);
   }
+}
+
+function ctxStrokeShieldCross(cCtx, cx, cy, size) {
+  cCtx.beginPath(); cCtx.moveTo(cx - size/2, cy); cCtx.lineTo(cx + size/2, cy); cCtx.stroke();
+  cCtx.beginPath(); cCtx.moveTo(cx, cy - size/2); cCtx.lineTo(cx, cy + size/2); cCtx.stroke();
 }
 
 function openCodexModal() {
@@ -1139,94 +816,56 @@ function openCodexModal() {
   container.innerHTML = '';
 
   ENEMY_CODEX_DATA.forEach(eInfo => {
-    const isUnlocked = unlockedCodexEnemies.has(eInfo.id);
-    const hasAlert = newCodexAlerts.has(eInfo.id);
-
+    const isUnlocked = unlockedCodexEnemies.has(eInfo.id), hasAlert = newCodexAlerts.has(eInfo.id);
     const card = document.createElement('div');
     card.className = 'codex-card';
     card.onclick = () => handleCodexCardClick(eInfo.id);
 
     const iconCanvas = document.createElement('canvas');
-    iconCanvas.width = 44; iconCanvas.height = 44;
-    iconCanvas.className = 'codex-card-icon-canvas';
-    const cCtx = iconCanvas.getContext('2d');
-    drawEnemyIconOnCanvas(cCtx, eInfo.id, 22, 22);
-
+    iconCanvas.width = 44; iconCanvas.height = 44; iconCanvas.className = 'codex-card-icon-canvas';
+    drawEnemyIconOnCanvas(iconCanvas.getContext('2d'), eInfo.id, 22, 22);
     card.appendChild(iconCanvas);
 
     const nameDiv = document.createElement('div');
-    nameDiv.className = 'codex-card-name';
-    nameDiv.innerText = eInfo.name;
+    nameDiv.className = 'codex-card-name'; nameDiv.innerText = eInfo.name;
     card.appendChild(nameDiv);
 
-    if (!isUnlocked) {
-      const ov = document.createElement('div');
-      ov.className = 'codex-card-overlay';
-      ov.innerText = '❓';
-      card.appendChild(ov);
-    }
-
-    if (hasAlert) {
-      const ex = document.createElement('div');
-      ex.className = 'codex-card-exclamation';
-      ex.innerText = '❗️';
-      card.appendChild(ex);
-    }
-
+    if (!isUnlocked) { const ov = document.createElement('div'); ov.className = 'codex-card-overlay'; ov.innerText = '❓'; card.appendChild(ov); }
+    if (hasAlert) { const ex = document.createElement('div'); ex.className = 'codex-card-exclamation'; ex.innerText = '❗️'; card.appendChild(ex); }
     container.appendChild(card);
   });
-
   modal.style.display = 'flex';
 }
 
 function handleCodexCardClick(enemyId) {
-  if (!unlockedCodexEnemies.has(enemyId)) {
-    return showToast('該敵人尚未通關解鎖！');
-  }
-
+  if (!unlockedCodexEnemies.has(enemyId)) return showToast('該敵人尚未通關解鎖！');
   if (newCodexAlerts.has(enemyId)) {
-    newCodexAlerts.delete(enemyId);
-    crystals += 10;
+    newCodexAlerts.delete(enemyId); crystals += 10;
     showToast(`🎉 查閱新敵人【${ENEMY_CODEX_DATA.find(e=>e.id===enemyId).name}】！獲得 💎10 鑽石！`);
-    updateUI();
-    saveGameToLocalStorage();
-    openCodexModal();
+    updateUI(); saveGameToLocalStorage(); openCodexModal();
   }
-
   showCodexDetailModal(enemyId);
 }
 
 function showCodexDetailModal(enemyId) {
   const eInfo = ENEMY_CODEX_DATA.find(e => e.id === enemyId);
   const stats = getEnemyStatsForWave(enemyId, Math.max(1, currentWave));
-
   document.getElementById('cd-title').innerText = eInfo.name;
   
   const iconCanvas = document.createElement('canvas');
   iconCanvas.width = 50; iconCanvas.height = 50;
-  const cCtx = iconCanvas.getContext('2d');
-  drawEnemyIconOnCanvas(cCtx, enemyId, 25, 25);
+  drawEnemyIconOnCanvas(iconCanvas.getContext('2d'), enemyId, 25, 25);
   
   const container = document.getElementById('cd-icon-container');
-  container.innerHTML = '';
-  container.appendChild(iconCanvas);
+  container.innerHTML = ''; container.appendChild(iconCanvas);
   
-  document.getElementById('cd-sec1').innerHTML = `
-    <b>生命值:</b> <span style="color:var(--primary);">${stats.hp}</span><br>
-    <b>攻擊力:</b> <span style="color:var(--danger);">${stats.atk}</span><br>
-    <b>移動速度:</b> <span style="color:var(--cyan);">${stats.speed}</span>
-  `;
-
-  document.getElementById('cd-sec2').innerHTML = `
-    <b>抗性:</b> ${stats.resistances}<br>
-    <b>技能:</b><br>${stats.skills.replace(/\n/g, '<br>')}
-  `;
-
+  document.getElementById('cd-sec1').innerHTML = `<b>生命值:</b> <span style="color:var(--primary);">${stats.hp}</span><br><b>攻擊力:</b> <span style="color:var(--danger);">${stats.atk}</span><br><b>移動速度:</b> <span style="color:var(--cyan);">${stats.speed}</span>`;
+  document.getElementById('cd-sec2').innerHTML = `<b>抗性:</b> ${stats.resistances}<br><b>技能:</b><br>${stats.skills.replace(/\n/g, '<br>')}`;
   document.getElementById('codex-detail-modal').style.display = 'flex';
 }
 
 function saveCheckpoint() {
-  checkpointState = JSON.parse(JSON.stringify({ gold, crystals, currentWave, hp, talents, activeSkills, towers, stats, seenEnemyTypes: Array.from(seenEnemyTypes), unlockedCodexEnemies: Array.from(unlockedCodexEnemies), newCodexAlerts: Array.from(newCodexAlerts) }));
+  checkpointState = JSON.parse(JSON.stringify({ gold, crystals, currentWave, hp, talents, activeSkills, towers, stats, seenEnemyTypes: [...seenEnemyTypes], unlockedCodexEnemies: [...unlockedCodexEnemies], newCodexAlerts: [...newCodexAlerts] }));
   showToast(`💾 第 ${currentWave} 波自動存檔 Checkpoint 已更新！`);
   saveGameToLocalStorage();
 }
@@ -1242,8 +881,7 @@ function loadCheckpoint() {
 
   enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = [];
   waveInProgress = false;
-  updateUI(); updateSkillUI(); updateTechUI();
-  saveGameToLocalStorage();
+  updateUI(); updateSkillUI(); updateTechUI(); saveGameToLocalStorage();
   return true;
 }
 
@@ -1252,59 +890,50 @@ function restartGame() {
   if (checkpointState && checkpointState.currentWave > 0) {
     loadCheckpoint(); showToast(`已載入第 ${currentWave} 波存檔數據！`);
   } else {
-    hp = 100; gold = 300; crystals = 0; currentWave = 0;
-    seenEnemyTypes = new Set();
+    hp = 100; gold = 300; crystals = 0; currentWave = 0; seenEnemyTypes = new Set();
     towers = []; enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = [];
-    waveInProgress = false;
-    stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
+    waveInProgress = false; stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
     Object.keys(talents).forEach(k => talents[k].lv = 0);
     Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
-    saveGameToLocalStorage();
-    updateUI(); updateSkillUI(); updateTechUI();
+    saveGameToLocalStorage(); updateUI(); updateSkillUI(); updateTechUI();
     showToast('遊戲完全重置！');
   }
 }
 
 // ============================================================================
-// 10. 遊戲核心主迴圈與狀態更新 (Game Loop & State Updates)
+// 遊戲主迴圈與邏輯更新
 // ============================================================================
 function takeDamage(enemy, dmg, sourceTower = null) {
   if (enemy.dead) return;
-  let baseBonus = 1 + talents.baseAtk.lv * 0.05;
-  let finalDmg = dmg * baseBonus;
-  enemy.hp -= finalDmg;
-  stats.totalDamage += finalDmg;
+
+  // 1號刺客技能【閃避】：受傷時 50% 機率免疫傷害，並顯示紅色 miss
+  if (enemy.type === 'scout1' && Math.random() < 0.5) {
+    addFloatingText(enemy.x, enemy.y - 10, 'miss', '#ff5555', 11);
+    return;
+  }
+
+  let finalDmg = dmg * (1 + talents.baseAtk.lv * 0.05);
+  enemy.hp -= finalDmg; stats.totalDamage += finalDmg;
   
   let shouldShowText = true;
   if (sourceTower) {
     sourceTower.attackTickCount = (sourceTower.attackTickCount || 0) + 1;
-    if (gameSpeed > 1) {
-      shouldShowText = (sourceTower.attackTickCount % gameSpeed === 0);
-    }
+    if (gameSpeed > 1) shouldShowText = (sourceTower.attackTickCount % gameSpeed === 0);
   }
 
   if (shouldShowText) {
-    let textColor = '#fff';
-    let fontScale = 1.0;
+    let textColor = '#fff', fontScale = 1.0;
     if (sourceTower && sourceTower.type === 'inferno' && sourceTower.infernoMode === 1) {
-      let stage = sourceTower.infernoStage || 0;
-      if (stage === 1) {
-        fontScale = 1.4;
-        textColor = 'rgb(255, 200, 100)';
-      } else if (stage === 2) {
-        fontScale = 2.0;
-        textColor = 'rgb(255, 50, 50)';
-      }
+      if (sourceTower.infernoStage === 1) { fontScale = 1.4; textColor = 'rgb(255, 200, 100)'; }
+      else if (sourceTower.infernoStage === 2) { fontScale = 2.0; textColor = 'rgb(255, 50, 50)'; }
     }
     addFloatingText(enemy.x, enemy.y - 10, Math.floor(finalDmg), textColor, Math.round(12 * fontScale));
   }
 
   if (enemy.hp <= 0) {
-    enemy.dead = true;
-    stats.totalKills++;
+    enemy.dead = true; stats.totalKills++;
     let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.1);
-    gold += goldGain;
-    stats.totalGoldEarned += goldGain;
+    gold += goldGain; stats.totalGoldEarned += goldGain;
     if (enemy.type === 'boss') {
       let bossCrystalReward = 5 + Math.floor((currentWave - 5) / 5) * 2;
       crystals += bossCrystalReward;
@@ -1315,62 +944,37 @@ function takeDamage(enemy, dmg, sourceTower = null) {
 }
 
 function applyKnockback(enemy, distPx) {
-  if (enemy.dead) return;
-  if (enemy.immuneTimer > 0) return;
-
-  let effectiveDist = distPx;
-  if (enemy.type === 'boss' && enemy.knockbackEffectiveness !== undefined) {
-    effectiveDist *= enemy.knockbackEffectiveness;
-  }
-
-  enemy.knockback = {
-    totalDist: effectiveDist,
-    remDist: effectiveDist,
-    duration: 0.5,
-    timer: 0.5
-  };
+  if (enemy.dead || enemy.immuneTimer > 0) return;
+  let effectiveDist = distPx * (enemy.type === 'boss' && enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : 1.0);
+  enemy.knockback = { totalDist: effectiveDist, remDist: effectiveDist, duration: 0.5, timer: 0.5 };
 }
 
 function processKnockback(enemy, dt) {
   if (!enemy.knockback || enemy.knockback.timer <= 0) return;
   let kb = enemy.knockback;
-  let ratio = kb.timer / kb.duration;
-  let step = kb.totalDist * (2 * ratio) * (dt / kb.duration);
-  step = Math.min(step, kb.remDist);
-  kb.remDist -= step;
-  kb.timer -= dt;
+  let step = Math.min(kb.totalDist * (2 * (kb.timer / kb.duration)) * (dt / kb.duration), kb.remDist);
+  kb.remDist -= step; kb.timer -= dt;
   
   let currStep = step;
   while (currStep > 0 && enemy.pathIndex >= 0) {
     let prevSegStart = path[enemy.pathIndex];
-    let dx = enemy.x - prevSegStart.x;
-    let dy = enemy.y - prevSegStart.y;
+    let dx = enemy.x - prevSegStart.x, dy = enemy.y - prevSegStart.y;
     let distToPrev = Math.hypot(dx, dy);
-    
     if (currStep <= distToPrev) {
-      if (distToPrev > 0) {
-        enemy.x -= (dx / distToPrev) * currStep;
-        enemy.y -= (dy / distToPrev) * currStep;
-      }
+      if (distToPrev > 0) { enemy.x -= (dx / distToPrev) * currStep; enemy.y -= (dy / distToPrev) * currStep; }
       currStep = 0;
     } else {
-      enemy.x = prevSegStart.x;
-      enemy.y = prevSegStart.y;
-      currStep -= distToPrev;
-      if (enemy.pathIndex > 0) enemy.pathIndex--;
-      else break;
+      enemy.x = prevSegStart.x; enemy.y = prevSegStart.y; currStep -= distToPrev;
+      if (enemy.pathIndex > 0) enemy.pathIndex--; else break;
     }
   }
 }
 
 let lastTime = performance.now();
 function gameLoop(now) {
-  let dt = (now - lastTime) / 1000;
+  let dt = Math.min(0.1, (now - lastTime) / 1000);
   lastTime = now;
-  if (dt > 0.1) dt = 0.1;
-  if (!isPaused) {
-    updateGame(dt * gameSpeed);
-  }
+  if (!isPaused) updateGame(dt * gameSpeed);
   renderGame();
   requestAnimationFrame(gameLoop);
 }
@@ -1381,51 +985,45 @@ function updateGame(dt) {
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
       let eData = waveSpawnQueue.shift();
-      
-      // [需求1改動] Boss 也加入 seenEnemyTypes 以便完美觸發解鎖
       if (!seenEnemyTypes.has(eData.type)) {
         seenEnemyTypes.add(eData.type);
         if (eData.type !== 'boss') showEnemyIntro(eData.type);
       }
-      
       if (eData.type === 'boss') showToast('⚠️ 強敵 BOSS 降臨！');
 
       enemies.push({
         id: Date.now() + Math.random(), type: eData.type, x: path[0].x, y: path[0].y,
         hp: eData.hp, maxHp: eData.hp, atk: eData.atk || 10, speed: eData.speed, gold: eData.gold,
-        freezeEffectiveness: eData.freezeEffectiveness || (eData.type === 'scout' ? 0.8 : 1.0),
-        knockbackEffectiveness: eData.knockbackEffectiveness,
-        pathIndex: 0, freezeTimer: 0, immuneTimer: 0, dead: false,
+        freezeEffectiveness: eData.freezeEffectiveness || ((eData.type === 'scout' || eData.type === 'scout1') ? 0.8 : 1.0),
+        paralyzeEffectiveness: eData.paralyzeEffectiveness || 1.0,
+        paralyzeImmunity: !!eData.paralyzeImmunity,
+        knockbackEffectiveness: eData.knockbackEffectiveness, pathIndex: 0, freezeTimer: 0, stunTimer: 0, immuneTimer: 0, dead: false,
         shockTimer: eData.shockTimer || 0, shockInterval: eData.shockInterval || 10, shockRadius: eData.shockRadius || 50,
-        beamTimer: 0, stopTimer: 0,
-        healTimer: 0, healRadius: eData.healRadius || 35,
-        blessTimer: 0, blessRadius: eData.blessRadius || 30, isStar: !!eData.isStar
+        beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 35, blessTimer: 0, blessRadius: eData.blessRadius || 30,
+        cleanseTimer: 0, regenTimer: 0, isStar: !!eData.isStar
       });
     }
   }
 
-  Object.keys(activeSkills).forEach(k => {
-    let s = activeSkills[k];
-    if (s.timer > 0) {
-      s.timer = Math.max(0, s.timer - dt);
-      const cdElem = document.getElementById(`cd-display-${k}`);
-      if (cdElem) cdElem.innerText = s.timer > 0 ? `(${s.timer.toFixed(1)}s)` : '';
-    }
-  });
+  // 主動技能冷卻：僅在未暫停且波次正在進行中時才減少
+  if (!isPaused && waveInProgress) {
+    Object.keys(activeSkills).forEach(k => {
+      let s = activeSkills[k];
+      if (s.timer > 0) {
+        s.timer = Math.max(0, s.timer - dt);
+        const cdElem = document.getElementById(`cd-display-${k}`);
+        if (cdElem) cdElem.innerText = s.timer > 0 ? `(${s.timer.toFixed(1)}s)` : '';
+      }
+    });
+  }
 
   towers.forEach(t => {
-    // [需求6改動] 建築工人小屋完全免疫癱瘓負面狀態
-    if (t.type === 'builder') {
-      t.disableTimer = 0;
-    } else if (t.disableTimer > 0) {
+    if (t.type === 'builder') { t.disableTimer = 0; }
+    else if (t.disableTimer > 0) {
       let prevTimer = t.disableTimer;
       t.disableTimer = Math.max(0, t.disableTimer - dt);
-
-      // [需求10改動] 地獄之塔脫離癱瘓時傷害重置為最低傷害
       if (t.type === 'inferno' && prevTimer > 0 && t.disableTimer === 0) {
-        t.targetLockId = null;
-        t.lockTime = 0;
-        t.infernoStage = 0;
+        t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
       }
     }
   });
@@ -1433,23 +1031,45 @@ function updateGame(dt) {
   for (let i = enemies.length - 1; i >= 0; i--) {
     let e = enemies[i];
     if (e.dead) { enemies.splice(i, 1); continue; }
-    
     processKnockback(e, dt);
-
     if (e.immuneTimer > 0) e.immuneTimer -= dt;
 
+    // 麻痺（Stun）計時器處置
+    if (e.stunTimer > 0) e.stunTimer -= dt;
+
     let speedMult = 1.0;
-    if (e.freezeTimer > 0) {
-      if (e.immuneTimer > 0) {
-        e.freezeTimer = 0;
-      } else {
-        e.freezeTimer -= dt;
-        speedMult = (e.type === 'boss') ? (1.0 - e.freezeEffectiveness) : (e.type === 'scout' ? 0.2 : 0.0);
-      }
+    
+    // 若處於麻痺狀態，無法移動
+    if (e.stunTimer > 0) {
+      speedMult = 0;
+    } else if (e.freezeTimer > 0) {
+      if (e.immuneTimer > 0) e.freezeTimer = 0;
+      else { e.freezeTimer -= dt; speedMult = (e.type === 'boss') ? (1.0 - e.freezeEffectiveness) : ((e.type === 'scout' || e.type === 'scout1') ? 0.2 : 0.0); }
     }
     if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
 
-    if (e.type === 'priest') {
+    // 1號士兵技能：每4秒解除自身負面狀態並免疫所有負面狀態1秒
+    if (e.type === 'soldier1' && e.stunTimer <= 0) {
+      e.cleanseTimer = (e.cleanseTimer || 0) + dt;
+      if (e.cleanseTimer >= 4.0) {
+        e.cleanseTimer = 0; e.freezeTimer = 0; e.stunTimer = 0; e.knockback = null; e.immuneTimer = 1.0;
+        addFloatingText(e.x, e.y - 15, '淨化!', '#ffd700');
+        activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 20, life: 0.4, maxLife: 0.4 });
+      }
+    }
+
+    // 1號坦克技能【自癒】：每秒恢復2%最大生命值
+    if (e.type === 'heavy1' && e.stunTimer <= 0) {
+      e.regenTimer = (e.regenTimer || 0) + dt;
+      if (e.regenTimer >= 1.0) {
+        e.regenTimer = 0;
+        let regenAmount = e.maxHp * 0.02;
+        e.hp = Math.min(e.maxHp, e.hp + regenAmount);
+        addFloatingText(e.x, e.y - 12, '+', '#50fa7b', 14);
+      }
+    }
+
+    if (e.type === 'priest' && e.stunTimer <= 0) {
       e.healTimer += dt;
       if (e.healTimer >= 5.0) {
         e.healTimer = 0;
@@ -1464,15 +1084,13 @@ function updateGame(dt) {
       }
     }
 
-    if (e.type === 'monk') {
+    if (e.type === 'monk' && e.stunTimer <= 0) {
       e.blessTimer += dt;
       if (e.blessTimer >= 8.0) {
         e.blessTimer = 0;
         enemies.forEach(other => {
           if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= e.blessRadius) {
-            other.freezeTimer = 0;
-            other.knockback = null;
-            other.immuneTimer = 1.5;
+            other.freezeTimer = 0; other.stunTimer = 0; other.knockback = null; other.immuneTimer = 1.5;
             addFloatingText(other.x, other.y - 15, '淨化!', '#bd93f9');
           }
         });
@@ -1480,16 +1098,14 @@ function updateGame(dt) {
       }
     }
 
-    if (e.type === 'boss') {
+    if (e.type === 'boss' && e.stunTimer <= 0) {
       if (currentWave >= 10) {
         e.shockTimer += dt;
         if (e.shockTimer >= e.shockInterval) {
           e.shockTimer = 0; e.stopTimer = 1.0;
           shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: e.shockRadius, alpha: 1.0 });
           towers.forEach(t => {
-            if (t.type !== 'gold' && t.type !== 'builder' && Math.hypot(t.x - e.x, t.y - e.y) <= e.shockRadius) {
-              t.disableTimer = 3.0;
-            }
+            if (t.type !== 'gold' && t.type !== 'builder' && Math.hypot(t.x - e.x, t.y - e.y) <= e.shockRadius) t.disableTimer = 3.0;
           });
           showToast('⚡ BOSS 釋放圓形衝擊波！範圍內防禦塔癱瘓 3 秒！');
         }
@@ -1515,12 +1131,9 @@ function updateGame(dt) {
     for (let j = barriers.length - 1; j >= 0; j--) {
       let b = barriers[j];
       if (Math.hypot(b.x - e.x, b.y - e.y) < 25) {
-        blocked = true;
-        b.attackTimer += dt;
+        blocked = true; b.attackTimer += dt;
         if (b.attackTimer >= 1.0) {
-          b.attackTimer = 0;
-          b.hp -= e.atk;
-          takeDamage(e, 200);
+          b.attackTimer = 0; b.hp -= e.atk; takeDamage(e, 200);
           if (b.hp <= 0) barriers.splice(j, 1);
         }
         break;
@@ -1535,10 +1148,9 @@ function updateGame(dt) {
       if (dist <= step) { e.x = target.x; e.y = target.y; e.pathIndex++; }
       else { e.x += (dx / dist) * step; e.y += (dy / dist) * step; }
     } else {
-      hp -= (e.type === 'boss' ? 30 : 10);
-      e.dead = true;
-      enemies.splice(i, 1);
-      updateUI();
+      // 需求1：敵人抵達主城後依照自身攻擊力扣除主城生命值
+      hp -= e.atk;
+      e.dead = true; enemies.splice(i, 1); updateUI();
       if (hp <= 0) return triggerGameOver();
     }
   }
@@ -1550,21 +1162,14 @@ function updateGame(dt) {
     document.getElementById('boss-hp-bar-fill').style.width = `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%`;
     document.getElementById('boss-hp-text').innerText = `${Math.floor(boss.hp)} / ${Math.floor(boss.maxHp)}`;
     document.getElementById('boss-freeze-val').innerText = `${Math.round((1.0 - boss.freezeEffectiveness) * 100)}%`;
-    
-    let kbPct = 100;
-    if (currentWave >= 15) {
-      kbPct = Math.round((boss.knockbackEffectiveness || 1.0) * 100);
-    }
-    document.getElementById('boss-kb-val').innerText = `${kbPct}%`;
+    document.getElementById('boss-paralyze-val').innerText = `${Math.round((1.0 - (boss.paralyzeEffectiveness !== undefined ? boss.paralyzeEffectiveness : 1.0)) * 100)}%`;
+    document.getElementById('boss-kb-val').innerText = `${currentWave >= 15 ? Math.round((boss.knockbackEffectiveness || 1.0) * 100) : 100}%`;
 
     const bossSkillsDescElem = document.getElementById('boss-skills-desc');
-    if (currentWave < 10) {
-      bossSkillsDescElem.style.display = 'none';
-    } else {
-      bossSkillsDescElem.style.display = 'inline';
-      let skillTexts = [];
-      if (currentWave >= 10) skillTexts.push(`能力：釋放範圍衝擊波 (癱瘓塔 3.0 秒)`);
-      if (currentWave >= 15) skillTexts.push(`發射干擾光束`);
+    bossSkillsDescElem.style.display = currentWave < 10 ? 'none' : 'inline';
+    if (currentWave >= 10) {
+      let skillTexts = ['能力：釋放範圍衝擊波 (癱瘓塔 3.0 秒)'];
+      if (currentWave >= 15) skillTexts.push('發射干擾光束');
       bossSkillsDescElem.innerText = skillTexts.join(' | ');
     }
   } else bossHpContainer.style.display = 'none';
@@ -1574,78 +1179,42 @@ function updateGame(dt) {
   cannonExplosions.forEach((ex, idx) => { ex.alpha -= 2.0 * dt; if (ex.alpha <= 0) cannonExplosions.splice(idx, 1); });
   activeVisualEffects.forEach((ve, idx) => { ve.life -= dt; if (ve.life <= 0) activeVisualEffects.splice(idx, 1); });
 
-  let highestHumFreq = 120;
-  let maxHumVolume = 0.04;
-  let anyInfernoActive = false;
+  let highestHumFreq = 120, maxHumVolume = 0.04, anyInfernoActive = false;
 
   towers.forEach(t => {
     if (t.type === 'builder') {
       let curRange = TOWER_TYPES.builder.range * (1 + (t.rngLv - 1) * 0.05);
       let workerSpeed = 0.85 * (1 + (t.specLv - 1) * 0.15) * 60;
-
       let disabledTowersInRange = towers.filter(other => other !== t && other.disableTimer > 0 && Math.hypot(other.x - t.x, other.y - t.y) <= curRange);
 
+      const sortDisabled = () => disabledTowersInRange.sort((a,b) => Math.hypot(a.x - t.workerPos.x, a.y - t.workerPos.y) - Math.hypot(b.x - t.workerPos.x, b.y - t.workerPos.y));
+
       if (t.workerState === 'idle') {
-        if (disabledTowersInRange.length > 0) {
-          disabledTowersInRange.sort((a,b) => Math.hypot(a.x - t.workerPos.x, a.y - t.workerPos.y) - Math.hypot(b.x - t.workerPos.x, b.y - t.workerPos.y));
-          t.workerTargetTowerId = disabledTowersInRange[0].id;
-          t.workerState = 'moving';
-        }
+        if (disabledTowersInRange.length > 0) { sortDisabled(); t.workerTargetTowerId = disabledTowersInRange[0].id; t.workerState = 'moving'; }
       } else if (t.workerState === 'moving') {
         let targetTower = towers.find(ot => ot.id === t.workerTargetTowerId);
         if (targetTower && targetTower.disableTimer > 0) {
-          let dx = targetTower.x - t.workerPos.x, dy = targetTower.y - t.workerPos.y;
-          let dist = Math.hypot(dx, dy);
-          let step = workerSpeed * dt;
-          if (dist <= step) {
-            t.workerPos.x = targetTower.x;
-            t.workerPos.y = targetTower.y;
-            t.workerState = 'repairing';
-            t.workerActionTimer = 0.2;
-            playSound('repairHammer');
-          } else {
-            t.workerPos.x += (dx / dist) * step;
-            t.workerPos.y += (dy / dist) * step;
-          }
+          let dx = targetTower.x - t.workerPos.x, dy = targetTower.y - t.workerPos.y, dist = Math.hypot(dx, dy), step = workerSpeed * dt;
+          if (dist <= step) { t.workerPos.x = targetTower.x; t.workerPos.y = targetTower.y; t.workerState = 'repairing'; t.workerActionTimer = 0.2; playSound('repairHammer'); }
+          else { t.workerPos.x += (dx / dist) * step; t.workerPos.y += (dy / dist) * step; }
         } else {
-          if (disabledTowersInRange.length > 0) {
-            disabledTowersInRange.sort((a,b) => Math.hypot(a.x - t.workerPos.x, a.y - t.workerPos.y) - Math.hypot(b.x - t.workerPos.x, b.y - t.workerPos.y));
-            t.workerTargetTowerId = disabledTowersInRange[0].id;
-          } else {
-            t.workerState = 'returning';
-          }
+          if (disabledTowersInRange.length > 0) { sortDisabled(); t.workerTargetTowerId = disabledTowersInRange[0].id; }
+          else t.workerState = 'returning';
         }
       } else if (t.workerState === 'repairing') {
         t.workerActionTimer -= dt;
         if (t.workerActionTimer <= 0) {
           let targetTower = towers.find(ot => ot.id === t.workerTargetTowerId);
           if (targetTower) targetTower.disableTimer = 0;
-
-          if (disabledTowersInRange.length > 0) {
-            disabledTowersInRange.sort((a,b) => Math.hypot(a.x - t.workerPos.x, a.y - t.workerPos.y) - Math.hypot(b.x - t.workerPos.x, b.y - t.workerPos.y));
-            t.workerTargetTowerId = disabledTowersInRange[0].id;
-            t.workerState = 'moving';
-          } else {
-            t.workerState = 'returning';
-          }
+          if (disabledTowersInRange.length > 0) { sortDisabled(); t.workerTargetTowerId = disabledTowersInRange[0].id; t.workerState = 'moving'; }
+          else t.workerState = 'returning';
         }
       } else if (t.workerState === 'returning') {
-        if (disabledTowersInRange.length > 0) {
-          disabledTowersInRange.sort((a,b) => Math.hypot(a.x - t.workerPos.x, a.y - t.workerPos.y) - Math.hypot(b.x - t.workerPos.x, b.y - t.workerPos.y));
-          t.workerTargetTowerId = disabledTowersInRange[0].id;
-          t.workerState = 'moving';
-        } else {
-          let dx = t.x - t.workerPos.x, dy = t.y - t.workerPos.y;
-          let dist = Math.hypot(dx, dy);
-          let step = workerSpeed * dt;
-          if (dist <= step) {
-            t.workerPos.x = t.x;
-            t.workerPos.y = t.y;
-            t.workerState = 'idle';
-          } else {
-            t.workerPos.x += (dx / dist) * step;
-            t.workerPos.y += (dy / dist) * step;
-          }
+        if (disabledTowersInRange.length > 0) { sortDisabled(); t.workerTargetTowerId = disabledTowersInRange[0].id; t.workerState = 'moving'; }
+        else {
+          let dx = t.x - t.workerPos.x, dy = t.y - t.workerPos.y, dist = Math.hypot(dx, dy), step = workerSpeed * dt;
+          if (dist <= step) { t.workerPos.x = t.x; t.workerPos.y = t.y; t.workerState = 'idle'; }
+          else { t.workerPos.x += (dx / dist) * step; t.workerPos.y += (dy / dist) * step; }
         }
       }
     }
@@ -1660,11 +1229,9 @@ function updateGame(dt) {
       if (waveInProgress && enemies.length > 0) {
         t.cooldown += dt;
         if (t.cooldown >= curCd) {
-          t.cooldown = 0;
-          let earned = 15 + (t.specLv - 1) * 10;
+          t.cooldown = 0; let earned = 15 + (t.specLv - 1) * 10;
           gold += earned; stats.totalGoldEarned += earned;
-          addFloatingText(t.x, t.y - 15, `+💰${earned}`, '#f1fa8c');
-          updateUI();
+          addFloatingText(t.x, t.y - 15, `+💰${earned}`, '#f1fa8c'); updateUI();
         }
       }
       return;
@@ -1676,29 +1243,17 @@ function updateGame(dt) {
       if (t.hammerRot === undefined) t.hammerRot = 0;
 
       if (t.hammerState === 'idle') {
-        t.hammerScale = 1.0;
-        t.hammerRot = 0;
-        t.cooldown += dt;
-        if (t.cooldown >= curCd) {
-          let targets = enemies.filter(e => !e.dead && Math.hypot(e.x - t.x, e.y - t.y) <= curRange);
-          if (targets.length > 0) {
-            t.cooldown = 0;
-            t.hammerState = 'shrinking';
-          }
+        t.hammerScale = 1.0; t.hammerRot = 0; t.cooldown += dt;
+        if (t.cooldown >= curCd && enemies.some(e => !e.dead && Math.hypot(e.x - t.x, e.y - t.y) <= curRange)) {
+          t.cooldown = 0; t.hammerState = 'shrinking';
         }
       } else if (t.hammerState === 'shrinking') {
-        let shrinkDuration = Math.min(0.1, curCd * 0.2);
-        t.hammerScale -= (0.35 / shrinkDuration) * dt;
+        t.hammerScale -= (0.35 / Math.min(0.1, curCd * 0.2)) * dt;
         if (t.hammerScale <= 0.65) {
-          t.hammerScale = 0.65;
-          t.hammerState = 'recovering';
-          playSound('hammerImpact');
-          let baseDmg = TOWER_TYPES.knockback.damage * (1 + (t.dmgLv - 1) * 0.1);
-          let kbDist = 5 + (t.specLv - 1);
-          let targets = enemies.filter(e => !e.dead && Math.hypot(e.x - t.x, e.y - t.y) <= curRange);
-          targets.forEach(e => {
-            takeDamage(e, baseDmg, t);
-            applyKnockback(e, kbDist);
+          t.hammerScale = 0.65; t.hammerState = 'recovering'; playSound('hammerImpact');
+          let baseDmg = TOWER_TYPES.knockback.damage * (1 + (t.dmgLv - 1) * 0.1), kbDist = 5 + (t.specLv - 1);
+          enemies.filter(e => !e.dead && Math.hypot(e.x - t.x, e.y - t.y) <= curRange).forEach(e => {
+            takeDamage(e, baseDmg, t); applyKnockback(e, kbDist);
           });
           activeVisualEffects.push({ type: 'hammerSlamWave', x: t.x, y: t.y, maxR: curRange, life: 0.3, maxLife: 0.3 });
           playSound('gearRotate');
@@ -1707,175 +1262,87 @@ function updateGame(dt) {
         let recoverDuration = Math.max(0.2, curCd * 0.7);
         t.hammerScale += (0.35 / recoverDuration) * dt;
         t.hammerRot += (Math.PI * 2 / recoverDuration) * dt;
-        if (t.hammerScale >= 1.0) {
-          t.hammerScale = 1.0;
-          t.hammerRot = 0;
-          t.hammerState = 'idle';
-        }
+        if (t.hammerScale >= 1.0) { t.hammerScale = 1.0; t.hammerRot = 0; t.hammerState = 'idle'; }
       }
       return;
     }
     
     let inRangeEnemies = enemies.filter(e => !e.dead && Math.hypot(e.x - t.x, e.y - t.y) <= curRange);
     if (inRangeEnemies.length > 0) {
-      inRangeEnemies.sort((a, b) => {
-        if (a.pathIndex !== b.pathIndex) return b.pathIndex - a.pathIndex;
-        let nextA = path[a.pathIndex + 1], nextB = path[b.pathIndex + 1];
-        if (!nextA || !nextB) return 0;
-        return Math.hypot(nextA.x - a.x, nextA.y - a.y) - Math.hypot(nextB.x - b.x, nextB.y - b.y);
-      });
+      inRangeEnemies.sort((a, b) => (a.pathIndex !== b.pathIndex ? b.pathIndex - a.pathIndex : Math.hypot(path[a.pathIndex + 1]?.x - a.x || 0, path[a.pathIndex + 1]?.y - a.y || 0) - Math.hypot(path[b.pathIndex + 1]?.x - b.x || 0, path[b.pathIndex + 1]?.y - b.y || 0)));
     }
 
-    // [需求8改動] 箭塔即時面向欲攻擊之敵人
     if (t.type === 'arrow' && inRangeEnemies.length > 0) {
-      let mainTarget = inRangeEnemies[0];
-      t.angle = Math.atan2(mainTarget.y - t.y, mainTarget.x - t.x);
+      t.angle = Math.atan2(inRangeEnemies[0].y - t.y, inRangeEnemies[0].x - t.x);
     }
 
     if (t.type === 'inferno') {
       if (t.infernoMode === 1) {
-        let lockTarget = null;
-        if (t.targetLockId) {
-          lockTarget = enemies.find(e => !e.dead && e.id === t.targetLockId) || null;
-          
-          // [需求4改動] 若敵人走出射程範圍，射線斷開並重置狀態
-          if (lockTarget && Math.hypot(lockTarget.x - t.x, lockTarget.y - t.y) > curRange) {
-            lockTarget = null;
-            t.targetLockId = null;
-            t.lockTime = 0;
-            t.infernoStage = 0;
-          }
+        let lockTarget = t.targetLockId ? enemies.find(e => !e.dead && e.id === t.targetLockId) : null;
+        if (lockTarget && Math.hypot(lockTarget.x - t.x, lockTarget.y - t.y) > curRange) {
+          lockTarget = null; t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
         }
         
         if (!lockTarget && inRangeEnemies.length > 0) {
-          lockTarget = inRangeEnemies[0];
-          t.targetLockId = lockTarget.id;
-          t.lockTime = 0;
-          t.infernoStage = 0;
-        } else if (!lockTarget) {
-          t.targetLockId = null;
-          t.lockTime = 0;
-          t.infernoStage = 0;
-        }
+          lockTarget = inRangeEnemies[0]; t.targetLockId = lockTarget.id; t.lockTime = 0; t.infernoStage = 0;
+        } else if (!lockTarget) { t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0; }
 
         if (lockTarget) {
-          anyInfernoActive = true;
-          t.lockTime += dt;
-          t.cooldown += dt;
+          anyInfernoActive = true; t.lockTime += dt; t.cooldown += dt;
+          let newStage = t.lockTime < 1.5 ? 0 : (t.lockTime < 4.5 ? 1 : 2);
+          let maxMult = 3.0 + (t.specLv - 1) * 0.4;
+          let currentDmgMult = newStage === 0 ? 1.0 : (newStage === 1 ? maxMult * 0.7 : maxMult);
+          let currentFreq = newStage === 0 ? 120 : (newStage === 1 ? 160 : 220);
+          let currentVol = newStage === 0 ? 0.04 : (newStage === 1 ? 0.06 : 0.09);
 
-          let newStage = 0;
-          let currentDmgMult = 1.0;
-          let currentFreq = 120;
-          let currentVol = 0.04;
-
-          if (t.lockTime < 1.5) {
-            newStage = 0;
-            currentDmgMult = 1.0;
-            currentFreq = 120;
-            currentVol = 0.04;
-          } else if (t.lockTime < 4.5) {
-            newStage = 1;
-            let maxMult = 3.0 + (t.specLv - 1) * 0.4;
-            currentDmgMult = maxMult * 0.7;
-            currentFreq = 160;
-            currentVol = 0.06;
-          } else {
-            newStage = 2;
-            let maxMult = 3.0 + (t.specLv - 1) * 0.4;
-            currentDmgMult = maxMult;
-            currentFreq = 220;
-            currentVol = 0.09;
-          }
-
-          if (newStage > t.infernoStage) {
-            t.infernoStage = newStage;
-            playSound('infernoPromote');
-          }
-
+          if (newStage > t.infernoStage) { t.infernoStage = newStage; playSound('infernoPromote'); }
           if (currentFreq > highestHumFreq) highestHumFreq = currentFreq;
           if (currentVol > maxHumVolume) maxHumVolume = currentVol;
 
           if (t.cooldown >= curCd) {
             t.cooldown = 0;
-            let baseDmg = TOWER_TYPES.inferno.damage * (1 + (t.dmgLv - 1) * 0.1);
-            takeDamage(lockTarget, baseDmg * currentDmgMult, t);
+            takeDamage(lockTarget, TOWER_TYPES.inferno.damage * (1 + (t.dmgLv - 1) * 0.1) * currentDmgMult, t);
           }
-          
-          activeVisualEffects.push({
-            type: 'infernoContinuousBeam',
-            x1: t.x, y1: t.y, x2: lockTarget.x, y2: lockTarget.y,
-            stage: t.infernoStage,
-            targetEnemy: lockTarget, life: 0.05, maxLife: 0.05
-          });
+          activeVisualEffects.push({ type: 'infernoContinuousBeam', x1: t.x, y1: t.y, x2: lockTarget.x, y2: lockTarget.y, stage: t.infernoStage, targetEnemy: lockTarget, life: 0.05, maxLife: 0.05 });
         }
       } else {
-        t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
-        t.cooldown += dt;
-        let maxTargets = 4 + (t.specLv - 1);
-        let targets = inRangeEnemies.slice(0, maxTargets);
+        t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0; t.cooldown += dt;
+        let targets = inRangeEnemies.slice(0, 4 + (t.specLv - 1));
         if (targets.length > 0) anyInfernoActive = true;
 
         if (t.cooldown >= curCd) {
           t.cooldown = 0;
           let baseDmg = TOWER_TYPES.inferno.damage * (1 + (t.dmgLv - 1) * 0.1);
-          targets.forEach(tgt => {
-            takeDamage(tgt, baseDmg, t);
-          });
+          targets.forEach(tgt => takeDamage(tgt, baseDmg, t));
         }
-
-        targets.forEach(tgt => {
-          activeVisualEffects.push({
-            type: 'infernoContinuousBeam',
-            x1: t.x, y1: t.y, x2: tgt.x, y2: tgt.y,
-            stage: 0,
-            targetEnemy: tgt, life: 0.05, maxLife: 0.05
-          });
-        });
+        targets.forEach(tgt => activeVisualEffects.push({ type: 'infernoContinuousBeam', x1: t.x, y1: t.y, x2: tgt.x, y2: tgt.y, stage: 0, targetEnemy: tgt, life: 0.05, maxLife: 0.05 }));
       }
       return;
     }
 
     t.cooldown += dt;
-    if (t.cooldown >= curCd) {
-      if (inRangeEnemies.length > 0) {
-        let target = inRangeEnemies[0];
-        t.cooldown = 0;
-        
-        if (t.type === 'arrow') playSound('bowShoot');
-        else playSound('shoot');
+    if (t.cooldown >= curCd && inRangeEnemies.length > 0) {
+      let target = inRangeEnemies[0]; t.cooldown = 0;
+      playSound(t.type === 'arrow' ? 'bowShoot' : 'shoot');
 
-        if (t.type === 'tesla') {
-          let jumpsMax = t.specLv + 1;
-          let baseDmg = TOWER_TYPES.tesla.damage * (1 + (t.dmgLv - 1) * 0.1);
-          let chainTargets = [target];
-          let currentTarget = target;
-          
-          for (let j = 1; j < jumpsMax; j++) {
-            let candidates = enemies.filter(e => !e.dead && !chainTargets.includes(e) && Math.hypot(e.x - currentTarget.x, e.y - currentTarget.y) <= 130);
-            if (candidates.length > 0) {
-              candidates.sort((a, b) => Math.hypot(a.x - currentTarget.x, a.y - currentTarget.y) - Math.hypot(b.x - currentTarget.x, b.y - currentTarget.y));
-              currentTarget = candidates[0];
-              chainTargets.push(currentTarget);
-            } else break;
-          }
-          
-          activeVisualEffects.push({
-            type: 'teslaChainProcess',
-            tower: t, targets: chainTargets, currentIndex: 0,
-            timer: -0.2, interval: 0.2, baseDmg: baseDmg, arcs: []
-          });
-        } else {
-          projectiles.push({
-            x: t.x, y: t.y, target, type: t.type, speed: 420,
-            baseDmg: TOWER_TYPES[t.type].damage * (1 + (t.dmgLv - 1) * 0.1), specLv: t.specLv, srcX: t.x, srcY: t.y, srcTower: t
-          });
+      if (t.type === 'tesla') {
+        let jumpsMax = t.specLv + 1, baseDmg = TOWER_TYPES.tesla.damage * (1 + (t.dmgLv - 1) * 0.1);
+        let chainTargets = [target], currentTarget = target;
+        for (let j = 1; j < jumpsMax; j++) {
+          let candidates = enemies.filter(e => !e.dead && !chainTargets.includes(e) && Math.hypot(e.x - currentTarget.x, e.y - currentTarget.y) <= 130);
+          if (candidates.length > 0) {
+            candidates.sort((a, b) => Math.hypot(a.x - currentTarget.x, a.y - currentTarget.y) - Math.hypot(b.x - currentTarget.x, b.y - currentTarget.y));
+            currentTarget = candidates[0]; chainTargets.push(currentTarget);
+          } else break;
         }
+        activeVisualEffects.push({ type: 'teslaChainProcess', tower: t, targets: chainTargets, currentIndex: 0, timer: -0.2, interval: 0.2, baseDmg, arcs: [] });
+      } else {
+        projectiles.push({ x: t.x, y: t.y, target, type: t.type, speed: 420, baseDmg: TOWER_TYPES[t.type].damage * (1 + (t.dmgLv - 1) * 0.1), specLv: t.specLv, srcX: t.x, srcY: t.y, srcTower: t });
       }
     }
   });
 
-  if (anyInfernoActive) startHumSound(highestHumFreq, maxHumVolume);
-  else stopHumSound();
+  if (anyInfernoActive) startHumSound(highestHumFreq, maxHumVolume); else stopHumSound();
 
   for (let i = activeVisualEffects.length - 1; i >= 0; i--) {
     let ve = activeVisualEffects[i];
@@ -1885,9 +1352,14 @@ function updateGame(dt) {
         ve.timer = 0;
         let hitEnemy = ve.targets[ve.currentIndex];
         if (!hitEnemy.dead) {
-          let dmg = ve.currentIndex === 0 ? ve.baseDmg : ve.baseDmg * 0.7;
-          takeDamage(hitEnemy, dmg, ve.tower);
-          playSound('zap');
+          takeDamage(hitEnemy, ve.currentIndex === 0 ? ve.baseDmg : ve.baseDmg * 0.7, ve.tower); playSound('zap');
+          
+          // 需求2：特斯拉電塔命中敵人套用 0.2 秒麻痺（若無免疫）
+          if (!hitEnemy.paralyzeImmunity && hitEnemy.immuneTimer <= 0) {
+            let eff = hitEnemy.paralyzeEffectiveness !== undefined ? hitEnemy.paralyzeEffectiveness : 1.0;
+            hitEnemy.stunTimer = Math.max(hitEnemy.stunTimer || 0, 0.2 * eff);
+          }
+
           activeVisualEffects.push({ type: 'teslaCircleArc', enemy: hitEnemy, x: hitEnemy.x, y: hitEnemy.y, life: 0.3, maxLife: 0.3 });
           let prevPoint = ve.currentIndex === 0 ? { x: ve.tower.x, y: ve.tower.y } : { x: ve.targets[ve.currentIndex - 1].x, y: ve.targets[ve.currentIndex - 1].y };
           ve.arcs.push({ x1: prevPoint.x, y1: prevPoint.y, x2: hitEnemy.x, y2: hitEnemy.y });
@@ -1904,28 +1376,21 @@ function updateGame(dt) {
   for (let i = projectiles.length - 1; i >= 0; i--) {
     let p = projectiles[i];
     if (p.target.dead) { projectiles.splice(i, 1); continue; }
-    let dx = p.target.x - p.x, dy = p.target.y - p.y, dist = Math.hypot(dx, dy);
-    let step = p.speed * dt;
+    let dx = p.target.x - p.x, dy = p.target.y - p.y, dist = Math.hypot(dx, dy), step = p.speed * dt;
     if (dist <= step) {
       playSound('hit');
-      let finalDmg = p.baseDmg;
       if (p.type === 'arrow') {
-        let flightDist = Math.hypot(p.target.x - p.srcX, p.target.y - p.srcY);
-        takeDamage(p.target, finalDmg * (1 + (0.01 * p.specLv * (flightDist / 10))), p.srcTower);
+        takeDamage(p.target, p.baseDmg * (1 + (0.01 * p.specLv * (Math.hypot(p.target.x - p.srcX, p.target.y - p.srcY) / 10))), p.srcTower);
       } else if (p.type === 'cannon') {
         let radius = 40 + (p.specLv - 1) * 5;
         cannonExplosions.push({ x: p.target.x, y: p.target.y, radius, alpha: 0.6 });
-        enemies.forEach(e => { if (Math.hypot(e.x - p.target.x, e.y - p.target.y) <= radius) takeDamage(e, finalDmg, p.srcTower); });
+        enemies.forEach(e => Math.hypot(e.x - p.target.x, e.y - p.target.y) <= radius && takeDamage(e, p.baseDmg, p.srcTower));
       } else if (p.type === 'frost') {
-        takeDamage(p.target, finalDmg, p.srcTower);
+        takeDamage(p.target, p.baseDmg, p.srcTower);
         if (!p.target.immuneTimer) p.target.freezeTimer = 1.5 + (p.specLv - 1) * 0.5;
-      } else {
-        takeDamage(p.target, finalDmg, p.srcTower);
-      }
+      } else takeDamage(p.target, p.baseDmg, p.srcTower);
       projectiles.splice(i, 1);
-    } else {
-      p.x += (dx / dist) * step; p.y += (dy / dist) * step;
-    }
+    } else { p.x += (dx / dist) * step; p.y += (dy / dist) * step; }
   }
 
   for (let i = floatingTexts.length - 1; i >= 0; i--) {
@@ -1943,168 +1408,81 @@ function updateGame(dt) {
 
     seenEnemyTypes.forEach(eType => {
       if (!unlockedCodexEnemies.has(eType)) {
-        unlockedCodexEnemies.add(eType);
-        newCodexAlerts.add(eType);
+        unlockedCodexEnemies.add(eType); newCodexAlerts.add(eType);
         showToast(`📖 圖鑑已解鎖新敵人！前往圖鑑可領取 💎10 鑽石！`);
       }
     });
 
-    if (currentWave % 5 === 0) saveCheckpoint();
-    else saveGameToLocalStorage();
+    if (currentWave % 5 === 0) saveCheckpoint(); else saveGameToLocalStorage();
     updateUI();
-    if (autoWave) setTimeout(() => { if (autoWave && !waveInProgress) startWave(); }, 1000);
+    if (autoWave) setTimeout(() => autoWave && !waveInProgress && startWave(), 1000);
   }
 }
 
 // ============================================================================
-// 11. 遊戲畫面繪製與視覺特效 (Rendering Engine & VFX)
+// 遊戲畫面繪製與視覺特效
 // ============================================================================
 function drawJaggedLine(ctx, x1, y1, x2, y2, color = '#bd93f9') {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  let dist = Math.hypot(x2 - x1, y2 - y1);
-  let steps = Math.max(3, Math.floor(dist / 15));
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1, y1);
+  let dist = Math.hypot(x2 - x1, y2 - y1), steps = Math.max(3, Math.floor(dist / 15));
   for (let i = 1; i < steps; i++) {
     let t = i / steps;
-    let px = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 12;
-    let py = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 12;
-    ctx.lineTo(px, py);
+    ctx.lineTo(x1 + (x2 - x1) * t + (Math.random() - 0.5) * 12, y1 + (y2 - y1) * t + (Math.random() - 0.5) * 12);
   }
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
+  ctx.lineTo(x2, y2); ctx.stroke();
 }
 
 function drawCircleArc(ctx, x, y, radius, color = '#bd93f9') {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  let points = 8;
-  for (let i = 0; i <= points; i++) {
-    let angle = (i / points) * Math.PI * 2;
-    let offset = (Math.random() - 0.5) * 6;
-    let r = radius + offset;
-    let px = x + Math.cos(angle) * r;
-    let py = y + Math.sin(angle) * r;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i <= 8; i++) {
+    let angle = (i / 8) * Math.PI * 2, r = radius + (Math.random() - 0.5) * 6;
+    let px = x + Math.cos(angle) * r, py = y + Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
-  ctx.closePath();
-  ctx.stroke();
+  ctx.closePath(); ctx.stroke();
 }
 
 function drawPortal(ctx, x, y) {
   let time = performance.now() * 0.003;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(time);
-  
+  ctx.save(); ctx.translate(x, y); ctx.rotate(time);
   let grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 25);
-  grad.addColorStop(0, 'rgba(189, 147, 249, 0.8)');
-  grad.addColorStop(0.5, 'rgba(139, 233, 253, 0.5)');
-  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(0, 0, 25, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#bd93f9';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < 4; i++) {
-    ctx.arc(0, 0, 10 + i * 3, i * Math.PI / 2, i * Math.PI / 2 + Math.PI / 3);
-  }
-  ctx.stroke();
-  ctx.restore();
+  grad.addColorStop(0, 'rgba(189, 147, 249, 0.8)'); grad.addColorStop(0.5, 'rgba(139, 233, 253, 0.5)'); grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#bd93f9'; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i < 4; i++) ctx.arc(0, 0, 10 + i * 3, i * Math.PI / 2, i * Math.PI / 2 + Math.PI / 3);
+  ctx.stroke(); ctx.restore();
 }
 
-// [需求8改動] 優化精準箭塔外觀與轉向弓箭繪製
 function drawTowerIcon(ctx, x, y, type, radius = 16, towerObj = null) {
   let tInfo = TOWER_TYPES[type];
-  
   if (type === 'arrow') {
-    ctx.fillStyle = tInfo.color;
-    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = tInfo.color; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#27ae60'; ctx.lineWidth = 2; ctx.stroke();
-
-    let angle = towerObj ? (towerObj.angle || 0) : 0;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-
-    // 繪製弓 (Bow)
-    ctx.strokeStyle = '#8B4513';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(-2, 0, 10, -Math.PI / 3, Math.PI / 3);
-    ctx.stroke();
-
-    // 繪製弓弦 (String)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    let topX = -2 + 10 * Math.cos(-Math.PI / 3);
-    let topY = 10 * Math.sin(-Math.PI / 3);
-    let botX = -2 + 10 * Math.cos(Math.PI / 3);
-    let botY = 10 * Math.sin(Math.PI / 3);
-    ctx.moveTo(topX, topY); ctx.lineTo(-6, 0); ctx.lineTo(botX, botY);
-    ctx.stroke();
-
-    // 繪製搭在弓上的箭矢 (Arrow)
-    ctx.strokeStyle = '#dcdde1';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-6, 0); ctx.lineTo(12, 0);
-    ctx.stroke();
-
-    // 箭頭
-    ctx.fillStyle = '#e74c3c';
-    ctx.beginPath();
-    ctx.moveTo(12, 0); ctx.lineTo(7, -3); ctx.lineTo(7, 3);
-    ctx.closePath();
-    ctx.fill();
-
+    ctx.save(); ctx.translate(x, y); ctx.rotate(towerObj ? (towerObj.angle || 0) : 0);
+    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(-2, 0, 10, -Math.PI / 3, Math.PI / 3); ctx.stroke();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(-2 + 10 * Math.cos(-Math.PI / 3), 10 * Math.sin(-Math.PI / 3)); ctx.lineTo(-6, 0); ctx.lineTo(-2 + 10 * Math.cos(Math.PI / 3), 10 * Math.sin(Math.PI / 3)); ctx.stroke();
+    ctx.strokeStyle = '#dcdde1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(12, 0); ctx.stroke();
+    ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(7, -3); ctx.lineTo(7, 3); ctx.closePath(); ctx.fill();
     ctx.restore();
   } else if (type === 'knockback') {
-    ctx.fillStyle = '#4a3b2c';
-    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4a3b2c'; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#2d2218'; ctx.lineWidth = 2; ctx.stroke();
-
-    let scale = towerObj ? (towerObj.hammerScale || 1.0) : 1.0;
-    let rot = towerObj ? (towerObj.hammerRot || 0) : 0;
-    let side = (radius * 2) * scale;
-    let half = side / 2;
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rot);
-
-    ctx.fillStyle = '#ffb86c';
-    ctx.fillRect(-half, -half, side, side);
-
-    ctx.strokeStyle = '#c4823f';
-    ctx.lineWidth = Math.max(1.5, 2.5 * scale);
-    ctx.strokeRect(-half, -half, side, side);
-
-    let cornerSize = Math.max(3, 5 * scale);
-    ctx.fillStyle = '#7a4b1c';
-    ctx.fillRect(-half, -half, cornerSize, cornerSize);
-    ctx.fillRect(half - cornerSize, -half, cornerSize, cornerSize);
-    ctx.fillRect(-half, half - cornerSize, cornerSize, cornerSize);
-    ctx.fillRect(half - cornerSize, half - cornerSize, cornerSize, cornerSize);
-
+    let scale = towerObj ? (towerObj.hammerScale || 1.0) : 1.0, side = (radius * 2) * scale, half = side / 2;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(towerObj ? (towerObj.hammerRot || 0) : 0);
+    ctx.fillStyle = '#ffb86c'; ctx.fillRect(-half, -half, side, side);
+    ctx.strokeStyle = '#c4823f'; ctx.lineWidth = Math.max(1.5, 2.5 * scale); ctx.strokeRect(-half, -half, side, side);
+    let cs = Math.max(3, 5 * scale); ctx.fillStyle = '#7a4b1c';
+    ctx.fillRect(-half, -half, cs, cs); ctx.fillRect(half - cs, -half, cs, cs); ctx.fillRect(-half, half - cs, cs, cs); ctx.fillRect(half - cs, half - cs, cs, cs);
     ctx.restore();
   } else {
-    ctx.fillStyle = tInfo.color;
-    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = tInfo.color; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#222';
     if (type === 'cannon') ctx.fillRect(x - 5, y - radius - 4, 10, 12);
     else if (type === 'frost') { ctx.beginPath(); ctx.arc(x, y, radius*0.5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); }
     else if (type === 'tesla') { ctx.fillStyle = '#f1fa8c'; ctx.fillRect(x - 2, y - radius - 3, 4, 10); }
     else if (type === 'inferno') { ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(x, y, radius*0.4, 0, Math.PI*2); ctx.fill(); }
-    else if (type === 'gold') { ctx.fillStyle = '#000'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('$', x - 4, y + 4); }
-    else if (type === 'builder') { ctx.fillStyle = '#000'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('🛠️', x - 6, y + 4); }
+    else if (type === 'gold' || type === 'builder') { ctx.fillStyle = '#000'; ctx.font = 'bold 12px sans-serif'; ctx.fillText(type === 'gold' ? '$' : '🛠️', x - (type === 'gold' ? 4 : 6), y + 4); }
   }
 }
 
@@ -2123,14 +1501,11 @@ function renderGame() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#181920'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  ctx.strokeStyle = '#282a36'; ctx.lineWidth = 42; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  ctx.beginPath();
-  path.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-  ctx.stroke();
-  ctx.strokeStyle = '#44475a'; ctx.lineWidth = 6; ctx.stroke();
+  ctx.strokeStyle = '#282a36'; ctx.lineWidth = 42; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+  path.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke(); ctx.strokeStyle = '#44475a'; ctx.lineWidth = 6; ctx.stroke();
   
-  drawPortal(ctx, path[0].x, path[0].y);
-  drawCastle(ctx, 930, 300);
+  drawPortal(ctx, path[0].x, path[0].y); drawCastle(ctx, 930, 300);
   
   barriers.forEach(b => {
     ctx.fillStyle = '#8B4513'; ctx.beginPath(); ctx.arc(b.x, b.y, 15, 0, Math.PI * 2); ctx.fill();
@@ -2141,126 +1516,89 @@ function renderGame() {
   
   towers.forEach(t => {
     drawTowerIcon(ctx, t.x, t.y, t.type, 16, t);
-    ctx.strokeStyle = selectedTower === t ? '#50fa7b' : '#fff';
-    ctx.lineWidth = selectedTower === t ? 3 : 1;
-    ctx.stroke();
+    ctx.strokeStyle = selectedTower === t ? '#50fa7b' : '#fff'; ctx.lineWidth = selectedTower === t ? 3 : 1; ctx.stroke();
     if (t.disableTimer > 0) {
       ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, 18, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#ff5555'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('⚡', t.x - 5, t.y + 5);
     }
     if (selectedTower === t) {
-      let r = TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05);
-      ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05), 0, Math.PI * 2); ctx.stroke();
     }
-
     if (t.type === 'builder' && t.workerPos) {
-      ctx.fillStyle = '#ffcc00';
-      ctx.beginPath(); ctx.arc(t.workerPos.x, t.workerPos.y, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(t.workerPos.x, t.workerPos.y, 6, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = '#000'; ctx.font = '8px sans-serif';
-      ctx.fillText('🔨', t.workerPos.x - 4, t.workerPos.y + 3);
+      ctx.fillStyle = '#000'; ctx.font = '8px sans-serif'; ctx.fillText('🔨', t.workerPos.x - 4, t.workerPos.y + 3);
     }
   });
   
   if (placingType) {
     let valid = isValidPlacement(dragPos.x, dragPos.y) && towers.length < MAX_TOWER_COUNT;
-    let r = TOWER_TYPES[placingType].range;
     ctx.strokeStyle = valid ? '#50fa7b' : '#ff5555'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(dragPos.x, dragPos.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(dragPos.x, dragPos.y, TOWER_TYPES[placingType].range, 0, Math.PI * 2); ctx.stroke();
     drawTowerIcon(ctx, dragPos.x, dragPos.y, placingType, 16);
   }
   
-  cannonExplosions.forEach(ex => {
-    ctx.fillStyle = `rgba(255, 68, 68, ${ex.alpha})`; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI * 2); ctx.fill();
-  });
-  shockwaves.forEach(sw => {
-    ctx.strokeStyle = `rgba(255, 85, 85, ${sw.alpha})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2); ctx.stroke();
-  });
-  bossBeams.forEach(bm => {
-    ctx.strokeStyle = `rgba(255, 0, 255, ${bm.alpha})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bm.x1, bm.y1); ctx.lineTo(bm.x2, bm.y2); ctx.stroke();
-  });
+  cannonExplosions.forEach(ex => { ctx.fillStyle = `rgba(255, 68, 68, ${ex.alpha})`; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI * 2); ctx.fill(); });
+  shockwaves.forEach(sw => { ctx.strokeStyle = `rgba(255, 85, 85, ${sw.alpha})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2); ctx.stroke(); });
+  bossBeams.forEach(bm => { ctx.strokeStyle = `rgba(255, 0, 255, ${bm.alpha})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bm.x1, bm.y1); ctx.lineTo(bm.x2, bm.y2); ctx.stroke(); });
   
   enemies.forEach(e => {
-    let color = e.type === 'boss' ? '#ff5555' : (e.type === 'scout' ? '#f1fa8c' : (e.type === 'heavy' ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))));
-    let size = e.type === 'boss' ? 18 : (e.type === 'scout' ? 7 : (e.type === 'heavy' ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10))));
+    let color = e.type === 'boss' ? '#ff5555' : ((e.type === 'scout' || e.type === 'scout1') ? '#f1fa8c' : ((e.type === 'heavy' || e.type === 'heavy1') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))));
+    let size = e.type === 'boss' ? 18 : ((e.type === 'scout' || e.type === 'scout1') ? 7 : ((e.type === 'heavy' || e.type === 'heavy1') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10))));
+    
     ctx.fillStyle = color; ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.fill();
     
-    if (e.isStar) {
-      ctx.fillStyle = '#f1fa8c';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('★', e.x - 5, e.y + 4);
+    // 華麗敵人細節繪製 (需求 7, 9, 10)
+    if (e.type === 'soldier1') {
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, size - 2, 0, Math.PI * 2); ctx.stroke();
+    } else if (e.type === 'scout1') {
+      ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x - 2, e.y - 2, size + 1, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(e.x, e.y, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (e.type === 'heavy1') {
+      ctx.strokeStyle = '#8a2be2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#d8bfd8'; ctx.lineWidth = 1.5; ctxStrokeShieldCross(ctx, e.x, e.y, size);
     }
+
+    if (e.isStar) { ctx.fillStyle = '#f1fa8c'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4); }
     if (e.freezeTimer > 0) { ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.stroke(); }
+    if (e.stunTimer > 0) { ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3; ctx.stroke(); }
     if (e.immuneTimer > 0) { ctx.strokeStyle = '#bd93f9'; ctx.lineWidth = 3; ctx.stroke(); }
-    let barW = size * 2;
-    ctx.fillStyle = '#000'; ctx.fillRect(e.x - size, e.y - size - 8, barW, 4);
-    ctx.fillStyle = '#50fa7b'; ctx.fillRect(e.x - size, e.y - size - 8, barW * (e.hp / e.maxHp), 4);
+    
+    ctx.fillStyle = '#000'; ctx.fillRect(e.x - size, e.y - size - 8, size * 2, 4);
+    ctx.fillStyle = '#50fa7b'; ctx.fillRect(e.x - size, e.y - size - 8, size * 2 * (e.hp / e.maxHp), 4);
   });
 
   activeVisualEffects.forEach(ve => {
     let alpha = ve.life / ve.maxLife;
     if (ve.type === 'infernoContinuousBeam') {
-      let dx = ve.x2 - ve.x1, dy = ve.y2 - ve.y1, dist = Math.hypot(dx, dy);
-      let stage = ve.stage || 0;
+      let dx = ve.x2 - ve.x1, dy = ve.y2 - ve.y1, stage = ve.stage || 0;
+      let beamWidth = stage === 0 ? 4 : (stage === 1 ? 6.8 : 10);
+      let strokeColor = stage === 0 ? '#ff0033' : (stage === 1 ? '#ff661a' : '#ffcc00');
+      let darkMult = stage === 0 ? 1.0 : (stage === 1 ? 1.5 : 2.0);
+      let fogR = stage === 0 ? 14 : (stage === 1 ? 21 : 28);
+      let flameR = (5 + Math.random() * 3) * darkMult;
 
-      let beamWidth = 4;
-      let darkMult = 1.0;
-      let strokeColor = '#ff0033';
-      let fogR = 14;
-      let flameR = 5 + Math.random() * 3;
+      ctx.strokeStyle = strokeColor; ctx.lineWidth = beamWidth; ctx.beginPath(); ctx.moveTo(ve.x1, ve.y1); ctx.lineTo(ve.x2, ve.y2); ctx.stroke();
 
-      if (stage === 0) {
-        beamWidth = 4; darkMult = 1.0; strokeColor = '#ff0033';
-        fogR = 14; flameR = 5 + Math.random() * 3;
-      } else if (stage === 1) {
-        beamWidth = 4 * 1.7; darkMult = 1.5; strokeColor = '#ff661a';
-        fogR = 14 * 1.5; flameR = (5 + Math.random() * 3) * 1.5;
-      } else if (stage === 2) {
-        beamWidth = 4 * 2.5; darkMult = 2.0; strokeColor = '#ffcc00';
-        fogR = 14 * 2.0; flameR = (5 + Math.random() * 3) * 2.0;
-      }
-
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = beamWidth;
-      ctx.beginPath(); ctx.moveTo(ve.x1, ve.y1); ctx.lineTo(ve.x2, ve.y2); ctx.stroke();
-
-      if (dist > 0) {
-        let nowSec = performance.now() * 0.003;
-        let pOffset = (nowSec * 1.5) % 1.0;
-        let darkX = ve.x1 + dx * pOffset;
-        let darkY = ve.y1 + dy * pOffset;
-        let darkR = 10 * darkMult;
-
+      if (Math.hypot(dx, dy) > 0) {
+        let pOffset = ((performance.now() * 0.003) * 1.5) % 1.0;
+        let darkX = ve.x1 + dx * pOffset, darkY = ve.y1 + dy * pOffset, darkR = 10 * darkMult;
         ctx.save();
         let grad = ctx.createRadialGradient(darkX, darkY, 2, darkX, darkY, darkR);
-        grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
-        grad.addColorStop(0.6, 'rgba(20, 0, 0, 0.4)');
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(darkX, darkY, darkR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)'); grad.addColorStop(0.6, 'rgba(20, 0, 0, 0.4)'); grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(darkX, darkY, darkR, 0, Math.PI * 2); ctx.fill(); ctx.restore();
       }
 
-      let fireX = ve.x2, fireY = ve.y2;
       ctx.save();
-      let fogGrad = ctx.createRadialGradient(fireX, fireY, 3, fireX, fireY, fogR);
-      fogGrad.addColorStop(0, 'rgba(40, 40, 40, 0.6)');
-      fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath(); ctx.arc(fireX, fireY, fogR, 0, Math.PI * 2); ctx.fill();
-      
-      ctx.fillStyle = strokeColor;
-      ctx.beginPath(); ctx.arc(fireX, fireY, flameR, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffff00';
-      ctx.beginPath(); ctx.arc(fireX, fireY, flameR * 0.5, 0, Math.PI * 2); ctx.fill();
+      let fogGrad = ctx.createRadialGradient(ve.x2, ve.y2, 3, ve.x2, ve.y2, fogR);
+      fogGrad.addColorStop(0, 'rgba(40, 40, 40, 0.6)'); fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = fogGrad; ctx.beginPath(); ctx.arc(ve.x2, ve.y2, fogR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = strokeColor; ctx.beginPath(); ctx.arc(ve.x2, ve.y2, flameR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffff00'; ctx.beginPath(); ctx.arc(ve.x2, ve.y2, flameR * 0.5, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-
     } else if (ve.type === 'hammerSlamWave') {
-      ctx.strokeStyle = `rgba(255, 184, 108, ${alpha})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.maxR * (1 - alpha), 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(255, 184, 108, ${alpha})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.maxR * (1 - alpha), 0, Math.PI * 2); ctx.stroke();
     } else if (ve.type === 'meteor') {
       ctx.fillStyle = `rgba(255, 50, 0, ${alpha * 0.35})`; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = `rgba(255, 200, 50, ${alpha})`; ctx.font = 'bold 36px sans-serif'; ctx.fillText('☄️ METEOR STRIKE ☄️', 330, 280);
@@ -2269,42 +1607,22 @@ function renderGame() {
     } else if (ve.type === 'warDrum') {
       ctx.strokeStyle = `rgba(241, 250, 140, ${alpha})`; ctx.lineWidth = 4;
       towers.forEach(t => { ctx.beginPath(); ctx.arc(t.x, t.y, 24 + (1 - alpha) * 20, 0, Math.PI * 2); ctx.stroke(); });
-    } else if (ve.type === 'healPulse') {
-      ctx.strokeStyle = `rgba(80, 250, 123, ${alpha})`; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.r * (1 - alpha * 0.2), 0, Math.PI * 2); ctx.stroke();
-    } else if (ve.type === 'blessPulse') {
-      ctx.strokeStyle = `rgba(189, 147, 249, ${alpha})`; ctx.lineWidth = 2;
+    } else if (ve.type === 'healPulse' || ve.type === 'blessPulse') {
+      ctx.strokeStyle = ve.type === 'healPulse' ? `rgba(80, 250, 123, ${alpha})` : `rgba(189, 147, 249, ${alpha})`; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.r * (1 - alpha * 0.2), 0, Math.PI * 2); ctx.stroke();
     } else if (ve.type === 'teslaChainProcess') {
-      ve.arcs.forEach(arc => { drawJaggedLine(ctx, arc.x1, arc.y1, arc.x2, arc.y2, '#bd93f9'); });
+      ve.arcs.forEach(arc => drawJaggedLine(ctx, arc.x1, arc.y1, arc.x2, arc.y2, '#bd93f9'));
     } else if (ve.type === 'teslaCircleArc') {
-      let enemyTarget = ve.enemy;
-      let targetX = enemyTarget && !enemyTarget.dead ? enemyTarget.x : ve.x;
-      let targetY = enemyTarget && !enemyTarget.dead ? enemyTarget.y : ve.y;
-      drawCircleArc(ctx, targetX, targetY, 12, '#bd93f9');
+      let tEnemy = ve.enemy;
+      drawCircleArc(ctx, tEnemy && !tEnemy.dead ? tEnemy.x : ve.x, tEnemy && !tEnemy.dead ? tEnemy.y : ve.y, 12, '#bd93f9');
     }
   });
   
-  // [需求8改動] 箭矢繪製（飛行的箭矢帶有箭頭與羽翼）
   projectiles.forEach(p => {
     if (p.type === 'arrow') {
-      let angle = Math.atan2(p.target.y - p.y, p.target.x - p.x);
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(angle);
-
-      ctx.strokeStyle = '#dcdde1';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-8, 0); ctx.lineTo(8, 0);
-      ctx.stroke();
-
-      ctx.fillStyle = '#e74c3c';
-      ctx.beginPath();
-      ctx.moveTo(8, 0); ctx.lineTo(4, -3); ctx.lineTo(4, 3);
-      ctx.closePath();
-      ctx.fill();
-
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.target.y - p.y, p.target.x - p.x));
+      ctx.strokeStyle = '#dcdde1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke();
+      ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(4, -3); ctx.lineTo(4, 3); ctx.closePath(); ctx.fill();
       ctx.restore();
     } else {
       ctx.fillStyle = TOWER_TYPES[p.type].color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
@@ -2313,8 +1631,7 @@ function renderGame() {
   
   floatingTexts.forEach(ft => {
     ctx.fillStyle = ft.color; ctx.globalAlpha = ft.alpha;
-    let fSize = ft.fontSize || 12;
-    ctx.font = `bold ${fSize}px sans-serif`;
+    ctx.font = `bold ${ft.fontSize || 12}px sans-serif`;
     ctx.fillText(ft.text, ft.x - 10, ft.y); ctx.globalAlpha = 1.0;
   });
 }
@@ -2322,29 +1639,21 @@ function renderGame() {
 function triggerGameOver() {
   isPaused = true;
   document.getElementById('gameover-modal').style.display = 'flex';
-  document.getElementById('go-desc').innerHTML = 
-    `您在第 ${currentWave} 波落敗了！<br><br>` +
-    `⚔️ 總擊殺敵數: ${stats.totalKills}<br>` +
-    `💥 總累積傷害: ${Math.floor(stats.totalDamage)}<br>` +
-    `💰 總累積金幣: ${Math.floor(stats.totalGoldEarned)}`;
+  document.getElementById('go-desc').innerHTML = `您在第 ${currentWave} 波落敗了！<br><br>⚔️ 總擊殺敵數: ${stats.totalKills}<br>💥 總累積傷害: ${Math.floor(stats.totalDamage)}<br>💰 總累積金幣: ${Math.floor(stats.totalGoldEarned)}`;
 }
 
 // ============================================================================
-// 12. 遊戲初始化與事件監聽 (Initialization & Event Listeners)
+// 初始化與事件處置
 // ============================================================================
 window.onload = function() {
-  canvas = document.getElementById('gameCanvas');
-  ctx = canvas.getContext('2d');
-  
+  canvas = document.getElementById('gameCanvas'); ctx = canvas.getContext('2d');
   loadGameFromLocalStorage();
   
   const shopContainer = document.getElementById('tower-shop');
   shopContainer.innerHTML = '';
   Object.keys(TOWER_TYPES).forEach(key => {
-    const t = TOWER_TYPES[key];
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.onclick = (e) => { e.stopPropagation(); startPlacement(key); };
+    const t = TOWER_TYPES[key], card = document.createElement('div');
+    card.className = 'card'; card.onclick = (e) => { e.stopPropagation(); startPlacement(key); };
     let statsText = key === 'gold' ? `產金週期: ${t.cd}s` : `攻擊: ${t.damage} | 射程: ${t.range} | 攻速: ${(1/t.cd).toFixed(1)}/s`;
     card.innerHTML = `<div class="card-name" style="color:${t.color}">${t.name}</div><div class="card-stats">${statsText}</div><div class="card-desc">${t.desc}</div><div class="card-cost">💰 ${t.cost}</div>`;
     shopContainer.appendChild(card);
@@ -2352,38 +1661,22 @@ window.onload = function() {
 
   document.getElementById('tu-close').onclick = () => { document.getElementById('tower-upgrade-overlay').style.display = 'none'; };
   
-  window.addEventListener('mousemove', () => { isMouseInput = true; });
-  canvas.addEventListener('mousemove', (e) => {
-    isMouseInput = true;
-    handleMove(e.clientX, e.clientY);
-  });
-  canvas.addEventListener('touchmove', (e) => {
-    isMouseInput = false;
-    if (e.touches.length) handleMove(e.touches[0].clientX, e.touches[0].clientY);
-  });
+  window.addEventListener('mousemove', () => isMouseInput = true);
+  canvas.addEventListener('mousemove', (e) => { isMouseInput = true; handleMove(e.clientX, e.clientY); });
+  canvas.addEventListener('touchmove', (e) => { isMouseInput = false; e.touches.length && handleMove(e.touches[0].clientX, e.touches[0].clientY); });
 
   canvas.addEventListener('click', (e) => {
-    if (placingType) {
-      if (isMouseInput) confirmPlacement();
-      return;
-    }
+    if (placingType) { if (isMouseInput) confirmPlacement(); return; }
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    selectedTower = towers.find(t => Math.hypot(t.x - mx, t.y - my) < 22) || null;
-    if (selectedTower) openTowerOverlay();
-    else document.getElementById('tower-upgrade-overlay').style.display = 'none';
+    selectedTower = towers.find(t => Math.hypot(t.x - (e.clientX - rect.left), t.y - (e.clientY - rect.top)) < 22) || null;
+    if (selectedTower) openTowerOverlay(); else document.getElementById('tower-upgrade-overlay').style.display = 'none';
   });
 
   window.addEventListener('keydown', (e) => {
     if (placingType) {
-      if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space') {
-        e.preventDefault(); confirmPlacement();
-      } else if (e.code === 'Escape') {
-        e.preventDefault(); cancelPlacement();
-      }
-    } else if (e.code === 'Space') {
-      e.preventDefault(); togglePause();
-    }
+      if (['Enter', 'NumpadEnter', 'Space'].includes(e.code)) { e.preventDefault(); confirmPlacement(); }
+      else if (e.code === 'Escape') { e.preventDefault(); cancelPlacement(); }
+    } else if (e.code === 'Space') { e.preventDefault(); togglePause(); }
   });
 
   updateSkillUI(); updateTechUI(); updateUI();
