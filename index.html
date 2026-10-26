@@ -57,11 +57,12 @@
     .skill-info-icon { position: absolute; top: 4px; right: 4px; background: rgba(189, 147, 249, 0.2); color: var(--purple); font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid var(--purple); z-index: 15; }
     .skill-info-icon:hover { background: var(--purple); color: #000; }
     
-    /* 帶指向尖端的氣泡式技能小彈窗 */
-    .skill-bubble-popover { position: absolute; bottom: 26px; right: -5px; width: 330px; background: rgba(30, 31, 41, 0.98); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; display: none; z-index: 300; box-shadow: 0 4px 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
-    .skill-bubble-popover::after { content: ''; position: absolute; bottom: -8px; right: 10px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--purple); }
+    /* 帶指向尖端的氣泡式技能小彈窗（在驚嘆號圖示右上方，尖端指向右下方驚嘆號） */
+    .skill-bubble-popover { position: absolute; bottom: 26px; right: -5px; width: 310px; background: rgba(30, 31, 41, 0.98); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; display: none; z-index: 300; box-shadow: 0 4px 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); cursor: pointer; }
+    .skill-bubble-popover::after { content: ''; position: absolute; bottom: -8px; right: 8px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--purple); }
 
-    .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 10; backdrop-filter: blur(2px); border-radius: 6px; }
+    /* 未解鎖技能黑罩遮蓋驚嘆號圖示 (z-index: 20 > 15) */
+    .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 20; backdrop-filter: blur(2px); border-radius: 6px; pointer-events: auto; }
     #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 330px; display: none; z-index: 60; }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
@@ -275,10 +276,9 @@ const activeSkills = {
 };
 
 const ENEMY_CODEX_DATA = [
-  { id: 'normal', name: '0號士兵', group: '0號' }, { id: 'scout', name: '0號刺客', group: '0號' },
-  { id: 'heavy', name: '0號坦克', group: '0號' }, 
-  { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' },
-  { id: 'heavy1', name: '1號坦克', group: '1號' },
+  { id: 'normal', name: '0號士兵', group: '0號' }, { id: 'scout', name: '0號刺客', group: '0號' }, { id: 'heavy', name: '0號坦克', group: '0號' }, 
+  { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' }, { id: 'heavy1', name: '1號坦克', group: '1號' },
+  { id: 'soldier2', name: '2號士兵', group: '2號' }, { id: 'scout2', name: '2號刺客', group: '2號' }, { id: 'heavy2', name: '2號坦克', group: '2號' },
   { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'warlock', name: '★ 巫師', group: '1星' },
   { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }
 ];
@@ -376,7 +376,9 @@ function playSound(type) {
       repairHammer: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.08); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08); osc.start(now); osc.stop(now + 0.08); },
       meteorSwoosh: () => { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.4); gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4); osc.start(now); osc.stop(now + 0.4); },
       meteorExplode: () => { osc.type = 'square'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.35); gain.gain.setValueAtTime(0.25, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.35); osc.start(now); osc.stop(now + 0.35); },
-      overchargeReady: () => { osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
+      overchargeReady: () => { osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); },
+      teleport: () => { osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.15); gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15); osc.start(now); osc.stop(now + 0.15); },
+      resurrect: () => { osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     };
     if (soundProfiles[type]) soundProfiles[type]();
   } catch(e) {}
@@ -397,9 +399,12 @@ function showEnemyIntro(type) {
     normal: ['0號士兵', '普通基礎敵人，各項能力均衡。'],
     scout: ['0號刺客', '特色：移動速度較快、生命值較低、冰凍效果減免 20%。'],
     heavy: ['0號坦克', '特色：移動速度較慢、生命值較高、免疫麻痺。'],
-    soldier1: ['1號士兵', '特色：生命值為0號士兵的1.2倍。\n技能：每4秒淨化並免疫負面狀態1秒。'],
+    soldier1: ['1號士兵', '特色：生命值為0號士兵的1.2倍。\n技能【淨化】：每4秒免疫所有負面狀態1秒。'],
     scout1: ['1號刺客', '特色：生命值為0號刺客的1.2倍。\n技能【閃避】：受到傷害時有65%機率完全免疫傷害。'],
     heavy1: ['1號坦克', '特色：生命值為0號坦克的1.2倍，免疫麻痺。\n技能【自癒】：每秒恢復5%最大生命值。'],
+    soldier2: ['2號士兵', '特色：生命值為0號士兵的1.3倍。\n技能【衝鋒陣線】：每4秒免疫所有負面狀態並提升200%移動速度，持續1秒。'],
+    scout2: ['2號刺客', '特色：生命值為0號刺客的1.3倍。\n技能：受傷時50%機率完全免疫傷害，若成功閃避則有5%機率向前瞬移5px。'],
+    heavy2: ['2號坦克', '特色：生命值為0號坦克的1.3倍，免疫麻痺。\n技能【二度甦醒】：死亡時以40%生命值原地復活一次（復活後技能失效）。'],
     priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍35內盟友15%最大生命值。'],
     monk: ['★ 祭司', '特色：一星敵人。移動速度0.60，生命值為0號的3.5倍。\n技能【祝福】：每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
     warlock: ['★ 巫師', '特色：生命值高、移動速度慢的敵人。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。']
@@ -695,7 +700,7 @@ function openTowerOverlay() {
     document.getElementById('tu-rng-cost').innerText = getUpgradeCost(40, 1.5, selectedTower.rngLv);
     document.getElementById('tu-spd-val').innerText = `${((1 / tInfo.cd) * (1 + (selectedTower.spdLv - 1) * 0.05)).toFixed(2)}/s`;
     document.getElementById('tu-spd-lv').innerText = selectedTower.spdLv;
-    document.getElementById('tu-spd-cost').innerText = getUpgradeCost(60, 1.5, selectedTower.spdLv);
+    document.getElementById('tu-spd-cost').innerText = getUpgradeCost(60, 1.5, selectedTower.spdCost);
     ['dmg', 'rng', 'spd'].forEach(k => document.getElementById(`tu-${k}-btn`).disabled = isDisable);
   }
   document.getElementById('tu-spec-btn').disabled = (selectedTower.type !== 'gold' && isDisable);
@@ -756,16 +761,19 @@ function getEnemyStatsForWave(type, wave) {
   let resistances = '無', skills = '無';
 
   if (type === 'normal') { hp = baseHp; atk = baseAtk; speed = 0.85; }
-  else if (type === 'soldier1') { hp = baseHp * 1.2; atk = baseAtk; speed = 0.85; skills = '【淨化免疫】每4秒解除負面狀態(減速/麻痺/擊退)並免疫1秒'; }
+  else if (type === 'soldier1') { hp = baseHp * 1.2; atk = baseAtk; speed = 0.85; skills = '【淨化】每4秒免疫所有負面狀態1秒'; }
+  else if (type === 'soldier2') { hp = baseHp * 1.3; atk = baseAtk; speed = 0.85; skills = '【衝鋒陣線】每4秒免疫所有負面狀態並提升200%移動速度，持續1秒。'; }
   else if (type === 'scout') { hp = baseHp * 0.4; atk = baseAtk * 0.7; speed = 2.55; resistances = '冰凍效果減免 20%'; }
   else if (type === 'scout1') { hp = baseHp * 0.4 * 1.2; atk = baseAtk * 0.7; speed = 2.55; resistances = '冰凍效果減免 20%'; skills = '【閃避】受傷時 65% 機率完全免疫傷害'; }
+  else if (type === 'scout2') { hp = baseHp * 0.4 * 1.3; atk = baseAtk * 0.7; speed = 2.55; resistances = '冰凍效果減免 20%'; skills = '【影閃】受傷時50%機率完全免疫傷害，若成功閃避則有5%機率向前瞬移5px'; }
   else if (type === 'heavy') { hp = baseHp * 3; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; }
   else if (type === 'heavy1') { hp = baseHp * 3 * 1.2; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; skills = '【自癒】每秒恢復 5% 最大生命值'; }
+  else if (type === 'heavy2') { hp = baseHp * 3 * 1.3; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; skills = '【二度甦醒】當死亡時將會以40%的生命值復活（復活後自身技能失效）'; }
   else if (type === 'priest') { hp = baseHp * 4.0; atk = baseAtk * 1.2; speed = 0.70; skills = '【治癒】每5秒治療範圍35內盟友15%最大生命值'; }
   else if (type === 'monk') { hp = baseHp * 3.5; atk = baseAtk * 1.5; speed = 0.60; skills = `【祝福】每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒`; }
   else if (type === 'warlock') {
     hp = (baseHp * 3) * 1.5; atk = (baseAtk * 1.5) * 0.5; speed = 0.40;
-    let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, w - 66) / 5) * 2);
+    let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, w - 51) / 5) * 2);
     skills = `【復生】每6秒復活死亡敵人(Boss除外)，最多復活${reviveCap}名`;
   }
   else if (type === 'boss') {
@@ -804,7 +812,7 @@ function startWave() {
   
   let priestNum = currentWave >= 21 ? Math.floor((currentWave - 21) / 10) + 1 : 0;
   let monkNum = currentWave >= 31 ? Math.min(10, Math.floor((currentWave - 31) / 5) + 1) : 0;
-  let warlockNum = currentWave >= 66 ? Math.min(10, Math.floor((currentWave - 66) / 5) + 1) : 0;
+  let warlockNum = currentWave >= 51 ? Math.min(10, Math.floor((currentWave - 51) / 5) + 1) : 0;
 
   let totalSpecial = priestNum + monkNum + warlockNum, specialIndicesMap = new Map();
   if (totalSpecial > 0) {
@@ -837,7 +845,7 @@ function startWave() {
     if (specialIndicesMap.has(i)) {
       let sType = specialIndicesMap.get(i);
       let stats = getEnemyStatsForWave(sType, currentWave);
-      let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 66) / 5) * 2);
+      let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 51) / 5) * 2);
       waveSpawnQueue.push({
         type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * (sType === 'priest' ? 2 : 2.5),
         healTimer: 0, healRadius: 35, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5),
@@ -851,19 +859,35 @@ function startWave() {
 
     if (baseCategory === 'normal') {
       enemySpawnCounters.soldier++;
-      if (currentWave >= 51 && (enemySpawnCounters.soldier % 2 === 0)) finalType = 'soldier1';
+      if (currentWave >= 61 && (enemySpawnCounters.soldier % 10 < 7)) {
+        finalType = 'soldier2';
+      } else if (currentWave >= 36 && (enemySpawnCounters.soldier % 2 === 0)) {
+        finalType = 'soldier1';
+      }
     } else if (baseCategory === 'scout') {
       enemySpawnCounters.scout++;
-      if (currentWave >= 56 && (enemySpawnCounters.scout % 2 === 0)) finalType = 'scout1';
+      if (currentWave >= 66 && (enemySpawnCounters.scout % 10 < 7)) {
+        finalType = 'scout2';
+      } else if (currentWave >= 41 && (enemySpawnCounters.scout % 2 === 0)) {
+        finalType = 'scout1';
+      }
     } else if (baseCategory === 'heavy') {
       enemySpawnCounters.heavy++;
-      if (currentWave >= 61 && (enemySpawnCounters.heavy % 2 === 0)) finalType = 'heavy1';
+      if (currentWave >= 71 && (enemySpawnCounters.heavy % 10 < 7)) {
+        finalType = 'heavy2';
+      } else if (currentWave >= 46 && (enemySpawnCounters.heavy % 2 === 0)) {
+        finalType = 'heavy1';
+      }
     }
 
     let stats = getEnemyStatsForWave(finalType, currentWave);
+    let baseGold = 15 + currentWave * 2;
+    if (finalType === 'soldier1' || finalType === 'scout1' || finalType === 'heavy1') baseGold *= 1.2;
+    else if (finalType === 'soldier2' || finalType === 'scout2' || finalType === 'heavy2') baseGold *= 1.3;
+
     waveSpawnQueue.push({ 
-      type: finalType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: 15 + currentWave * 2,
-      paralyzeImmunity: (finalType === 'heavy' || finalType === 'heavy1')
+      type: finalType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: baseGold,
+      paralyzeImmunity: (finalType === 'heavy' || finalType === 'heavy1' || finalType === 'heavy2')
     });
   }
   
@@ -1019,20 +1043,27 @@ function buyTalent(key) {
 // 敵人圖鑑系統
 // ============================================================================
 function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
-  let size = enemyType === 'boss' ? 18 : ((enemyType === 'scout' || enemyType === 'scout1') ? 7 : ((enemyType === 'heavy' || enemyType === 'heavy1' || enemyType === 'warlock') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10))));
-  let color = enemyType === 'boss' ? '#ff5555' : ((enemyType === 'scout' || enemyType === 'scout1') ? '#f1fa8c' : ((enemyType === 'heavy' || enemyType === 'heavy1') ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))));
+  let size = enemyType === 'boss' ? 18 : ((enemyType.startsWith('scout')) ? 7 : ((enemyType.startsWith('heavy') || enemyType === 'warlock') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10))));
+  let color = enemyType === 'boss' ? '#ff5555' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))));
   
   cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
   
   if (enemyType === 'soldier1') {
     cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 1.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
-    cCtx.strokeStyle = '#ffffff'; cCtx.lineWidth = 1; cCtx.beginPath(); cCtx.arc(cx, cy, size - 2, 0, Math.PI * 2); cCtx.stroke();
+  } else if (enemyType === 'soldier2') {
+    cCtx.strokeStyle = '#e5e4e2'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+    cCtx.fillStyle = '#ffffff'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★', cx - 4, cy + 3);
   } else if (enemyType === 'scout1') {
     cCtx.strokeStyle = '#00ffff'; cCtx.lineWidth = 1.5; cCtx.beginPath(); cCtx.arc(cx - 2, cy - 2, size + 1, 0, Math.PI * 2); cCtx.stroke();
+  } else if (enemyType === 'scout2') {
+    cCtx.strokeStyle = '#00e5ff'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
     cCtx.fillStyle = '#00ffff'; cCtx.beginPath(); cCtx.arc(cx, cy, 3, 0, Math.PI * 2); cCtx.fill();
   } else if (enemyType === 'heavy1') {
     cCtx.strokeStyle = '#8a2be2'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
     cCtx.strokeStyle = '#d8bfd8'; cCtx.lineWidth = 1.5; ctxStrokeShieldCross(cCtx, cx, cy, size);
+  } else if (enemyType === 'heavy2') {
+    cCtx.strokeStyle = '#d8bfd8'; cCtx.lineWidth = 3.0; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+    cCtx.strokeStyle = '#ff00ff'; cCtx.lineWidth = 1.5; ctxStrokeShieldCross(cCtx, cx, cy, size);
   } else if (enemyType === 'warlock') {
     cCtx.strokeStyle = '#ff00ff'; cCtx.lineWidth = 2; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
     cCtx.fillStyle = '#ff00ff'; cCtx.font = 'bold 12px sans-serif'; cCtx.fillText('★', cx - 5, cy + 4);
@@ -1135,6 +1166,23 @@ function takeDamage(enemy, dmg, sourceTower = null) {
     return;
   }
 
+  if (enemy.type === 'scout2' && Math.random() < 0.50) {
+    addFloatingText(enemy.x, enemy.y - 10, 'miss', '#00ffff', 11);
+    if (Math.random() < 0.05) {
+      let startX = enemy.x, startY = enemy.y;
+      let stepPx = 5;
+      let targetSeg = path[enemy.pathIndex + 1];
+      if (targetSeg) {
+        let dx = targetSeg.x - enemy.x, dy = targetSeg.y - enemy.y, dist = Math.hypot(dx, dy);
+        if (dist > 0) { enemy.x += (dx / dist) * stepPx; enemy.y += (dy / dist) * stepPx; }
+      }
+      playSound('teleport');
+      activeVisualEffects.push({ type: 'teleportAura', x: startX, y: startY, life: 0.3, maxLife: 0.3 });
+      activeVisualEffects.push({ type: 'teleportAura', x: enemy.x, y: enemy.y, life: 0.3, maxLife: 0.3 });
+    }
+    return;
+  }
+
   let baseTechMultiplier = (1 + talents.baseAtk.lv * 0.06);
   let overchargeTotalBonus = 0;
 
@@ -1169,6 +1217,15 @@ function takeDamage(enemy, dmg, sourceTower = null) {
   }
 
   if (enemy.hp <= 0) {
+    if (enemy.type === 'heavy2' && !enemy.hasResurrected) {
+      enemy.hasResurrected = true;
+      enemy.hp = enemy.maxHp * 0.40;
+      playSound('resurrect');
+      activeVisualEffects.push({ type: 'resurrectAura', x: enemy.x, y: enemy.y, r: 22, life: 0.8, maxLife: 0.8 });
+      addFloatingText(enemy.x, enemy.y - 15, '二度甦醒!', '#bd93f9');
+      return;
+    }
+
     enemy.dead = true; stats.totalKills++;
     let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12);
     gold += goldGain; stats.totalGoldEarned += goldGain;
@@ -1240,7 +1297,7 @@ function updateGame(dt) {
       let newEnemy = {
         id: Date.now() + Math.random(), type: eData.type, x: path[0].x, y: path[0].y,
         hp: eData.hp, maxHp: eData.hp, atk: eData.atk || 10, speed: eData.speed, baseSpeed: eData.baseSpeed || eData.speed, gold: eData.gold,
-        freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : ((eData.type === 'scout' || eData.type === 'scout1') ? 0.8 : 1.0),
+        freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : (eData.type.startsWith('scout') ? 0.8 : 1.0),
         paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : 1.0,
         paralyzeImmunity: !!eData.paralyzeImmunity,
         knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : 1.0,
@@ -1248,7 +1305,7 @@ function updateGame(dt) {
         shockTimer: eData.shockTimer || 0, shockInterval: eData.shockInterval || 10, shockRadius: eData.shockRadius || 50,
         beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 35, blessTimer: 0, blessRadius: eData.blessRadius || 30,
         resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10,
-        cleanseTimer: 0, regenTimer: 0, isStar: !!eData.isStar, isEnraged: false
+        cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false, isStar: !!eData.isStar, isEnraged: false
       };
       enemies.push(newEnemy);
     }
@@ -1306,8 +1363,9 @@ function updateGame(dt) {
     if (e.type === 'boss' && currentWave >= 45) {
       if (!e.isEnraged && e.hp / e.maxHp <= 0.20) {
         e.isEnraged = true;
-        e.speed = parseFloat((e.baseSpeed * 1.15).toFixed(2));
-        showToast('⚠️ BOSS 進入狂暴狀態！移動速度提升 15%！');
+        let incRate = currentWave >= 90 ? 0.30 : (currentWave >= 75 ? 0.25 : (currentWave >= 60 ? 0.20 : 0.15));
+        e.speed = parseFloat((e.baseSpeed * (1 + incRate)).toFixed(2));
+        showToast(`⚠️ BOSS 進入狂暴狀態！移動速度提升 ${Math.round(incRate * 100)}%！`);
       }
     }
 
@@ -1333,7 +1391,7 @@ function updateGame(dt) {
       speedMult = 0;
     } else if (e.freezeTimer > 0) {
       e.freezeTimer -= dt;
-      speedMult = (e.type === 'boss') ? (1.0 - e.freezeEffectiveness) : ((e.type === 'scout' || e.type === 'scout1') ? 0.2 : 0.0);
+      speedMult = (e.type === 'boss') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
       isBlizzardActive = true;
     }
     if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
@@ -1346,6 +1404,22 @@ function updateGame(dt) {
           addFloatingText(e.x, e.y - 15, '淨化!', '#ffd700');
           activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 20, color: '#ffd700', life: 0.4, maxLife: 0.4 });
         }
+      }
+
+      if (e.type === 'soldier2' && e.stunTimer <= 0) {
+        e.cleanseTimer = (e.cleanseTimer || 0) + dt;
+        if (e.cleanseTimer >= 4.0) {
+          e.cleanseTimer = 0; clearNegativeStatuses(e); e.immuneTimer = 1.0;
+          e.isCharging = true; e.chargeTimer = 1.0;
+          addFloatingText(e.x, e.y - 15, '衝鋒!', '#e5e4e2');
+          activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 22, color: '#ffffff', life: 0.4, maxLife: 0.4 });
+        }
+      }
+
+      if (e.isCharging) {
+        e.chargeTimer -= dt;
+        if (e.chargeTimer <= 0) e.isCharging = false;
+        else speedMult *= 3.0; // 提升 200% 移動速度 (100% + 200% = 3.0倍)
       }
 
       if (e.type === 'heavy1' && e.stunTimer <= 0) {
@@ -1384,8 +1458,8 @@ function updateGame(dt) {
             enemies.push({
               id: Date.now() + Math.random(), type: deadData.type, x: e.x, y: e.y,
               hp: resStats.hp, maxHp: resStats.hp, atk: resStats.atk || 10, speed: parseFloat(resStats.speed), baseSpeed: parseFloat(resStats.speed), gold: deadData.gold,
-              freezeEffectiveness: (deadData.type === 'scout' || deadData.type === 'scout1') ? 0.8 : 1.0,
-              paralyzeImmunity: (deadData.type === 'heavy' || deadData.type === 'heavy1'),
+              freezeEffectiveness: deadData.type.startsWith('scout') ? 0.8 : 1.0,
+              paralyzeImmunity: deadData.type.startsWith('heavy'),
               pathIndex: e.pathIndex, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, dead: false,
               cleanseTimer: 0, regenTimer: 0, isEnraged: false
             });
@@ -1489,7 +1563,10 @@ function updateGame(dt) {
     if (freezeReduce > 0) traitTexts.push(`冰凍效果減免: ${Math.round(freezeReduce * 100)}%`);
     if (paralyzeReduce > 0) traitTexts.push(`麻痺時間減免: ${Math.round(paralyzeReduce * 100)}%`);
     if (kbReduce > 0) traitTexts.push(`擊退距離減免: ${Math.round(kbReduce * 100)}%`);
-    if (boss.isEnraged) traitTexts.push('🔥 狂暴中 (速度 +15%)');
+    if (boss.isEnraged) {
+      let incRate = currentWave >= 90 ? 30 : (currentWave >= 75 ? 25 : (currentWave >= 60 ? 20 : 15));
+      traitTexts.push(`🔥 狂暴中 (速度 +${incRate}%)`);
+    }
     document.getElementById('boss-traits-text').innerText = traitTexts.length > 0 ? traitTexts.join(' | ') : '無特殊減免';
 
     const bossSkillsDescElem = document.getElementById('boss-skills-desc');
@@ -1925,7 +2002,6 @@ function renderGame() {
       ctx.fillStyle = '#ff5555'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('⚡', t.x - 5, t.y + 5);
     }
     
-    // 圖層調整：綠色選取圓圈位於塔上方、攻擊特效下方
     if (selectedTower === t) {
       ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05), 0, Math.PI * 2); ctx.stroke();
     }
@@ -1949,17 +2025,23 @@ function renderGame() {
   bossBeams.forEach(bm => { ctx.strokeStyle = `rgba(255, 0, 255, ${bm.alpha})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bm.x1, bm.y1); ctx.lineTo(bm.x2, bm.y2); ctx.stroke(); });
   
   enemies.forEach(e => {
-    let color = e.type === 'boss' ? '#ff5555' : ((e.type === 'scout' || e.type === 'scout1') ? '#f1fa8c' : ((e.type === 'heavy' || e.type === 'heavy1') ? '#bd93f9' : (e.type === 'warlock' ? '#9400d3' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))));
-    let size = e.type === 'boss' ? 18 : ((e.type === 'scout' || e.type === 'scout1') ? 7 : ((e.type === 'heavy' || e.type === 'heavy1' || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10))));
+    let color = e.type === 'boss' ? '#ff5555' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy')) ? '#bd93f9' : (e.type === 'warlock' ? '#9400d3' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))));
+    let size = e.type === 'boss' ? 18 : ((e.type.startsWith('scout')) ? 7 : ((e.type.startsWith('heavy') || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10))));
     
-    // Boss 狂暴狀態：周身環繞旋轉紅色光輝
+    if (e.isCharging) color = '#e5e4e2'; // 2號士兵發動衝鋒時變為白金色
+
+    // Boss 狂暴狀態：6 條緊貼 Boss 的紅色光輝（3 條順時針、3 條逆時針交叉旋轉）
     if (e.type === 'boss' && e.isEnraged) {
-      let rotAngle = performance.now() * 0.005;
-      ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(rotAngle);
-      for (let r = 0; r < 4; r++) {
-        let a = (r / 4) * Math.PI * 2;
-        ctx.strokeStyle = 'rgba(255, 0, 0, 0.85)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(Math.cos(a) * 12, Math.sin(a) * 12, size + 5, 0, Math.PI / 2); ctx.stroke();
+      let tNow = performance.now() * 0.006;
+      ctx.save(); ctx.translate(e.x, e.y);
+      for (let r = 0; r < 3; r++) {
+        let a1 = tNow + (r / 3) * Math.PI * 2;
+        ctx.strokeStyle = 'rgba(255, 30, 30, 0.9)'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, size + 3, a1, a1 + Math.PI / 3); ctx.stroke();
+
+        let a2 = -tNow + (r / 3) * Math.PI * 2;
+        ctx.strokeStyle = 'rgba(255, 100, 100, 0.9)'; ctx.lineWidth = 2.0;
+        ctx.beginPath(); ctx.arc(0, 0, size + 4, a2, a2 + Math.PI / 3); ctx.stroke();
       }
       ctx.restore();
     }
@@ -1968,19 +2050,26 @@ function renderGame() {
     
     if (e.type === 'soldier1') {
       ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, size - 2, 0, Math.PI * 2); ctx.stroke();
+    } else if (e.type === 'soldier2') {
+      ctx.strokeStyle = '#e5e4e2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★', e.x - 4, e.y + 3);
     } else if (e.type === 'scout1') {
       ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x - 2, e.y - 2, size + 1, 0, Math.PI * 2); ctx.stroke();
+    } else if (e.type === 'scout2') {
+      ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(e.x, e.y, 3, 0, Math.PI * 2); ctx.fill();
     } else if (e.type === 'heavy1') {
       ctx.strokeStyle = '#8a2be2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = '#d8bfd8'; ctx.lineWidth = 1.5; ctxStrokeShieldCross(ctx, e.x, e.y, size);
+    } else if (e.type === 'heavy2') {
+      ctx.strokeStyle = '#d8bfd8'; ctx.lineWidth = 3.0; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 1.5; ctxStrokeShieldCross(ctx, e.x, e.y, size);
     } else if (e.type === 'warlock') {
       ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4);
     }
 
-    if (e.isStar && e.type !== 'warlock') { ctx.fillStyle = '#f1fa8c'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4); }
+    if (e.isStar && !e.type.startsWith('soldier2') && e.type !== 'warlock') { ctx.fillStyle = '#f1fa8c'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4); }
     if (e.freezeTimer > 0) { ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.stroke(); }
     if (e.stunTimer > 0) { ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3; ctx.stroke(); }
     if (e.immuneTimer > 0) { ctx.strokeStyle = '#bd93f9'; ctx.lineWidth = 3; ctx.stroke(); }
@@ -2018,6 +2107,9 @@ function renderGame() {
     } else if (ve.type === 'resurrectAura') {
       ctx.fillStyle = `rgba(189, 147, 249, ${alpha * 0.4})`; ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(148, 0, 211, ${alpha})`; ctx.lineWidth = 2.5; ctx.stroke();
+    } else if (ve.type === 'teleportAura') {
+      ctx.strokeStyle = `rgba(0, 229, 255, ${alpha})`; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(ve.x, ve.y, 14 * (1 - alpha + 0.5), 0, Math.PI * 2); ctx.stroke();
     } else if (ve.type === 'infernoContinuousBeam') {
       let dx = ve.x2 - ve.x1, dy = ve.y2 - ve.y1, stage = ve.stage || 0;
       let beamWidth = stage === 0 ? 4 : (stage === 1 ? 6.8 : 10);
@@ -2117,8 +2209,12 @@ window.onload = function() {
   canvas.addEventListener('mousemove', (e) => { isMouseInput = true; handleMove(e.clientX, e.clientY); });
   canvas.addEventListener('touchmove', (e) => { isMouseInput = false; e.touches.length && handleMove(e.touches[0].clientX, e.touches[0].clientY); });
 
-  canvas.addEventListener('click', (e) => {
+  // 全局點擊事件：隱藏技能氣泡彈窗
+  window.addEventListener('click', () => {
     document.querySelectorAll('.skill-bubble-popover').forEach(p => p.style.display = 'none');
+  });
+
+  canvas.addEventListener('click', (e) => {
     if (placingType) { if (isMouseInput) confirmPlacement(); return; }
     const rect = canvas.getBoundingClientRect();
     selectedTower = towers.find(t => Math.hypot(t.x - (e.clientX - rect.left), t.y - (e.clientY - rect.top)) < 22) || null;
