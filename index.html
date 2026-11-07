@@ -1,15 +1,26 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <script type="module">
-  // Import the functions you need from the SDKs you need
+  <!-- 1. HTML 按鈕與使用者資訊顯示區 -->
+<button id="login-btn">使用 Google 帳號登入</button>
+<button id="logout-btn" style="display: none;">登出</button>
+
+<div id="user-info" style="margin-top: 15px;"></div>
+
+<!-- 2. Firebase 與 Google 登入邏輯 -->
+<script type="module">
+  // 引入 Firebase 核心與 Auth 模組
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { 
+    getAuth, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    signOut, 
+    onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  // 您專案的 Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyAz1T_G5zGnzQQg1L-xm3ygiiT7XNyMyLo",
     authDomain: "growth-tower-defense.firebaseapp.com",
@@ -20,14 +31,57 @@
     measurementId: "G-W6RFRT16VT"
   };
 
-  // Initialize Firebase
+  // 初始化 Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
-</script>
-  <button id="login-btn">使用 Google 帳號登入</button>
-  <button id="logout-btn" style="display: none;">登出</button>
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-  <div id="user-info" style="margin-top: 15px;"></div>
+  // 取得 HTML 元素
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const userInfo = document.getElementById('user-info');
+
+  // 點擊按鈕執行 Google 登入
+  loginBtn.addEventListener('click', () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("登入成功：", result.user);
+      })
+      .catch((error) => {
+        console.error("登入失敗：", error.message);
+        alert(`登入失敗：${error.message}`);
+      });
+  });
+
+  // 點擊按鈕執行登出
+  logoutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      console.log("已登出");
+    }).catch((error) => {
+      console.error("登出失敗：", error);
+    });
+  });
+
+  // 自動監聽登入狀態變更
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // 使用者已登入：顯示個人資訊並切換按鈕
+      userInfo.innerHTML = `
+        <p>歡迎，<b>${user.displayName}</b>！</p>
+        <p>Email: ${user.email}</p>
+        <img src="${user.photoURL}" alt="頭像" width="50" style="border-radius: 50%;">
+      `;
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'inline-block';
+    } else {
+      // 使用者已登出：清除資訊並顯示登入按鈕
+      userInfo.innerHTML = '<p>目前尚未登入</p>';
+      loginBtn.style.display = 'inline-block';
+      logoutBtn.style.display = 'none';
+    }
+  });
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>成長型塔防遊戲 - Growth Tower Defense</title>
