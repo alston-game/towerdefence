@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAz1T_G5zGnzQQg1L-xm3ygiiT7XNyMyLo",
+    authDomain: "growth-tower-defense.firebaseapp.com",
+    projectId: "growth-tower-defense",
+    storageBucket: "growth-tower-defense.firebasestorage.app",
+    messagingSenderId: "735547651970",
+    appId: "1:735547651970:web:a51baa600c199537d7c19b",
+    measurementId: "G-W6RFRT16VT"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>成長型塔防遊戲 - Growth Tower Defense</title>
