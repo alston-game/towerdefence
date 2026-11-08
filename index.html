@@ -3395,6 +3395,10 @@ window.updateAuthUI = updateAuthUI;
       window.newCodexAlerts = newCodexAlerts;
       window.promptLogoutConfirm = promptLogoutConfirm;
       window.promptClearAccountConfirm = promptClearAccountConfirm;
+      // 在 window.onload 結尾處加上全域導出
+      window.updateUI = updateUI;
+      window.updateAuthUI = updateAuthUI;
+      window.loadSnapshotState = loadSnapshotState;
 
       updateSkillUI(); updateTechUI(); updateSettingsUI(); updateUI();
       requestAnimationFrame(gameLoop);
