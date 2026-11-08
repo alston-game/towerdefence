@@ -15,7 +15,6 @@
     
     #game-header, #controls-bar, #panel-container { width: 100%; max-width: 1000px; }
     
-    /* 調整 Z-Index 確保在全局科技打開時可視 */
     #game-header { 
       display: flex; justify-content: space-between; align-items: center; 
       padding: 12px 20px; background: var(--panel-bg); border-radius: 8px; 
@@ -29,7 +28,6 @@
     .res-item { display: flex; align-items: center; font-size: 14px; font-weight: bold; }
     .res-icon { font-size: 18px; margin-right: 6px; }
     
-    /* 設定按鈕內部圖示旋轉，避免驚嘆號跟著旋轉 */
     .settings-gear-btn {
       position: relative; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--cyan);
       border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center;
@@ -48,7 +46,6 @@
     #boss-hp-text { font-size: 12px; margin: 2px 0 4px; font-family: monospace; }
     #boss-traits { font-size: 11px; color: var(--cyan); line-height: 1.3; }
     
-    /* 提升 Toast 層級高於全局科技 (Z-Index 360) */
     #toast-container { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 360; pointer-events: none; }
     .toast { background: rgba(20, 20, 30, 0.95); border-left: 4px solid var(--orange); padding: 10px 15px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     
@@ -108,10 +105,7 @@
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
     
-    /* 基礎 Modal 與層級優化 */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 300; pointer-events: auto; }
-    
-    /* 全局科技 Modal 專屬層級（確保 header 與 toast 不被覆蓋） */
     #tech-modal { z-index: 200; }
     
     .modal-content { background: var(--panel-bg); border-radius: 10px; padding: 20px; width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.8); }
@@ -136,18 +130,16 @@
     .settings-opt-btn { background: var(--purple); color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; min-width: 140px; text-align: center; }
     .settings-opt-btn:hover { filter: brightness(1.1); }
 
-    /* 成就系統特有樣式（含未解鎖灰階效果） */
     .achieve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
     .achieve-item { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-align: center; }
     .achieve-item:hover { transform: translateY(-3px); border-color: var(--yellow); }
-    .achieve-item.locked { filter: grayscale(100%); opacity: 0.6; } /* 未解鎖灰階效果 */
+    .achieve-item.locked { filter: grayscale(100%); opacity: 0.6; }
     .achieve-icon-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; justify-content: center; align-items: center; font-size: 20px; margin-bottom: 6px; background: #343746; color: #888; transition: all 0.2s; position: relative; }
     .achieve-normal.unlocked .achieve-icon-btn { border-color: var(--cyan); background: rgba(139, 233, 253, 0.25); color: var(--cyan); box-shadow: 0 0 8px rgba(139, 233, 253, 0.4); }
     .achieve-rare.unlocked .achieve-icon-btn { border-color: var(--primary); background: rgba(80, 250, 123, 0.25); color: var(--primary); box-shadow: 0 0 10px rgba(80, 250, 123, 0.6); }
     .achieve-name { font-size: 11px; font-weight: bold; color: var(--white); }
     .achieve-badge { position: absolute; top: 4px; right: 4px; background: var(--danger); color: #fff; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8); }
 
-    /* 排行榜特有樣式 */
     .leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 300px; overflow-y: auto; }
     .leaderboard-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 12px; }
     .leaderboard-rank { font-weight: bold; width: 30px; color: var(--yellow); }
@@ -168,11 +160,9 @@
     </div>
     
     <div class="header-right-group">
-      <!-- 6. 已登入時顯示 Google 頭像 -->
       <img id="user-avatar-img" class="user-avatar-img" src="" alt="Google 頭像" title="已登入 Google 帳號" />
       <button class="settings-gear-btn" onclick="openSettingsModal()" title="遊戲設定">
         <span class="gear-icon">⚙️</span>
-        <!-- 3. 設定按鈕驚嘆號獨立靜止定位 -->
         <span class="btn-alert-badge" id="settings-btn-badge" style="display:none;">❗️</span>
       </button>
     </div>
@@ -303,12 +293,10 @@
           </button>
         </div>
 
-        <!-- 5. 帳號登入/登出與清除帳號進度按鈕 -->
         <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
           <div id="settings-user-info" style="font-size:12px; color:#aaa; margin-bottom:4px;"></div>
           <button class="btn btn-primary" id="settings-login-btn" style="width:100%;">🔑 登入 Google 帳號</button>
           <button class="btn btn-danger" id="settings-logout-btn" onclick="promptLogoutConfirm()" style="width:100%; display:none;">🚪 登出帳號</button>
-          <!-- 清除帳號進度按鍵 (登出下方) -->
           <button class="btn" id="settings-clear-btn" onclick="promptClearAccountConfirm()" style="width:100%; display:none; background:#aa0000; color:#fff; border:none;">🔥 清除帳號進度</button>
         </div>
 
@@ -358,7 +346,6 @@
       </div>
     </div>
 
-    <!-- 4. 全局科技 Modal (層級設為 200，讓頂部 Header 與 Toast 能顯示在遮罩上方) -->
     <div class="modal" id="tech-modal">
       <div class="modal-content">
         <h3 style="color:var(--cyan); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">💎 全局科技</h3>
@@ -375,7 +362,6 @@
       </div>
     </div>
 
-    <!-- 4. 敵人圖鑑詳情 Modal (層級提升至 500 最頂層) -->
     <div class="modal" id="codex-detail-modal" style="z-index: 500;">
       <div class="modal-content" style="width: 360px;">
         <h3 id="cd-title" style="color:var(--primary); text-align:center; margin-bottom:10px;"></h3>
@@ -446,7 +432,7 @@
     </div>
   </div>
 
-  <!-- 1. Firebase 服務與數據庫連線模組 -->
+  <!-- Firebase 服務與數據庫連線模組 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
     import { 
@@ -471,10 +457,15 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // 完全靜默上傳所有進度數據至 Firestore (波次開始前/波次結束後調用)
+    window.auth = auth;
+
+    // 🔥 修正 1：加強防呆檢查，解決 Cannot convert undefined or null to object 報錯
     async function saveGameToCloud(user) {
       if (!user) return;
       try {
+        const talentsObj = window.talents || {};
+        const skillsObj = window.activeSkills || {};
+        
         const saveData = {
           playerName: window.playerName || user.displayName || "玩家",
           photoURL: user.photoURL || "",
@@ -483,13 +474,13 @@
           gold: window.gold ?? 300,
           crystals: window.crystals ?? 0,
           starParticles: window.starParticles ?? 0,
-          stats: window.stats,
-          gameSettings: window.gameSettings,
+          stats: window.stats || {},
+          gameSettings: window.gameSettings || {},
           unlockedAchievements: Array.from(window.unlockedAchievements || []),
           claimedAchievements: Array.from(window.claimedAchievements || []),
           newAchievementAlerts: Array.from(window.newAchievementAlerts || []),
-          talents: Object.keys(window.talents).reduce((a, k) => (a[k] = window.talents[k].lv, a), {}),
-          activeSkills: Object.keys(window.activeSkills).reduce((a, k) => (a[k] = { valLv: window.activeSkills[k].valLv, cdLv: window.activeSkills[k].cdLv, timer: window.activeSkills[k].timer }, a), {}),
+          talents: Object.keys(talentsObj).reduce((a, k) => (a[k] = talentsObj[k].lv, a), {}),
+          activeSkills: Object.keys(skillsObj).reduce((a, k) => (a[k] = { valLv: skillsObj[k].valLv, cdLv: skillsObj[k].cdLv, timer: skillsObj[k].timer }, a), {}),
           towers: (window.towers || []).map(t => ({
             type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
             totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1
@@ -506,7 +497,6 @@
       }
     }
 
-    // 從 Firestore 讀取玩家資料
     async function loadGameFromCloud(user) {
       if (!user) return false;
       try {
@@ -527,7 +517,6 @@
       }
     }
 
-    // 🔥 完全清除該 Google 帳號於 Firestore 的數據
     async function deleteAccountDataFromCloud(user) {
       if (!user) return;
       try {
@@ -538,7 +527,7 @@
       }
     }
 
-    // 1. 修復並拉取排行榜數據
+    // 🔥 修正 2：簡化並穩定排行榜查詢，只要有登入紀錄就列出
     async function fetchLeaderboardData() {
       try {
         const querySnapshot = await getDocs(collection(db, "users"));
@@ -556,6 +545,7 @@
         return players;
       } catch(e) {
         console.error("讀取排行榜失敗：", e);
+        if (typeof window.showToast === 'function') window.showToast('讀取排行榜失敗，請檢查 Firebase 權限規則設定！', 'res');
         return [];
       }
     }
@@ -564,14 +554,21 @@
     window.deleteAccountDataFromCloud = deleteAccountDataFromCloud;
     window.fetchLeaderboardData = fetchLeaderboardData;
 
-    // Google 登入監聽與按鈕事件
+    // 🔥 修正 3：登入按鈕事件綁定與觸發流程優化
+    const handleGoogleLogin = () => {
+      signInWithPopup(auth, provider).then((result) => {
+        if (typeof window.showToast === 'function') window.showToast(`成功登入：${result.user.displayName}`, 'res');
+      }).catch((error) => alert(`登入失敗：${error.message}`));
+    };
+
     document.getElementById('settings-login-btn').addEventListener('click', () => {
-      signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
+      document.getElementById('settings-modal').style.display = 'none';
+      handleGoogleLogin();
     });
 
     document.getElementById('welcome-google-login-btn').addEventListener('click', () => {
       document.getElementById('welcome-auth-modal').style.display = 'none';
-      signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
+      handleGoogleLogin();
     });
 
     document.getElementById('welcome-guest-btn').addEventListener('click', () => {
@@ -593,7 +590,6 @@
         logoutBtn.style.display = 'block';
         clearBtn.style.display = 'block';
         
-        // 6. 已登入狀態下顯示 Google 大頭貼頭像
         if (avatarImg) {
           avatarImg.src = window.currentUser.photoURL || 'https://lh3.googleusercontent.com/a/default-user';
           avatarImg.style.display = 'block';
@@ -613,7 +609,6 @@
         window.currentUser = user;
         const exists = await loadGameFromCloud(user);
         if (!exists) {
-          // 若屬該 Google 帳號首次登入，出現取名字彈窗
           document.getElementById('name-setting-modal').style.display = 'flex';
         }
         updateAuthUI();
@@ -623,7 +618,7 @@
       }
     });
   </script>
-  <!-- 2. 遊戲核心 JavaScript 控制邏輯與機制 -->
+  <!-- 遊戲核心 JavaScript 控制邏輯與機制 -->
   <script>
     let canvas, ctx;
     let gameSpeed = 1, isPaused = false, autoWave = false, waveInProgress = false;
@@ -646,8 +641,6 @@
     };
 
     let seenEnemyTypes = new Set(), unlockedCodexEnemies = new Set(), newCodexAlerts = new Set();
-    
-    // 成就數據追蹤
     let unlockedAchievements = new Set();
     let claimedAchievements = new Set();
     let newAchievementAlerts = new Set();
@@ -695,6 +688,9 @@
       timeReversal: { name: '時空逆流', cd: 35, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 16, desc: '使全場敵人往反方向移動。', val: 2.0 },
       targetMark:   { name: '目標標記', cd: 40, timer: 0, cdLv: 1, valLv: 1, cost: 1, reqWave: 21, desc: '隨機標記多名敵人使其額外受到25%的傷害，4秒後引爆並擊退範圍35px內的敵人8px。', val: 3 }
     };
+
+    window.talents = talents;
+    window.activeSkills = activeSkills;
 
     const ENEMY_CODEX_DATA = [
       { id: 'normal', name: '0號士兵', group: '0號' }, { id: 'scout', name: '0號刺客', group: '0號' }, { id: 'heavy', name: '0號坦克', group: '0號' }, 
@@ -818,11 +814,13 @@
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
+    window.showToast = showToast;
 
     function confirmPlayerName() {
       let inputVal = document.getElementById('player-name-input').value.trim();
       if (!inputVal) inputVal = "玩家";
       playerName = inputVal;
+      window.playerName = playerName;
       document.getElementById('name-setting-modal').style.display = 'none';
       if (typeof updateAuthUI === 'function') updateAuthUI();
       if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -831,7 +829,6 @@
       showToast(`玩家暱稱已設定為：${playerName}`, 'res');
     }
 
-    /* 5. 防呆警告彈窗控制邏輯 */
     function showConfirmModal(title, msg, onConfirm) {
       document.getElementById('confirm-modal-title').innerText = title;
       document.getElementById('confirm-modal-msg').innerText = msg;
@@ -847,21 +844,28 @@
       document.getElementById('confirm-action-modal').style.display = 'none';
     }
 
+    // 🔥 修正 4：修正二次確認與 Firebase signOut
     function promptLogoutConfirm() {
+      document.getElementById('settings-modal').style.display = 'none';
       showConfirmModal('🚪 帳號登出確認', '您確定要登出當前 Google 帳號嗎？登出後頁面將重置為訪客狀態。', () => {
         if (window.auth) {
           window.auth.signOut().then(() => {
             window.currentUser = null;
             playerName = "訪客";
+            window.playerName = playerName;
             resetToDefaultNewGame();
             if (typeof updateAuthUI === 'function') updateAuthUI();
             showToast('已安全登出帳號！', 'res');
+          }).catch(err => {
+            showToast(`登出失敗：${err.message}`, 'res');
           });
         }
       });
     }
 
+    // 🔥 修正 5：清除進度後不彈出身份選擇彈窗，維持原 Google 帳號登入狀態
     function promptClearAccountConfirm() {
+      document.getElementById('settings-modal').style.display = 'none';
       showConfirmModal('🔥 清除帳號進度確認', '⚠️ 此操作將完全刪除您在雲端保存的所有遊戲紀錄並重置，確定要清除嗎？', async () => {
         if (window.currentUser && typeof window.deleteAccountDataFromCloud === 'function') {
           await window.deleteAccountDataFromCloud(window.currentUser);
@@ -946,7 +950,6 @@
       updateUI();
     }
 
-    /* 3. 成就 UI 渲染 (未達成套用灰階特效) */
     function openAchievementsModal() {
       document.getElementById('settings-modal').style.display = 'none';
       const modal = document.getElementById('achievements-modal');
@@ -1002,7 +1005,6 @@
       document.getElementById('achieve-detail-modal').style.display = 'flex';
     }
 
-    /* 1. 全伺服器排行榜 Modal */
     async function openLeaderboardModal() {
       document.getElementById('settings-modal').style.display = 'none';
       const modal = document.getElementById('leaderboard-modal');
@@ -1159,18 +1161,23 @@
     }
 
     function loadSnapshotState(data) {
-      if (data.playerName) playerName = data.playerName;
-      currentWave = data.currentWave || 0; hp = data.hp ?? 100; gold = data.gold ?? 300; crystals = data.crystals ?? 0;
-      starParticles = data.starParticles ?? 0;
-      if (data.stats) stats = data.stats;
-      if (data.gameSettings) gameSettings = Object.assign(gameSettings, data.gameSettings);
-      if (data.seenEnemyTypes) seenEnemyTypes = new Set(data.seenEnemyTypes);
-      if (data.unlockedCodexEnemies) unlockedCodexEnemies = new Set(data.unlockedCodexEnemies);
-      if (data.newCodexAlerts) newCodexAlerts = new Set(data.newCodexAlerts);
+      if (!data) return;
+      if (data.playerName) { playerName = data.playerName; window.playerName = playerName; }
+      currentWave = data.currentWave || 0; window.currentWave = currentWave;
+      hp = data.hp ?? 100; window.hp = hp;
+      gold = data.gold ?? 300; window.gold = gold;
+      crystals = data.crystals ?? 0; window.crystals = crystals;
+      starParticles = data.starParticles ?? 0; window.starParticles = starParticles;
       
-      if (data.unlockedAchievements) unlockedAchievements = new Set(data.unlockedAchievements);
-      if (data.claimedAchievements) claimedAchievements = new Set(data.claimedAchievements);
-      if (data.newAchievementAlerts) newAchievementAlerts = new Set(data.newAchievementAlerts);
+      if (data.stats) { stats = data.stats; window.stats = stats; }
+      if (data.gameSettings) { gameSettings = Object.assign(gameSettings, data.gameSettings); window.gameSettings = gameSettings; }
+      if (data.seenEnemyTypes) { seenEnemyTypes = new Set(data.seenEnemyTypes); window.seenEnemyTypes = seenEnemyTypes; }
+      if (data.unlockedCodexEnemies) { unlockedCodexEnemies = new Set(data.unlockedCodexEnemies); window.unlockedCodexEnemies = unlockedCodexEnemies; }
+      if (data.newCodexAlerts) { newCodexAlerts = new Set(data.newCodexAlerts); window.newCodexAlerts = newCodexAlerts; }
+      
+      if (data.unlockedAchievements) { unlockedAchievements = new Set(data.unlockedAchievements); window.unlockedAchievements = unlockedAchievements; }
+      if (data.claimedAchievements) { claimedAchievements = new Set(data.claimedAchievements); window.claimedAchievements = claimedAchievements; }
+      if (data.newAchievementAlerts) { newAchievementAlerts = new Set(data.newAchievementAlerts); window.newAchievementAlerts = newAchievementAlerts; }
 
       if (data.talents) Object.keys(data.talents).forEach(k => talents[k] && (talents[k].lv = data.talents[k]));
       if (data.activeSkills) Object.keys(data.activeSkills).forEach(k => {
@@ -1191,6 +1198,7 @@
           chargeProgress: t.chargeProgress || 0, isOvercharged: false, overchargeTimer: 0,
           workerState: 'idle', workerPos: { x: t.x, y: t.y }, workerTargetTowerId: null, workerActionTimer: 0
         }));
+        window.towers = towers;
       }
 
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = [];
@@ -1198,14 +1206,26 @@
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
     }
 
-    /* 2. 重置為全預設無紀錄狀態 (移除 LocalStorage) */
     function resetToDefaultNewGame() {
-      hp = 100; gold = 300; crystals = 0; starParticles = 0; currentWave = 0;
-      seenEnemyTypes = new Set(); unlockedCodexEnemies = new Set(); newCodexAlerts = new Set();
-      unlockedAchievements = new Set(); claimedAchievements = new Set(); newAchievementAlerts = new Set();
-      towers = []; enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
+      hp = 100; window.hp = hp;
+      gold = 300; window.gold = gold;
+      crystals = 0; window.crystals = crystals;
+      starParticles = 0; window.starParticles = starParticles;
+      currentWave = 0; window.currentWave = currentWave;
+
+      seenEnemyTypes = new Set(); window.seenEnemyTypes = seenEnemyTypes;
+      unlockedCodexEnemies = new Set(); window.unlockedCodexEnemies = unlockedCodexEnemies;
+      newCodexAlerts = new Set(); window.newCodexAlerts = newCodexAlerts;
+      
+      unlockedAchievements = new Set(); window.unlockedAchievements = unlockedAchievements;
+      claimedAchievements = new Set(); window.claimedAchievements = claimedAchievements;
+      newAchievementAlerts = new Set(); window.newAchievementAlerts = newAchievementAlerts;
+
+      towers = []; window.towers = towers;
+      enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
       waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
-      stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
+      stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 }; window.stats = stats;
+      
       Object.keys(talents).forEach(k => talents[k].lv = 0);
       Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
@@ -1243,7 +1263,6 @@
       const codexBadge = document.getElementById('codex-btn-badge');
       if (codexBadge) codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
 
-      // 檢查成就紅點狀態
       const achieveBadge = document.getElementById('achievements-btn-badge');
       const settingsBadge = document.getElementById('settings-btn-badge');
       const hasAchAlert = newAchievementAlerts.size > 0;
@@ -1309,7 +1328,7 @@
       if (towers.length >= MAX_TOWER_COUNT) { cancelPlacement(); return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill'); }
       if (!isValidPlacement(dragPos.x, dragPos.y)) return showToast('該位置無效（不能重疊道路或其它塔）！', 'towerSkill');
       
-      gold -= TOWER_TYPES[placingType].cost;
+      gold -= TOWER_TYPES[placingType].cost; window.gold = gold;
       let newTower = { 
         id: Date.now() + Math.random(), type: placingType, x: dragPos.x, y: dragPos.y, 
         dmgLv: 1, rngLv: 1, spdLv: 1, specLv: 1, cooldown: 0, angle: 0,
@@ -1320,7 +1339,7 @@
       };
       if (placingType === 'inferno') { newTower.infernoMode = 1; newTower.targetLockId = null; newTower.lockTime = 0; newTower.infernoStage = 0; }
       
-      towers.push(newTower);
+      towers.push(newTower); window.towers = towers;
       showToast('建造成功！', 'towerSkill');
       
       if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -1457,7 +1476,7 @@
       let lvProp = stat === 'spec' ? 'specLv' : `${stat}Lv`;
       let cost = getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]);
       if (gold >= cost) {
-        gold -= cost; selectedTower[lvProp]++;
+        gold -= cost; window.gold = gold; selectedTower[lvProp]++;
         
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
           window.saveGameToCloud(window.currentUser);
@@ -1471,7 +1490,8 @@
       let idx = towers.indexOf(selectedTower);
       if (idx !== -1) {
         gold += parseInt(document.getElementById('tu-sell-val').innerText);
-        towers.splice(idx, 1); selectedTower = null;
+        window.gold = gold;
+        towers.splice(idx, 1); window.towers = towers; selectedTower = null;
         document.getElementById('tower-upgrade-overlay').style.display = 'none';
         
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -1543,7 +1563,6 @@
       return { hp: Math.floor(hp), atk: Math.floor(atk), atkSpeedStr, moveSpeedPxStr, speed: speed.toFixed(2), resistances, skills };
     }
 
-    /* 2. 波次開始前時時上傳數據至帳號裡 */
     function startWave() {
       if (waveInProgress) return;
       if (isPaused) {
@@ -1551,7 +1570,7 @@
         document.getElementById('pause-btn').innerText = '⏸ 暫停';
       }
       
-      waveInProgress = true; currentWave++; updateUI(); updateSkillUI();
+      waveInProgress = true; currentWave++; window.currentWave = currentWave; updateUI(); updateSkillUI();
       waveSpawnQueue = []; deadEnemyGraveyard = []; waveStarEnemyKills = 0; waveTookDamage = false;
       
       let count = Math.floor(8 + currentWave * 1.5 + Math.pow(currentWave, 1.1) * 0.2);
@@ -1654,7 +1673,6 @@
         });
       }
 
-      // 波次開始前實時上傳數據至帳號
       if (window.currentUser && typeof window.saveGameToCloud === 'function') {
         window.saveGameToCloud(window.currentUser);
       }
@@ -1757,7 +1775,7 @@
       let curLv = type === 'val' ? s.valLv : s.cdLv;
       let reqCost = s.cost + curLv - 1;
       if (crystals >= reqCost) {
-        crystals -= reqCost;
+        crystals -= reqCost; window.crystals = crystals;
         if (type === 'val') { s.valLv++; showToast(`【${s.name}】數值效果已提升！`, 'res'); }
         else { s.cdLv++; showToast(`【${s.name}】冷卻時間已縮短！`, 'res'); }
         
@@ -1798,8 +1816,8 @@
       const t = talents[key], reqCost = t.cost + t.lv;
       if (t.lv >= t.max) return showToast('該科技已達最高等級 (50級)！', 'res');
       if (crystals >= reqCost) {
-        crystals -= reqCost; t.lv++;
-        if (key === 'maxHpBonus') hp += 25;
+        crystals -= reqCost; window.crystals = crystals; t.lv++;
+        if (key === 'maxHpBonus') { hp += 25; window.hp = hp; }
         showToast(`成功升級【${t.name}】！`, 'res');
         
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -1876,7 +1894,7 @@
     function handleCodexCardClick(enemyId) {
       if (!unlockedCodexEnemies.has(enemyId)) return showToast('該敵人尚未通關解鎖！', 'enemy');
       if (newCodexAlerts.has(enemyId)) {
-        newCodexAlerts.delete(enemyId); crystals += 10;
+        newCodexAlerts.delete(enemyId); crystals += 10; window.crystals = crystals;
         showToast(`🎉 查閱新敵人【${ENEMY_CODEX_DATA.find(e=>e.id===enemyId).name}】！獲得 💎10 鑽石！`, 'res');
         updateUI();
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -1980,7 +1998,7 @@
       let markBonus = (enemy.marks && enemy.marks.length > 0) ? 0.25 : 0;
       let finalDmg = dmg * baseTechMultiplier * (1 + overchargeTotalBonus + markBonus);
 
-      enemy.hp -= finalDmg; stats.totalDamage += finalDmg;
+      enemy.hp -= finalDmg; stats.totalDamage += finalDmg; window.stats = stats;
       
       if (sourceTower) {
         sourceTower.totalDamageDealt = (sourceTower.totalDamageDealt || 0) + finalDmg;
@@ -2014,7 +2032,7 @@
           return;
         }
 
-        enemy.dead = true; stats.totalKills++;
+        enemy.dead = true; stats.totalKills++; window.stats = stats;
 
         if (enemy.marks && enemy.marks.length > 0) {
           triggerMarkExplosion(enemy.x, enemy.y);
@@ -2026,7 +2044,7 @@
         }
 
         let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12);
-        gold += goldGain; stats.totalGoldEarned += goldGain;
+        gold += goldGain; window.gold = gold; stats.totalGoldEarned += goldGain; window.stats = stats;
 
         if (enemy.type !== 'boss') {
           deadEnemyGraveyard.push({ type: enemy.type, pathIndex: enemy.pathIndex, x: enemy.x, y: enemy.y, gold: enemy.gold });
@@ -2034,7 +2052,7 @@
 
         if (enemy.type === 'boss') {
           let bossCrystalReward = 5 + Math.floor((currentWave - 5) / 5) * 2;
-          crystals += bossCrystalReward;
+          crystals += bossCrystalReward; window.crystals = crystals;
           showToast(`🎉 擊殺 BOSS！獲得 ${bossCrystalReward} 顆鑽石與巨額金幣！`, 'res');
         }
         updateUI();
@@ -2112,7 +2130,7 @@
           spawnTimer = 0;
           let eData = waveSpawnQueue.shift();
           if (!seenEnemyTypes.has(eData.type)) {
-            seenEnemyTypes.add(eData.type);
+            seenEnemyTypes.add(eData.type); window.seenEnemyTypes = seenEnemyTypes;
             if (eData.type !== 'boss') showEnemyIntro(eData.type);
           }
           if (eData.type === 'boss') showToast('⚠️ 強敵 BOSS 降臨！', 'enemy');
@@ -2412,7 +2430,7 @@
           if (dist <= step) { e.x = target.x; e.y = target.y; e.pathIndex++; }
           else { e.x += (dx / dist) * step; e.y += (dy / dist) * step; }
         } else {
-          hp -= e.atk; waveTookDamage = true;
+          hp -= e.atk; window.hp = hp; waveTookDamage = true;
           e.dead = true; enemies.splice(i, 1); updateUI();
           if (hp <= 0) return triggerGameOver();
         }
@@ -2525,7 +2543,7 @@
             t.cooldown += dt;
             if (t.cooldown >= curCd) {
               t.cooldown = 0; let earned = 15 + (effectiveSpecLv - 1) * 10;
-              gold += earned; stats.totalGoldEarned += earned;
+              gold += earned; window.gold = gold; stats.totalGoldEarned += earned; window.stats = stats;
               t.totalGoldEarned = (t.totalGoldEarned || 0) + earned;
               checkTowerPromotion(t);
               addFloatingText(t.x, t.y - 15, `+💰${earned}`, '#f1fa8c'); updateUI();
@@ -2768,7 +2786,6 @@
         if (ft.alpha <= 0) floatingTexts.splice(i, 1);
       }
 
-      /* 2. 波次結束自動上傳數據至帳號 */
       if (waveInProgress && enemies.length === 0 && waveSpawnQueue.length === 0) {
         waveInProgress = false;
         resetBossStates();
@@ -2780,10 +2797,10 @@
         let totalCrystalsEarned = waveCrystalBonus + starEnemyBonus;
         
         let promotedTowerCount = towers.filter(t => t.isPromoted).length;
-        starParticles += promotedTowerCount;
+        starParticles += promotedTowerCount; window.starParticles = starParticles;
         
-        crystals += totalCrystalsEarned;
-        if (talents.castleRegen.lv > 0) hp = Math.min(maxHp, hp + talents.castleRegen.lv * 5);
+        crystals += totalCrystalsEarned; window.crystals = crystals;
+        if (talents.castleRegen.lv > 0) { hp = Math.min(maxHp, hp + talents.castleRegen.lv * 5); window.hp = hp; }
         
         let starRewardMsg = starEnemyBonus > 0 ? ` (包含擊殺 ${starEnemyBonus} 名1星敵人加成)` : '';
         let promotedParticleMsg = promotedTowerCount > 0 ? ` 🌟+${promotedTowerCount} 星核微粒` : '';
@@ -2792,13 +2809,13 @@
         seenEnemyTypes.forEach(eType => {
           if (!unlockedCodexEnemies.has(eType)) {
             unlockedCodexEnemies.add(eType); newCodexAlerts.add(eType);
+            window.unlockedCodexEnemies = unlockedCodexEnemies; window.newCodexAlerts = newCodexAlerts;
             showToast(`📖 圖鑑已解鎖新敵人！前往圖鑑可領取 💎10 鑽石！`, 'res');
           }
         });
 
         if (currentWave % 5 === 0) saveCheckpoint();
         
-        // ✨ 波次結束靜默同步數據至雲端
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
           window.saveGameToCloud(window.currentUser);
         }
@@ -3193,7 +3210,6 @@
     window.onload = function() {
       canvas = document.getElementById('gameCanvas'); ctx = canvas.getContext('2d');
       
-      // 2. 移除 LocalStorage 讀取，進入網站預設彈出選擇登入/訪客彈窗
       document.getElementById('welcome-auth-modal').style.display = 'flex';
       resetToDefaultNewGame();
 
@@ -3239,6 +3255,8 @@
       window.seenEnemyTypes = seenEnemyTypes;
       window.unlockedCodexEnemies = unlockedCodexEnemies;
       window.newCodexAlerts = newCodexAlerts;
+      window.promptLogoutConfirm = promptLogoutConfirm;
+      window.promptClearAccountConfirm = promptClearAccountConfirm;
 
       updateSkillUI(); updateTechUI(); updateSettingsUI(); updateUI();
       requestAnimationFrame(gameLoop);
