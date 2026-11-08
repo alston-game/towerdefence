@@ -883,10 +883,10 @@
       document.getElementById('confirm-action-modal').style.display = 'none';
     }
 
-    // 🔥 修正 4：修正二次確認與 Firebase signOut
+    // 🔥 修改：登出後重新跳出登入選擇彈窗 (需求 3)
     function promptLogoutConfirm() {
       document.getElementById('settings-modal').style.display = 'none';
-      showConfirmModal('🚪 帳號登出確認', '您確定要登出當前 Google 帳號嗎？登出後頁面將重置為訪客狀態。', () => {
+      showConfirmModal('🚪 帳號登出確認', '您確定要登出當前 Google 帳號嗎？登出後將重置為初始狀態。', () => {
         if (window.auth) {
           window.auth.signOut().then(() => {
             window.currentUser = null;
@@ -894,7 +894,10 @@
             window.playerName = playerName;
             resetToDefaultNewGame();
             if (typeof updateAuthUI === 'function') updateAuthUI();
-            showToast('已安全登出帳號！', 'res');
+        
+        // 顯示歡迎登入彈窗
+            document.getElementById('welcome-auth-modal').style.display = 'flex';
+            showToast('已成功登出帳號！', 'res');
           }).catch(err => {
             showToast(`登出失敗：${err.message}`, 'res');
           });
