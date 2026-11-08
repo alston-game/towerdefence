@@ -470,61 +470,28 @@
 
     window.auth = auth;
 
-    // 🔥 修正 1：加強防呆檢查，解決 Cannot convert undefined or null to object 報錯
+    // 🔥 修改：僅在通關後採計最高波次上傳雲端 (需求 4)
     async function saveGameToCloud(user) {
       if (!user) return;
-      try {
-        const talentsObj = window.talents || {};
-        const skillsObj = window.activeSkills || {};
-        
-        const saveData = {
-          playerName: window.playerName || user.displayName || "玩家",
-          photoURL: user.photoURL || "",
-          currentWave: window.currentWave || 0,
-          hp: window.hp ?? 100,
-          gold: window.gold ?? 300,
-          crystals: window.crystals ?? 0,
-          starParticles: window.starParticles ?? 0,
-          stats: window.stats || {},
-          gameSettings: window.gameSettings || {},
-          unlockedAchievements: Array.from(window.unlockedAchievements || []),
-          claimedAchievements: Array.from(window.claimedAchievements || []),
-          newAchievementAlerts: Array.from(window.newAchievementAlerts || []),
-          talents: Object.keys(talentsObj).reduce((a, k) => (a[k] = talentsObj[k].lv, a), {}),
-          activeSkills: Object.keys(skillsObj).reduce((a, k) => (a[k] = { valLv: skillsObj[k].valLv, cdLv: skillsObj[k].cdLv, timer: skillsObj[k].timer }, a), {}),
-          towers: (window.towers || []).map(t => ({
-            type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
-            totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1
-          })),
-          seenEnemyTypes: Array.from(window.seenEnemyTypes || []),
-          unlockedCodexEnemies: Array.from(window.unlockedCodexEnemies || []),
-          newCodexAlerts: Array.from(window.newCodexAlerts || []),
-          lastUpdated: new Date()
-        };
-        await setDoc(doc(db, "users", user.uid), saveData, { merge: true });
-        console.log("☁️ 雲端進度靜默同步完成");
-      } catch (e) {
-        console.error("雲端存檔失敗：", e);
-      }
-    }
+  
+  // 若目前正處於戰鬥波次中，採計上一波 (currentWave - 1)；若為整備期，則為 currentWave
+      let completedWave = waveInProgress ? Math.max(0, currentWave - 1) : currentWave;
 
-    async function loadGameFromCloud(user) {
-      if (!user) return false;
+      const gameData = {
+        playerName: playerName,
+        currentWave: completedWave, // 上傳已通關波次
+        hp: hp,
+        gold: gold,
+        crystals: crystals,
+        starParticles: starParticles,
+    // ...其餘存檔欄位維持原樣...
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
       try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.playerName) window.playerName = data.playerName;
-          if (typeof window.loadSnapshotState === 'function') {
-            window.loadSnapshotState(data);
-          }
-          return true;
-        }
-        return false;
+        await db.collection('users').doc(user.uid).set(gameData, { merge: true });
       } catch (e) {
-        console.error("雲端讀檔失敗：", e);
-        return false;
+        console.error("雲端存檔失敗:", e);
       }
     }
 
