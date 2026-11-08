@@ -626,31 +626,36 @@ onAuthStateChanged(auth, async (user) => {
     });
 
     function updateAuthUI() {
-      const infoDiv = document.getElementById('settings-user-info');
-      const loginBtn = document.getElementById('settings-login-btn');
-      const logoutBtn = document.getElementById('settings-logout-btn');
-      const clearBtn = document.getElementById('settings-clear-btn');
-      const avatarImg = document.getElementById('user-avatar-img');
+  const infoDiv = document.getElementById('settings-user-info');
+  const loginBtn = document.getElementById('settings-login-btn');
+  const logoutBtn = document.getElementById('settings-logout-btn');
+  const clearBtn = document.getElementById('settings-clear-btn');
+  const avatarImg = document.getElementById('user-avatar-img');
 
-      if (window.currentUser) {
-        infoDiv.innerHTML = `已登入：<b>${window.playerName || window.currentUser.displayName || "玩家"}</b> (${window.currentUser.email})`;
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'block';
-        clearBtn.style.display = 'block';
-        
-        if (avatarImg) {
-          avatarImg.src = window.currentUser.photoURL || 'https://lh3.googleusercontent.com/a/default-user';
-          avatarImg.style.display = 'block';
-        }
-      } else {
-        infoDiv.innerHTML = `目前身份：<b>${window.playerName || "訪客"}</b> (未登入狀態，不存檔)`;
-        loginBtn.style.display = 'block';
-        logoutBtn.style.display = 'none';
-        clearBtn.style.display = 'none';
-        if (avatarImg) avatarImg.style.display = 'none';
-      }
+  if (window.currentUser) {
+    if (infoDiv) {
+      infoDiv.innerHTML = `已登入：<b>${window.playerName || window.currentUser.displayName || "玩家"}</b> (${window.currentUser.email})`;
     }
-    window.updateAuthUI = updateAuthUI;
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'block';
+    if (clearBtn) clearBtn.style.display = 'block';
+    
+    // 關鍵修復：取得 Google 帳號頭像 URL 並顯示
+    if (avatarImg) {
+      avatarImg.src = window.currentUser.photoURL || 'https://lh3.googleusercontent.com/a/default-user';
+      avatarImg.style.display = 'block';
+    }
+  } else {
+    if (infoDiv) {
+      infoDiv.innerHTML = `目前身份：<b>${window.playerName || "訪客"}</b> (未登入狀態，不存檔)`;
+    }
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (avatarImg) avatarImg.style.display = 'none';
+  }
+}
+window.updateAuthUI = updateAuthUI;
 
     // 🔥 修改 1 & 2：自動更新 UI 頭像並確保雲端進度成功載入與套用
     window.auth.onAuthStateChanged(async (user) => {
