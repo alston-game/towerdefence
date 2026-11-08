@@ -615,19 +615,47 @@
     }
     window.updateAuthUI = updateAuthUI;
 
-    onAuthStateChanged(auth, async (user) => {
+    // 🔥 修改：Firebase 驗證狀態監聽 (需求 1)
+    window.auth.onAuthStateChanged(async (user) => {
       if (user) {
         window.currentUser = user;
-        const exists = await loadGameFromCloud(user);
-        if (!exists) {
-          document.getElementById('name-setting-modal').style.display = 'flex';
+    // 已登入狀態：自動關閉歡迎彈窗，不讓使用者再次選擇
+        document.getElementById('welcome-auth-modal').style.display = 'none';
+    
+    // 嘗試從雲端載入進度
+        if (typeof window.loadGameFromCloud === 'function') {
+          await window.loadGameFromCloud(user);
         }
-        updateAuthUI();
       } else {
         window.currentUser = null;
-        updateAuthUI();
       }
     });
+
+// 🔥 修改：處理 Google 登入並修復 COOP 跨域阻擋問題 (需求 2)
+    async function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+    // 優先使用 Popup 登入
+        await window.auth.signInWithPopup(provider);
+        document.getElementById('welcome-auth-modal').style.display = 'none';
+        showToast('Google 帳號登入成功！', 'res');
+      } catch (error) {
+        console.warn("Popup 登入受阻，切換至 Redirect 模式:", error);
+    // 遇到 COOP 阻擋或 Popup 被封鎖時，改用 Redirect 模式
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.message.includes('Cross-Origin-Opener-Policy')) {
+          await window.auth.signInWithRedirect(provider);
+        } else {
+          showToast(`登入失敗: ${error.message}`, 'res');
+        }
+      }
+    }
+
+// 🔥 修改：選擇訪客登入時，關閉歡迎彈窗並跳出暱稱設定彈窗 (需求 2)
+    function loginAsGuest() {
+      document.getElementById('welcome-auth-modal').style.display = 'none';
+      document.getElementById('name-setting-modal').style.display = 'flex';
+      showToast('已以訪客身份進入遊戲', 'res');
+    }
   </script>
   <!-- 遊戲核心 JavaScript 控制邏輯與機制 -->
   <script>
