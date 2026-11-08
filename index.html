@@ -13,17 +13,15 @@
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body { background: var(--bg-color); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; }
     
-    #auth-bar { width: 100%; max-width: 1000px; background: var(--panel-bg); border-radius: 8px; padding: 10px 15px; margin-bottom: 10px; border: 1px solid var(--card-bg); display: flex; justify-content: space-between; align-items: center; }
-    #user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-    
     #game-header, #controls-bar, #panel-container { width: 100%; max-width: 1000px; }
     #game-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--panel-bg); border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--card-bg); z-index: 250; position: relative; }
-    .res-item { display: flex; align-items: center; font-size: 15px; font-weight: bold; }
+    .res-item { display: flex; align-items: center; font-size: 14px; font-weight: bold; }
     .res-icon { font-size: 18px; margin-right: 6px; }
     
     .settings-gear-btn {
+      position: relative;
       background: var(--card-bg); border: 1px solid var(--border-color); color: var(--cyan);
-      border-radius: 50%; width: 34px; height: 34px; display: flex; justify-content: center;
+      border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center;
       align-items: center; font-size: 18px; cursor: pointer; transition: all 0.2s;
     }
     .settings-gear-btn:hover { background: var(--border-color); transform: rotate(45deg); color: var(--primary); }
@@ -73,7 +71,7 @@
 
     #trash-cancel-btn { display: none; background: var(--danger); color: var(--white); border: none; border-radius: 6px; padding: 10px 14px; font-size: 16px; cursor: pointer; transition: transform 0.2s, background-color 0.2s; align-items: center; justify-content: center; }
     #trash-cancel-btn:hover { transform: scale(1.2); background: #ff3333; }
-    .btn-alert-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 6px rgba(255,0,0,0.8); pointer-events: none; }
+    .btn-alert-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 6px rgba(255,0,0,0.8); pointer-events: none; z-index: 10; }
     #panel-container { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 10px; margin-top: 10px; z-index: 50; position: relative; }
     .panel { background: var(--panel-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--card-bg); }
     .panel-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--cyan); border-bottom: 1px solid var(--card-bg); padding-bottom: 6px; }
@@ -94,7 +92,7 @@
     #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 340px; display: none; z-index: 60; }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 200; pointer-events: auto; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center; z-index: 300; pointer-events: auto; }
     .modal-content { background: var(--panel-bg); border-radius: 10px; padding: 20px; width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.8); }
     .mode-toggle-btn { background: #333; color: #fff; border: 1px solid var(--purple); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 4px; }
     .mode-toggle-btn:hover { background: var(--purple); color: #000; }
@@ -106,7 +104,7 @@
     .codex-card-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #888; }
     .codex-card-exclamation { position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 12px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8); }
     
-    .checkpoint-select-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 6px; }
+    .checkpoint-select-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 6px; text-align: center; position: relative; }
     .checkpoint-select-btn:hover { border-color: var(--primary); background: var(--border-color); }
     .checkpoint-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; max-height: 250px; overflow-y: auto; }
     .checkpoint-card-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; font-weight: bold; color: var(--cyan); transition: all 0.15s; }
@@ -116,21 +114,29 @@
     .settings-label { font-size: 13px; font-weight: bold; color: var(--cyan); }
     .settings-opt-btn { background: var(--purple); color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; min-width: 140px; text-align: center; }
     .settings-opt-btn:hover { filter: brightness(1.1); }
+
+    /* 成就系統特有樣式 */
+    .achieve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    .achieve-item { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .achieve-item:hover { transform: translateY(-3px); border-color: var(--yellow); }
+    .achieve-icon-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; justify-content: center; align-items: center; font-size: 20px; margin-bottom: 6px; background: #343746; color: #888; transition: all 0.2s; position: relative; }
+    /* 普通成就按鈕 */
+    .achieve-normal.unlocked .achieve-icon-btn { border-color: var(--cyan); background: rgba(139, 233, 253, 0.25); color: var(--cyan); box-shadow: 0 0 8px rgba(139, 233, 253, 0.4); }
+    /* 稀有成就按鈕 (綠色系) */
+    .achieve-rare.unlocked .achieve-icon-btn { border-color: var(--primary); background: rgba(80, 250, 123, 0.25); color: var(--primary); box-shadow: 0 0 10px rgba(80, 250, 123, 0.6); }
+    .achieve-name { font-size: 11px; font-weight: bold; color: var(--white); }
+    .achieve-badge { position: absolute; top: 4px; right: 4px; background: var(--danger); color: #fff; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8); }
+
+    /* 排行榜特有樣式 */
+    .leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 300px; overflow-y: auto; }
+    .leaderboard-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+    .leaderboard-rank { font-weight: bold; width: 30px; color: var(--yellow); }
+    .leaderboard-player { display: flex; align-items: center; gap: 8px; flex: 1; font-weight: bold; color: var(--white); }
+    .leaderboard-wave { color: var(--cyan); font-weight: bold; margin-right: 10px; }
   </style>
 </head>
 
 <body>
-  <!-- 帳號登入管理列 -->
-  <div id="auth-bar">
-    <div id="user-info">
-      <p>目前狀態：尚未登入 (雲端存檔未啟用)</p>
-    </div>
-    <div>
-      <button class="btn btn-primary" id="login-btn">🔑 使用 Google 帳號登入</button>
-      <button class="btn btn-danger" id="logout-btn" style="display: none;">登出</button>
-    </div>
-  </div>
-
   <div id="game-header">
     <div class="res-item"><span class="res-icon">🏰</span> 主城血量: <span id="hp-val">100</span>/<span id="max-hp-val">100</span></div>
     <div class="res-item"><span class="res-icon">💰</span> 金幣: <span id="gold-val">300</span></div>
@@ -140,7 +146,10 @@
     <div class="res-item">
       <span class="res-icon">🌊</span> 波次: <span id="wave-val" style="margin-right:8px;">0</span>
     </div>
-    <button class="settings-gear-btn" onclick="openSettingsModal()" title="遊戲設定">⚙️</button>
+    <button class="settings-gear-btn" onclick="openSettingsModal()" title="遊戲設定">
+      ⚙️
+      <span class="btn-alert-badge" id="settings-btn-badge" style="display:none;">❗️</span>
+    </button>
   </div>
 
   <div id="game-container">
@@ -198,30 +207,107 @@
       <button class="btn btn-danger" onclick="cancelPlacement()">取消 (Esc)</button>
     </div>
 
+    <!-- 首次登入選擇 Modal -->
+    <div class="modal" id="welcome-auth-modal">
+      <div class="modal-content" style="width:400px; text-align:center;">
+        <h2 style="color:var(--cyan); margin-bottom:10px;">🎮 歡迎來到成長型塔防</h2>
+        <p style="font-size:13px; color:#aaa; margin-bottom:20px;">請選擇您的進入方式：</p>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <button class="btn btn-primary" id="welcome-google-login-btn" style="padding:12px;">🔑 使用 Google 帳號登入 (支援雲端同步)</button>
+          <button class="btn" id="welcome-guest-btn" style="padding:12px;">👤 以訪客身份直接遊玩 (本機離線遊玩)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 名字設定 Modal -->
+    <div class="modal" id="name-setting-modal">
+      <div class="modal-content" style="width:360px; text-align:center;">
+        <h3 style="color:var(--primary); margin-bottom:10px;">🏷️ 設定您的玩家暱稱</h3>
+        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">此名字將顯示於您的頭像旁及排行榜上</p>
+        <input type="text" id="player-name-input" placeholder="請輸入暱稱..." maxlength="12" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:#12131C; color:#fff; font-size:14px; margin-bottom:15px; outline:none;" />
+        <button class="btn btn-primary" onclick="confirmPlayerName()" style="width:100%;">確認暱稱</button>
+      </div>
+    </div>
+
     <!-- 設定 Modal -->
     <div class="modal" id="settings-modal">
       <div class="modal-content" style="width:450px;">
         <h3 style="color:var(--cyan); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">⚙️ 遊戲系統設定</h3>
         <div class="settings-row">
-          <span class="settings-label">傷害數字顯示量</span>
+          <span class="settings-label">1. 傷害數字顯示量</span>
           <button class="settings-opt-btn" id="cfg-dmg-btn" onclick="cycleSetting('dmgNumMode')">全部</button>
         </div>
         <div class="settings-row">
-          <span class="settings-label">音效音量</span>
+          <span class="settings-label">2. 音效音量</span>
           <button class="settings-opt-btn" id="cfg-vol-btn" onclick="cycleSetting('audioVolume')">100%</button>
         </div>
         <div class="settings-row">
-          <span class="settings-label">彈窗提示設定</span>
+          <span class="settings-label">3. 彈窗提示設定</span>
           <button class="settings-opt-btn" id="cfg-toast-btn" onclick="cycleSetting('toastMode')">全部</button>
         </div>
         <div class="settings-row">
-          <span class="settings-label">特效顯示設定</span>
+          <span class="settings-label">4. 特效顯示設定</span>
           <button class="settings-opt-btn" id="cfg-vfx-btn" onclick="cycleSetting('vfxMode')">全部</button>
         </div>
-        <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px;">
-          <button class="checkpoint-select-btn" onclick="openCheckpointPanelFromSettings()">📜 跳回存檔點</button>
+        <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+          <!-- 4. 成成就按鈕 -->
+          <button class="checkpoint-select-btn" onclick="openAchievementsModal()" style="color:var(--yellow);">
+            🎖️ 玩家成就
+            <span class="btn-alert-badge" id="achievements-btn-badge" style="display:none;">❗️</span>
+          </button>
+          
+          <!-- 5. 玩家排行榜按鈕 -->
+          <button class="checkpoint-select-btn" onclick="openLeaderboardModal()" style="color:var(--orange);">
+            🏆 玩家排行榜
+          </button>
+          
+          <!-- 6. 跳回存檔點 -->
+          <button class="checkpoint-select-btn" onclick="openCheckpointPanelFromSettings()">
+            📜 跳回存檔點
+          </button>
         </div>
+
+        <!-- 7. 登入/登出 帳號控制 (第6項) -->
+        <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+          <div id="settings-user-info" style="font-size:12px; color:#aaa; margin-bottom:4px;"></div>
+          <button class="btn btn-primary" id="settings-login-btn" style="width:100%;">🔑 登入 Google 帳號</button>
+          <button class="btn btn-danger" id="settings-logout-btn" style="width:100%; display:none;">🚪 登出帳號</button>
+        </div>
+
         <button class="btn" onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉設定</button>
+      </div>
+    </div>
+
+    <!-- 成就 Modal -->
+    <div class="modal" id="achievements-modal">
+      <div class="modal-content" style="width:480px;">
+        <h3 style="color:var(--yellow); margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🎖️ 玩家成就</h3>
+        <p style="font-size:11px; color:#aaa;">點擊圓形圖示可查看成就詳情與領取獎勵</p>
+        <div class="achieve-grid" id="achieve-grid-container"></div>
+        <button class="btn" onclick="document.getElementById('achievements-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
+      </div>
+    </div>
+
+    <!-- 成就單項詳情 Modal -->
+    <div class="modal" id="achieve-detail-modal" style="z-index:320;">
+      <div class="modal-content" style="width:340px; text-align:center;">
+        <div id="ach-detail-icon" style="font-size:36px; margin-bottom:8px;">🏆</div>
+        <h3 id="ach-detail-title" style="color:var(--primary); margin-bottom:6px;"></h3>
+        <div id="ach-detail-type" style="font-size:11px; font-weight:bold; margin-bottom:10px;"></div>
+        <p id="ach-detail-desc" style="font-size:12px; color:#ddd; margin-bottom:15px; line-height:1.4;"></p>
+        <div id="ach-detail-reward" style="font-size:13px; color:var(--yellow); font-weight:bold; margin-bottom:15px;"></div>
+        <button class="btn" onclick="document.getElementById('achieve-detail-modal').style.display='none'" style="width:100%;">關閉</button>
+      </div>
+    </div>
+
+    <!-- 玩家排行榜 Modal -->
+    <div class="modal" id="leaderboard-modal">
+      <div class="modal-content" style="width:460px;">
+        <h3 style="color:var(--orange); margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🏆 玩家通關最高波次排行榜</h3>
+        <div class="leaderboard-list" id="leaderboard-list-container">
+          <div style="text-align:center; color:#888; padding:15px;">載入中...</div>
+        </div>
+        <button class="btn" onclick="document.getElementById('leaderboard-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -325,7 +411,7 @@
       getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged 
     } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
     import { 
-      getFirestore, doc, setDoc, getDoc 
+      getFirestore, doc, setDoc, getDoc, collection, getDocs 
     } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -344,37 +430,35 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const userInfo = document.getElementById('user-info');
-
-    loginBtn.addEventListener('click', () => {
-      signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
-    });
-
-    logoutBtn.addEventListener('click', () => {
-      signOut(auth);
-    });
-
-    // 存檔至 Firestore
+    // 靜默備份至 Firestore (波次結束時自動調用)
     async function saveGameToCloud(user) {
       if (!user) return;
       try {
         const saveData = {
-          currentWave, hp, gold, crystals, starParticles, stats, gameSettings,
-          talents: Object.keys(talents).reduce((a, k) => (a[k] = talents[k].lv, a), {}),
-          activeSkills: Object.keys(activeSkills).reduce((a, k) => (a[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv, timer: activeSkills[k].timer }, a), {}),
-          towers: towers.map(t => ({
+          playerName: window.playerName || user.displayName || "玩家",
+          currentWave: window.currentWave || 0,
+          hp: window.hp ?? 100,
+          gold: window.gold ?? 300,
+          crystals: window.crystals ?? 0,
+          starParticles: window.starParticles ?? 0,
+          stats: window.stats,
+          gameSettings: window.gameSettings,
+          unlockedAchievements: Array.from(window.unlockedAchievements || []),
+          claimedAchievements: Array.from(window.claimedAchievements || []),
+          newAchievementAlerts: Array.from(window.newAchievementAlerts || []),
+          talents: Object.keys(window.talents).reduce((a, k) => (a[k] = window.talents[k].lv, a), {}),
+          activeSkills: Object.keys(window.activeSkills).reduce((a, k) => (a[k] = { valLv: window.activeSkills[k].valLv, cdLv: window.activeSkills[k].cdLv, timer: window.activeSkills[k].timer }, a), {}),
+          towers: (window.towers || []).map(t => ({
             type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
             totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1
           })),
-          seenEnemyTypes: [...seenEnemyTypes],
-          unlockedCodexEnemies: [...unlockedCodexEnemies],
-          newCodexAlerts: [...newCodexAlerts],
+          seenEnemyTypes: Array.from(window.seenEnemyTypes || []),
+          unlockedCodexEnemies: Array.from(window.unlockedCodexEnemies || []),
+          newCodexAlerts: Array.from(window.newCodexAlerts || []),
           lastUpdated: new Date()
         };
         await setDoc(doc(db, "users", user.uid), saveData, { merge: true });
-        if (typeof showToast === 'function') showToast("☁️ 遊戲數據已同步至雲端！", "res");
+        console.log("☁️ 雲端同步完成 (靜默)");
       } catch (e) {
         console.error("雲端存檔失敗：", e);
       }
@@ -382,45 +466,108 @@
 
     // 載入 Firestore 數據
     async function loadGameFromCloud(user) {
-      if (!user) return;
+      if (!user) return false;
       try {
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          if (typeof loadSnapshotState === 'function') {
-            loadSnapshotState(data);
-            if (typeof showToast === 'function') showToast("☁️ 成功載入雲端存檔！", "res");
+          if (data.playerName) window.playerName = data.playerName;
+          if (typeof window.loadSnapshotState === 'function') {
+            window.loadSnapshotState(data);
           }
-        } else {
-          await saveGameToCloud(user);
+          return true;
         }
+        return false;
       } catch (e) {
         console.error("雲端讀檔失敗：", e);
+        return false;
       }
     }
 
+    // 抓取全伺服器玩家排行榜
+    async function fetchLeaderboardData() {
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        let players = [];
+        querySnapshot.forEach(docSnap => {
+          let d = docSnap.data();
+          players.push({
+            name: d.playerName || "匿名玩家",
+            wave: d.currentWave || 0,
+            photoURL: d.photoURL || "",
+            unlockedAchievements: d.unlockedAchievements || []
+          });
+        });
+        players.sort((a, b) => b.wave - a.wave);
+        return players;
+      } catch(e) {
+        console.error("讀取排行榜失敗：", e);
+        return [];
+      }
+    }
+
+    window.saveGameToCloud = saveGameToCloud;
+    window.fetchLeaderboardData = fetchLeaderboardData;
+
+    // Firebase Auth 事件綁定
+    document.getElementById('settings-login-btn').addEventListener('click', () => {
+      signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
+    });
+
+    document.getElementById('settings-logout-btn').addEventListener('click', () => {
+      signOut(auth).then(() => {
+        window.currentUser = null;
+        window.playerName = "訪客";
+        updateAuthUI();
+        window.saveGameToLocalStorage();
+      });
+    });
+
+    document.getElementById('welcome-google-login-btn').addEventListener('click', () => {
+      document.getElementById('welcome-auth-modal').style.display = 'none';
+      signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
+    });
+
+    document.getElementById('welcome-guest-btn').addEventListener('click', () => {
+      document.getElementById('welcome-auth-modal').style.display = 'none';
+      window.currentUser = null;
+      if (!window.playerName || window.playerName === "訪客") {
+        document.getElementById('name-setting-modal').style.display = 'flex';
+      }
+    });
+
+    function updateAuthUI() {
+      const infoDiv = document.getElementById('settings-user-info');
+      const loginBtn = document.getElementById('settings-login-btn');
+      const logoutBtn = document.getElementById('settings-logout-btn');
+
+      if (window.currentUser) {
+        infoDiv.innerHTML = `已登入：<b>${window.playerName || window.currentUser.displayName || "玩家"}</b> (${window.currentUser.email})`;
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+      } else {
+        infoDiv.innerHTML = `目前身份：<b>${window.playerName || "訪客"}</b> (離線本機數據)`;
+        loginBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+      }
+    }
+    window.updateAuthUI = updateAuthUI;
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        userInfo.innerHTML = `
-          <img src="${user.photoURL}" alt="頭像" width="28" style="border-radius: 50%;">
-          <span>歡迎，<b>${user.displayName}</b></span>
-          <button id="cloud-save-btn" class="btn btn-primary" style="padding:2px 8px; font-size:11px;">☁️ 備份雲端</button>
-        `;
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-
         window.currentUser = user;
-        window.saveGameToCloud = () => saveGameToCloud(user);
-
-        document.getElementById('cloud-save-btn').addEventListener('click', () => saveGameToCloud(user));
-        await loadGameFromCloud(user);
+        const exists = await loadGameFromCloud(user);
+        if (!exists) {
+          // 當前遊玩進度綁定至新 Google 帳號
+          if (!window.playerName || window.playerName === "訪客") {
+            window.playerName = user.displayName || "玩家";
+          }
+          await saveGameToCloud(user);
+        }
+        updateAuthUI();
       } else {
-        userInfo.innerHTML = '<p>目前尚未登入 (進度儲存於本地)</p>';
-        loginBtn.style.display = 'inline-block';
-        logoutBtn.style.display = 'none';
-        window.currentUser = null;
-        window.saveGameToCloud = null;
+        updateAuthUI();
       }
     });
   </script>
@@ -435,8 +582,10 @@
     let checkpointState = null, savedCheckpointsMap = {}, pendingJumpWave = null, isMouseInput = false;
 
     let waveStarEnemyKills = 0;
+    let waveTookDamage = false; // 是否無傷防守本波
     let overdriveState = 'ready'; 
     let overdriveTimer = 0;
+    let playerName = "訪客";
 
     let gameSettings = {
       dmgNumMode: 0,   
@@ -446,19 +595,37 @@
     };
 
     let seenEnemyTypes = new Set(), unlockedCodexEnemies = new Set(), newCodexAlerts = new Set();
+    
+    // 成就數據追蹤
+    let unlockedAchievements = new Set();
+    let claimedAchievements = new Set();
+    let newAchievementAlerts = new Set();
 
-    const MAX_TOWER_COUNT = 15, STORAGE_KEY = 'GrowthTD_SaveData_v6';
+    const ACHIEVEMENTS_DATA = [
+      { id: 'wave_10', title: '初出茅廬', desc: '成功通關第 10 波敵人', type: 'normal', reqWave: 10, reqNoDamage: false, reward: 5, icon: '🛡️' },
+      { id: 'wave_30', title: '堅守陣地', desc: '成功通關第 30 波敵人', type: 'normal', reqWave: 30, reqNoDamage: false, reward: 5, icon: '⚔️' },
+      { id: 'wave_50', title: '百戰勇士', desc: '成功通關第 50 波敵人', type: 'normal', reqWave: 50, reqNoDamage: false, reward: 5, icon: '🏰' },
+      { id: 'wave_80', title: '鋼鐵防線', desc: '成功通關第 80 波敵人', type: 'normal', reqWave: 80, reqNoDamage: false, reward: 5, icon: '👑' },
+      { id: 'wave_100', title: '傳奇守護者', desc: '成功通關第 100 波終極挑戰', type: 'normal', reqWave: 100, reqNoDamage: false, reward: 5, icon: '🌟' },
+      
+      { id: 'perfect_25', title: '完美防禦 I', desc: '主城滿血狀態下無傷通關第 25 波', type: 'rare', reqWave: 25, reqNoDamage: true, reward: 10, icon: '💎' },
+      { id: 'perfect_50', title: '完美防禦 II', desc: '主城滿血狀態下無傷通關第 50 波', type: 'rare', reqWave: 50, reqNoDamage: true, reward: 10, icon: '翡' },
+      { id: 'perfect_75', title: '完美防禦 III', desc: '主城滿血狀態下無傷通關第 75 波', type: 'rare', reqWave: 75, reqNoDamage: true, reward: 10, icon: '🔮' },
+      { id: 'perfect_100', title: '無瑕的神話', desc: '主城滿血狀態下無傷通關第 100 波', type: 'rare', reqWave: 100, reqNoDamage: true, reward: 10, icon: '🏆' }
+    ];
+
+    const MAX_TOWER_COUNT = 15, STORAGE_KEY = 'GrowthTD_SaveData_v7';
     const getUpgradeCost = (base, rate, lv) => Math.floor(base * Math.pow(rate, lv - 1));
 
     const TOWER_TYPES = {
       arrow:      { name: '精準箭塔', cost: 100, range: 140, damage: 30, cd: 0.6, color: '#50fa7b', specName: '遠距增傷', desc: '單體遠程。距離每+10px傷害提高5%', baseDps: 50, breakThreshold: 200000, targetType: 'damage' },
       cannon:     { name: '重型砲塔', cost: 160, range: 110, damage: 75, cd: 1.4, color: '#ff5555', specName: '爆炸範圍', desc: '範圍爆破傷害。初始範圍40，專屬升級+5', baseDps: 53.57, breakThreshold: 642000, targetType: 'damage' },
       frost:      { name: '寒冰法塔', cost: 130, range: 120, damage: 12, cd: 0.9, color: '#8be9fd', specName: '冰凍時間', desc: '減速敵人。專屬升級每次+0.5秒冰凍時間', baseDps: 13.33, breakThreshold: 53000, targetType: 'damage' },
-      tesla:      { name: '特斯拉電塔', cost: 220, range: 130, damage: 40, cd: 1.1, color: '#bd93f9', specName: '連鎖彈跳', desc: '發射可彈跳的閃電，命中麻痺敵人0.2秒，專屬升級+1次彈跳', baseDps: 36.36, breakThreshold: 725000, targetType: 'damage' },
-      gold:       { name: '點金之塔', cost: 200, range: 0,   damage: 0,  cd: 4.0, color: '#f1fa8c', specName: '產金量提升', desc: '戰鬥中持續生產金幣 (限建5座)', baseDps: 1, breakThreshold: 25000, targetType: 'gold' },
+      tesla:      { name: '特斯拉電塔', cost: 220, range: 130, damage: 40, cd: 1.1, color: '#bd93f9', specName: '連鎖彈跳', desc: '發射可彈跳的閃電，命中麻痺敵人0.2秒，專屬升級+1次彈跳', baseDps: 36.36, breakThreshold: 850000, targetType: 'damage' },
+      gold:       { name: '點金之塔', cost: 200, range: 0,   damage: 0,  cd: 4.0, color: '#f1fa8c', specName: '產金量提升', desc: '戰鬥中持續生產金幣 (限建5座)', baseDps: 1, breakThreshold: 75000, targetType: 'gold' },
       knockback:  { name: '震盪重錘', cost: 320, range: 50,  damage: 180, cd: 2.5, color: '#ffb86c', specName: '擊退距離', desc: '高傷慢速向下重壓擊退範圍敵人。升級+1距離', baseDps: 72, breakThreshold: 144000, targetType: 'damage' },
       inferno:    { name: '地獄之塔', cost: 400, range: 110, damage: 16, cd: 0.4, color: '#ff0055', specName: '型態專屬', desc: '每0.4s傷害。型態1漸增傷害；型態2多條射線', baseDps: 40, breakThreshold: 1120000, targetType: 'damage' },
-      builder:    { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 0.5, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱瘓防禦塔。免疫負面狀態', baseDps: 16, breakThreshold: 64000, targetType: 'damage' },
+      builder:    { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 0.5, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱守防禦塔。免疫負護狀態', baseDps: 16, breakThreshold: 64000, targetType: 'damage' },
       overcharge: { name: '超能樞紐', cost: 220, range: 90, damage: 20, cd: 0.5, color: '#0055ff', specName: '超能增幅', desc: '持續發射射線攻擊吸收光芒，滿100%觸發超能狀態增幅周圍塔', baseDps: 40, breakThreshold: 100000, targetType: 'damage' }
     };
 
@@ -493,13 +660,6 @@
     let placingType = null, dragPos = {x: -100, y: -100}, selectedTower = null;
 
     let enemySpawnCounters = { soldier: 0, scout: 0, heavy: 0 };
-
-    function toTwoSigFigsTrunc(val) {
-      if (val <= 0) return 0;
-      let exp = Math.floor(Math.log10(val));
-      let scale = Math.pow(10, exp - 1);
-      return Math.floor(val / scale) * scale;
-    }
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null, humOsc = null, humGain = null;
@@ -608,9 +768,19 @@
       setTimeout(() => toast.remove(), 4000);
     }
 
+    function confirmPlayerName() {
+      let inputVal = document.getElementById('player-name-input').value.trim();
+      if (!inputVal) inputVal = "玩家";
+      playerName = inputVal;
+      document.getElementById('name-setting-modal').style.display = 'none';
+      if (typeof updateAuthUI === 'function') updateAuthUI();
+      saveGameToLocalStorage();
+      showToast(`玩家暱稱已設定為：${playerName}`, 'res');
+    }
+
     function triggerOverdrive() {
       if (overdriveState !== 'ready') return;
-      if (!waveInProgress) return showToast('⚠️ 只能在戰鬥進行中啟動超能過載！', 'towerSkill');
+      if (!waveInProgress) return showToast('⚠️ 只能在戰禦進行中啟動超能過載！', 'towerSkill');
       if (starParticles < 25) return showToast('🌟 星核微粒不足 (需要 25 個)！', 'res');
       let hasPromotedTower = towers.some(t => t.isPromoted);
       if (!hasPromotedTower) return showToast('⚠️ 場上尚無晉升的防禦塔，無法發動超能過載！', 'towerSkill');
@@ -660,6 +830,120 @@
       if (volBtn) volBtn.innerText = gameSettings.audioVolume === 0 ? '關閉' : `${Math.round(gameSettings.audioVolume * 100)}%`;
       if (toastBtn) toastBtn.innerText = toastLabels[gameSettings.toastMode];
       if (vfxBtn) vfxBtn.innerText = vfxLabels[gameSettings.vfxMode];
+      if (typeof updateAuthUI === 'function') updateAuthUI();
+    }
+
+    /* 成就系統 UI 與檢視邏輯 */
+    function checkAchievementsOnWaveComplete() {
+      ACHIEVEMENTS_DATA.forEach(ach => {
+        if (!unlockedAchievements.has(ach.id)) {
+          let reqPassed = currentWave >= ach.reqWave;
+          let noDmgPassed = !ach.reqNoDamage || (!waveTookDamage && hp >= maxHp);
+          if (reqPassed && noDmgPassed) {
+            unlockedAchievements.add(ach.id);
+            newAchievementAlerts.add(ach.id);
+            showToast(`🎖️ 達成新成就：【${ach.title}】！可至設定領取獎勵！`, 'res');
+          }
+        }
+      });
+      updateUI();
+    }
+
+    function openAchievementsModal() {
+      document.getElementById('settings-modal').style.display = 'none';
+      const modal = document.getElementById('achievements-modal');
+      const grid = document.getElementById('achieve-grid-container');
+      grid.innerHTML = '';
+
+      ACHIEVEMENTS_DATA.forEach(ach => {
+        const isUnlocked = unlockedAchievements.has(ach.id);
+        const hasAlert = newAchievementAlerts.has(ach.id);
+        
+        const item = document.createElement('div');
+        item.className = `achieve-item achieve-${ach.type} ${isUnlocked ? 'unlocked' : ''}`;
+        item.onclick = () => showAchievementDetail(ach);
+
+        item.innerHTML = `
+          ${hasAlert ? '<div class="achieve-badge">❗️</div>' : ''}
+          <div class="achieve-icon-btn">${ach.icon}</div>
+          <div class="achieve-name">${ach.title}</div>
+        `;
+        grid.appendChild(item);
+      });
+      modal.style.display = 'flex';
+    }
+
+    function showAchievementDetail(ach) {
+      const isUnlocked = unlockedAchievements.has(ach.id);
+      const isClaimed = claimedAchievements.has(ach.id);
+      const hasAlert = newAchievementAlerts.has(ach.id);
+
+      if (hasAlert) {
+        newAchievementAlerts.delete(ach.id);
+        if (!isClaimed) {
+          claimedAchievements.add(ach.id);
+          crystals += ach.reward;
+          showToast(`🎉 獲得成就【${ach.title}】解鎖獎勵 💎${ach.reward} 鑽石！`, 'res');
+        }
+        updateUI();
+        saveGameToLocalStorage();
+        openAchievementsModal();
+      }
+
+      document.getElementById('ach-detail-icon').innerText = ach.icon;
+      document.getElementById('ach-detail-title').innerText = ach.title;
+      document.getElementById('ach-detail-type').innerText = ach.type === 'rare' ? '💚 稀有成就' : '⚪ 普通成就';
+      document.getElementById('ach-detail-type').style.color = ach.type === 'rare' ? 'var(--primary)' : 'var(--cyan)';
+      document.getElementById('ach-detail-desc').innerText = ach.desc;
+      
+      let statusStr = isUnlocked ? '已完成 ✅' : '未完成 🔒';
+      document.getElementById('ach-detail-reward').innerText = `${statusStr} (解鎖獎勵: 💎 ${ach.reward})`;
+      
+      document.getElementById('achieve-detail-modal').style.display = 'flex';
+    }
+
+    /* 全伺服器排行榜 Modal */
+    async function openLeaderboardModal() {
+      document.getElementById('settings-modal').style.display = 'none';
+      const modal = document.getElementById('leaderboard-modal');
+      const list = document.getElementById('leaderboard-list-container');
+      list.innerHTML = '<div style="text-align:center; color:#888; padding:15px;">數據更新中...</div>';
+      modal.style.display = 'flex';
+
+      if (typeof window.fetchLeaderboardData === 'function') {
+        let players = await window.fetchLeaderboardData();
+        list.innerHTML = '';
+        if (players.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:#888; padding:15px;">尚無排行榜紀錄</div>';
+          return;
+        }
+
+        players.forEach((p, index) => {
+          const item = document.createElement('div');
+          item.className = 'leaderboard-item';
+          item.innerHTML = `
+            <div class="leaderboard-rank">#${index + 1}</div>
+            <div class="leaderboard-player">
+              <span>👤 ${p.name}</span>
+            </div>
+            <div class="leaderboard-wave">第 ${p.wave} 波</div>
+            <button class="btn" style="padding:2px 8px; font-size:11px; background:var(--purple); color:#000;" onclick="viewPlayerAchievements('${p.name}', ${JSON.stringify(p.unlockedAchievements).replace(/"/g, '&quot;')})">🏅 成就</button>
+          `;
+          list.appendChild(item);
+        });
+      }
+    }
+
+    function viewPlayerAchievements(pName, achList = []) {
+      let unlockedSet = new Set(achList);
+      let html = `<div style="text-align:left; font-size:12px; max-height:220px; overflow-y:auto;">`;
+      ACHIEVEMENTS_DATA.forEach(ach => {
+        let ok = unlockedSet.has(ach.id);
+        html += `<div style="margin-bottom:6px; color:${ok ? 'var(--primary)' : '#666'};">${ok ? '✅' : '🔒'} <b>${ach.title}</b> - ${ach.desc}</div>`;
+      });
+      html += `</div>`;
+      
+      showToast(`玩家【${pName}】共達成 ${unlockedSet.size} 個成就`, 'res');
     }
 
     function showEnemyIntro(type) {
@@ -764,7 +1048,10 @@
 
     function createCurrentStateSnapshot() {
       return JSON.parse(JSON.stringify({
-        currentWave, hp, gold, crystals, starParticles, stats, gameSettings,
+        playerName, currentWave, hp, gold, crystals, starParticles, stats, gameSettings,
+        unlockedAchievements: Array.from(unlockedAchievements),
+        claimedAchievements: Array.from(claimedAchievements),
+        newAchievementAlerts: Array.from(newAchievementAlerts),
         talents: Object.keys(talents).reduce((a, k) => (a[k] = talents[k].lv, a), {}),
         activeSkills: Object.keys(activeSkills).reduce((a, k) => (a[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv, timer: activeSkills[k].timer }, a), {}),
         towers: towers.map(t => ({
@@ -772,11 +1059,14 @@
           totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted,
           infernoMode: t.infernoMode || 1, chargeProgress: t.chargeProgress || 0
         })),
-        seenEnemyTypes: [...seenEnemyTypes], unlockedCodexEnemies: [...unlockedCodexEnemies], newCodexAlerts: [...newCodexAlerts]
+        seenEnemyTypes: Array.from(seenEnemyTypes),
+        unlockedCodexEnemies: Array.from(unlockedCodexEnemies),
+        newCodexAlerts: Array.from(newCodexAlerts)
       }));
     }
 
     function loadSnapshotState(data) {
+      if (data.playerName) playerName = data.playerName;
       currentWave = data.currentWave || 0; hp = data.hp ?? 100; gold = data.gold ?? 300; crystals = data.crystals ?? 0;
       starParticles = data.starParticles ?? 0;
       if (data.stats) stats = data.stats;
@@ -784,6 +1074,10 @@
       if (data.seenEnemyTypes) seenEnemyTypes = new Set(data.seenEnemyTypes);
       if (data.unlockedCodexEnemies) unlockedCodexEnemies = new Set(data.unlockedCodexEnemies);
       if (data.newCodexAlerts) newCodexAlerts = new Set(data.newCodexAlerts);
+      
+      if (data.unlockedAchievements) unlockedAchievements = new Set(data.unlockedAchievements);
+      if (data.claimedAchievements) claimedAchievements = new Set(data.claimedAchievements);
+      if (data.newAchievementAlerts) newAchievementAlerts = new Set(data.newAchievementAlerts);
 
       if (data.talents) Object.keys(data.talents).forEach(k => talents[k] && (talents[k].lv = data.talents[k]));
       if (data.activeSkills) Object.keys(data.activeSkills).forEach(k => {
@@ -813,22 +1107,26 @@
 
     function saveGameToLocalStorage() {
       const saveData = {
-        currentWave, hp, gold, crystals, starParticles, stats, checkpointState, savedCheckpointsMap, gameSettings,
+        playerName, currentWave, hp, gold, crystals, starParticles, stats, checkpointState, savedCheckpointsMap, gameSettings,
+        unlockedAchievements: Array.from(unlockedAchievements),
+        claimedAchievements: Array.from(claimedAchievements),
+        newAchievementAlerts: Array.from(newAchievementAlerts),
         talents: Object.keys(talents).reduce((a, k) => (a[k] = talents[k].lv, a), {}),
         activeSkills: Object.keys(activeSkills).reduce((a, k) => (a[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv, timer: activeSkills[k].timer }, a), {}),
         towers: towers.map(t => ({ type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv, totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1 })),
-        seenEnemyTypes: [...seenEnemyTypes], unlockedCodexEnemies: [...unlockedCodexEnemies], newCodexAlerts: [...newCodexAlerts]
+        seenEnemyTypes: Array.from(seenEnemyTypes), unlockedCodexEnemies: Array.from(unlockedCodexEnemies), newCodexAlerts: Array.from(newCodexAlerts)
       };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData)); } catch(e) {}
-      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-        window.saveGameToCloud();
-      }
     }
 
     function loadGameFromLocalStorage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        if (!raw) {
+          // 首次無紀錄，彈出登入選擇彈窗
+          document.getElementById('welcome-auth-modal').style.display = 'flex';
+          return;
+        }
         const data = JSON.parse(raw);
         if (data.savedCheckpointsMap) savedCheckpointsMap = data.savedCheckpointsMap;
         if (data.checkpointState) checkpointState = data.checkpointState;
@@ -867,6 +1165,14 @@
 
       const codexBadge = document.getElementById('codex-btn-badge');
       if (codexBadge) codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
+
+      // 檢查成就紅點狀態
+      const achieveBadge = document.getElementById('achievements-btn-badge');
+      const settingsBadge = document.getElementById('settings-btn-badge');
+      const hasAchAlert = newAchievementAlerts.size > 0;
+      
+      if (achieveBadge) achieveBadge.style.display = hasAchAlert ? 'flex' : 'none';
+      if (settingsBadge) settingsBadge.style.display = hasAchAlert ? 'flex' : 'none';
       
       const startBtn = document.getElementById('start-wave-btn');
       startBtn.classList.toggle('disabled-wave', waveInProgress);
@@ -1111,7 +1417,7 @@
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
         else if (w >= 31) hp *= (1 + 0.8 + (w - 30) * 0.095);
         
-        hp = toTwoSigFigsTrunc(hp); atk = baseAtk * 3.0; speed = 0.6;
+        hp = Math.floor(hp); atk = baseAtk * 3.0; speed = 0.6;
         atkSpeedStr = `${Math.floor(atk)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`;
 
         let freezeReduce = Math.min(0.60, Math.floor((w - 5) / 5) * 0.05);
@@ -1149,7 +1455,7 @@
       }
       
       waveInProgress = true; currentWave++; updateUI(); updateSkillUI();
-      waveSpawnQueue = []; deadEnemyGraveyard = []; waveStarEnemyKills = 0;
+      waveSpawnQueue = []; deadEnemyGraveyard = []; waveStarEnemyKills = 0; waveTookDamage = false;
       
       let count = Math.floor(8 + currentWave * 1.5 + Math.pow(currentWave, 1.1) * 0.2);
       spawnInterval = Math.max(0.2, Math.min(1.0, 55 / count));
@@ -1500,6 +1806,7 @@
       } else {
         hp = 100; gold = 300; crystals = 0; starParticles = 0; currentWave = 0; seenEnemyTypes = new Set();
         towers = []; enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
+        unlockedAchievements = new Set(); claimedAchievements = new Set(); newAchievementAlerts = new Set();
         waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0; stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
         Object.keys(talents).forEach(k => talents[k].lv = 0);
         Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
@@ -1995,7 +2302,7 @@
           if (dist <= step) { e.x = target.x; e.y = target.y; e.pathIndex++; }
           else { e.x += (dx / dist) * step; e.y += (dy / dist) * step; }
         } else {
-          hp -= e.atk;
+          hp -= e.atk; waveTookDamage = true;
           e.dead = true; enemies.splice(i, 1); updateUI();
           if (hp <= 0) return triggerGameOver();
         }
@@ -2351,10 +2658,13 @@
         if (ft.alpha <= 0) floatingTexts.splice(i, 1);
       }
 
+      // 💥 波次結束結算區塊
       if (waveInProgress && enemies.length === 0 && waveSpawnQueue.length === 0) {
         waveInProgress = false;
         resetBossStates();
         
+        checkAchievementsOnWaveComplete();
+
         let waveCrystalBonus = 3 + Math.floor(currentWave / 5);
         let starEnemyBonus = waveStarEnemyKills;
         let totalCrystalsEarned = waveCrystalBonus + starEnemyBonus;
@@ -2377,6 +2687,12 @@
         });
 
         if (currentWave % 5 === 0) saveCheckpoint(); else saveGameToLocalStorage();
+        
+        // ✨ 波次結束靜默同步數據至雲端
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+
         updateUI();
         if (autoWave) setTimeout(() => autoWave && !waveInProgress && startWave(), 1000);
       }
@@ -2801,6 +3117,14 @@
           else if (e.code === 'Escape') { e.preventDefault(); cancelPlacement(); }
         } else if (e.code === 'Space') { e.preventDefault(); togglePause(); }
       });
+
+      window.loadSnapshotState = loadSnapshotState;
+      window.unlockedAchievements = unlockedAchievements;
+      window.claimedAchievements = claimedAchievements;
+      window.newAchievementAlerts = newAchievementAlerts;
+      window.seenEnemyTypes = seenEnemyTypes;
+      window.unlockedCodexEnemies = unlockedCodexEnemies;
+      window.newCodexAlerts = newCodexAlerts;
 
       updateSkillUI(); updateTechUI(); updateSettingsUI(); updateUI();
       requestAnimationFrame(gameLoop);
