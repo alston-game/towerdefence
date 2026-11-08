@@ -1045,9 +1045,41 @@
       }
     }
 
+    // 🔥 修改：顯示玩家獲得的所有成就圖示彈窗 (需求 5)
     function viewPlayerAchievements(pName, achList = []) {
+      const modal = document.getElementById('player-achievements-modal');
+      const grid = document.getElementById('player-ach-modal-grid');
+      const title = document.getElementById('player-ach-modal-title');
+  
+      if (!modal || !grid) return;
+  
+      title.innerText = `🏆 玩家【${pName}】的成就`;
+      grid.innerHTML = '';
+  
       let unlockedSet = new Set(achList);
-      showToast(`玩家【${pName}】共達成 ${unlockedSet.size} 個成就`, 'res');
+  
+      if (ACHIEVEMENTS_DATA.length === 0) {
+        grid.innerHTML = '<div style="color:#888; grid-column:1/-1;">尚無成就資料</div>';
+      } else {
+        ACHIEVEMENTS_DATA.forEach(ach => {
+          const isUnlocked = unlockedSet.has(ach.id);
+          const item = document.createElement('div');
+          item.style.cssText = `
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            padding:8px; border-radius:6px; background:${isUnlocked ? 'rgba(80,250,123,0.15)' : 'rgba(255,255,255,0.05)'};
+            border:1px solid ${isUnlocked ? 'var(--primary)' : '#444'};
+            opacity: ${isUnlocked ? '1' : '0.35'};
+          `;
+          item.title = `${ach.title}: ${ach.desc}`;
+          item.innerHTML = `
+            <div style="font-size:20px;">${ach.icon}</div>
+            <div style="font-size:9px; color:#fff; margin-top:4px; text-overflow:ellipsis; overflow:hidden; whitespace:nowrap; max-width:50px;">${ach.title}</div>
+          `;
+          grid.appendChild(item);
+        });
+      }
+  
+      modal.style.display = 'flex';
     }
 
     function showEnemyIntro(type) {
