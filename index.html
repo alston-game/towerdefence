@@ -14,17 +14,29 @@
     body { background: var(--bg-color); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; }
     
     #game-header, #controls-bar, #panel-container { width: 100%; max-width: 1000px; }
-    #game-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--panel-bg); border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--card-bg); z-index: 250; position: relative; }
+    
+    /* 調整 Z-Index 確保在全局科技打開時可視 */
+    #game-header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 12px 20px; background: var(--panel-bg); border-radius: 8px; 
+      margin-bottom: 10px; border: 1px solid var(--card-bg); 
+      z-index: 350; position: relative; 
+    }
+    
+    .header-right-group { display: flex; align-items: center; gap: 10px; }
+    .user-avatar-img { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--cyan); object-fit: cover; display: none; }
+    
     .res-item { display: flex; align-items: center; font-size: 14px; font-weight: bold; }
     .res-icon { font-size: 18px; margin-right: 6px; }
     
+    /* 設定按鈕內部圖示旋轉，避免驚嘆號跟著旋轉 */
     .settings-gear-btn {
-      position: relative;
-      background: var(--card-bg); border: 1px solid var(--border-color); color: var(--cyan);
+      position: relative; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--cyan);
       border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center;
-      align-items: center; font-size: 18px; cursor: pointer; transition: all 0.2s;
+      align-items: center; font-size: 18px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
     }
-    .settings-gear-btn:hover { background: var(--border-color); transform: rotate(45deg); color: var(--primary); }
+    .settings-gear-btn .gear-icon { transition: transform 0.3s ease; display: inline-block; }
+    .settings-gear-btn:hover .gear-icon { transform: rotate(45deg); color: var(--primary); }
 
     #game-container { position: relative; width: 1000px; height: 600px; background: #111; border-radius: 8px; overflow: hidden; touch-action: none; }
     canvas { display: block; cursor: crosshair; }
@@ -35,8 +47,11 @@
     .boss-hp-line-20 { position: absolute; top: 0; bottom: 0; left: 20%; width: 2px; background: #ffffff; z-index: 5; pointer-events: none; box-shadow: 0 0 4px #fff; }
     #boss-hp-text { font-size: 12px; margin: 2px 0 4px; font-family: monospace; }
     #boss-traits { font-size: 11px; color: var(--cyan); line-height: 1.3; }
-    #toast-container { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 260; pointer-events: none; }
-    .toast { background: rgba(20, 20, 30, 0.95); border-left: 4px solid var(--orange); padding: 10px 15px; border-radius: 4px; font-size: 13px; }
+    
+    /* 提升 Toast 層級高於全局科技 (Z-Index 360) */
+    #toast-container { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 360; pointer-events: none; }
+    .toast { background: rgba(20, 20, 30, 0.95); border-left: 4px solid var(--orange); padding: 10px 15px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    
     #enemy-intro-popup { position: absolute; bottom: 15px; right: 15px; width: 280px; background: rgba(20, 20, 30, 0.95); border: 2px solid var(--purple); border-radius: 8px; padding: 12px; z-index: 260; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     #enemy-intro-popup .close-btn { position: absolute; top: 6px; right: 10px; color: var(--danger); font-weight: bold; cursor: pointer; font-size: 16px; }
     #enemy-intro-title { font-weight: bold; font-size: 14px; color: var(--primary); margin-bottom: 6px; padding-right: 15px; }
@@ -92,7 +107,13 @@
     #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 340px; display: none; z-index: 60; }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center; z-index: 300; pointer-events: auto; }
+    
+    /* 基礎 Modal 與層級優化 */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 300; pointer-events: auto; }
+    
+    /* 全局科技 Modal 專屬層級（確保 header 與 toast 不被覆蓋） */
+    #tech-modal { z-index: 200; }
+    
     .modal-content { background: var(--panel-bg); border-radius: 10px; padding: 20px; width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.8); }
     .mode-toggle-btn { background: #333; color: #fff; border: 1px solid var(--purple); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 4px; }
     .mode-toggle-btn:hover { background: var(--purple); color: #000; }
@@ -115,14 +136,13 @@
     .settings-opt-btn { background: var(--purple); color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; min-width: 140px; text-align: center; }
     .settings-opt-btn:hover { filter: brightness(1.1); }
 
-    /* 成就系統特有樣式 */
+    /* 成就系統特有樣式（含未解鎖灰階效果） */
     .achieve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
     .achieve-item { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; text-align: center; }
     .achieve-item:hover { transform: translateY(-3px); border-color: var(--yellow); }
+    .achieve-item.locked { filter: grayscale(100%); opacity: 0.6; } /* 未解鎖灰階效果 */
     .achieve-icon-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; justify-content: center; align-items: center; font-size: 20px; margin-bottom: 6px; background: #343746; color: #888; transition: all 0.2s; position: relative; }
-    /* 普通成就按鈕 */
     .achieve-normal.unlocked .achieve-icon-btn { border-color: var(--cyan); background: rgba(139, 233, 253, 0.25); color: var(--cyan); box-shadow: 0 0 8px rgba(139, 233, 253, 0.4); }
-    /* 稀有成就按鈕 (綠色系) */
     .achieve-rare.unlocked .achieve-icon-btn { border-color: var(--primary); background: rgba(80, 250, 123, 0.25); color: var(--primary); box-shadow: 0 0 10px rgba(80, 250, 123, 0.6); }
     .achieve-name { font-size: 11px; font-weight: bold; color: var(--white); }
     .achieve-badge { position: absolute; top: 4px; right: 4px; background: var(--danger); color: #fff; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(255,0,0,0.8); }
@@ -146,10 +166,16 @@
     <div class="res-item">
       <span class="res-icon">🌊</span> 波次: <span id="wave-val" style="margin-right:8px;">0</span>
     </div>
-    <button class="settings-gear-btn" onclick="openSettingsModal()" title="遊戲設定">
-      ⚙️
-      <span class="btn-alert-badge" id="settings-btn-badge" style="display:none;">❗️</span>
-    </button>
+    
+    <div class="header-right-group">
+      <!-- 6. 已登入時顯示 Google 頭像 -->
+      <img id="user-avatar-img" class="user-avatar-img" src="" alt="Google 頭像" title="已登入 Google 帳號" />
+      <button class="settings-gear-btn" onclick="openSettingsModal()" title="遊戲設定">
+        <span class="gear-icon">⚙️</span>
+        <!-- 3. 設定按鈕驚嘆號獨立靜止定位 -->
+        <span class="btn-alert-badge" id="settings-btn-badge" style="display:none;">❗️</span>
+      </button>
+    </div>
   </div>
 
   <div id="game-container">
@@ -207,25 +233,37 @@
       <button class="btn btn-danger" onclick="cancelPlacement()">取消 (Esc)</button>
     </div>
 
-    <!-- 首次登入選擇 Modal -->
+    <!-- 首次進入選擇 Modal -->
     <div class="modal" id="welcome-auth-modal">
       <div class="modal-content" style="width:400px; text-align:center;">
         <h2 style="color:var(--cyan); margin-bottom:10px;">🎮 歡迎來到成長型塔防</h2>
         <p style="font-size:13px; color:#aaa; margin-bottom:20px;">請選擇您的進入方式：</p>
         <div style="display:flex; flex-direction:column; gap:12px;">
-          <button class="btn btn-primary" id="welcome-google-login-btn" style="padding:12px;">🔑 使用 Google 帳號登入 (支援雲端同步)</button>
-          <button class="btn" id="welcome-guest-btn" style="padding:12px;">👤 以訪客身份直接遊玩 (本機離線遊玩)</button>
+          <button class="btn btn-primary" id="welcome-google-login-btn" style="padding:12px;">🔑 使用 Google 帳號登入 (雲端備份進度)</button>
+          <button class="btn" id="welcome-guest-btn" style="padding:12px;">👤 以訪客身份遊玩 (本次不登入進度不儲存)</button>
         </div>
       </div>
     </div>
 
     <!-- 名字設定 Modal -->
-    <div class="modal" id="name-setting-modal">
+    <div class="modal" id="name-setting-modal" style="z-index: 380;">
       <div class="modal-content" style="width:360px; text-align:center;">
         <h3 style="color:var(--primary); margin-bottom:10px;">🏷️ 設定您的玩家暱稱</h3>
-        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">此名字將顯示於您的頭像旁及排行榜上</p>
+        <p style="font-size:12px; color:#aaa; margin-bottom:15px;">此名字將顯示於您的個人資料及排行榜上</p>
         <input type="text" id="player-name-input" placeholder="請輸入暱稱..." maxlength="12" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:#12131C; color:#fff; font-size:14px; margin-bottom:15px; outline:none;" />
         <button class="btn btn-primary" onclick="confirmPlayerName()" style="width:100%;">確認暱稱</button>
+      </div>
+    </div>
+
+    <!-- 二次確認通用 Modal -->
+    <div class="modal" id="confirm-action-modal" style="z-index: 450;">
+      <div class="modal-content" style="width:360px; text-align:center;">
+        <h3 style="color:var(--danger); margin-bottom:10px;" id="confirm-modal-title">⚠️ 操作確認</h3>
+        <p style="font-size:13px; color:#ddd; margin-bottom:20px; line-height:1.5;" id="confirm-modal-msg">您確定要執行此操作嗎？</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button class="btn btn-danger" id="confirm-modal-yes-btn" style="flex:1;">確定執行</button>
+          <button class="btn" onclick="closeConfirmModal()" style="flex:1;">取消</button>
+        </div>
       </div>
     </div>
 
@@ -249,29 +287,29 @@
           <span class="settings-label">4. 特效顯示設定</span>
           <button class="settings-opt-btn" id="cfg-vfx-btn" onclick="cycleSetting('vfxMode')">全部</button>
         </div>
+        
         <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
-          <!-- 4. 成成就按鈕 -->
           <button class="checkpoint-select-btn" onclick="openAchievementsModal()" style="color:var(--yellow);">
             🎖️ 玩家成就
             <span class="btn-alert-badge" id="achievements-btn-badge" style="display:none;">❗️</span>
           </button>
           
-          <!-- 5. 玩家排行榜按鈕 -->
           <button class="checkpoint-select-btn" onclick="openLeaderboardModal()" style="color:var(--orange);">
             🏆 玩家排行榜
           </button>
           
-          <!-- 6. 跳回存檔點 -->
           <button class="checkpoint-select-btn" onclick="openCheckpointPanelFromSettings()">
             📜 跳回存檔點
           </button>
         </div>
 
-        <!-- 7. 登入/登出 帳號控制 (第6項) -->
+        <!-- 5. 帳號登入/登出與清除帳號進度按鈕 -->
         <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
           <div id="settings-user-info" style="font-size:12px; color:#aaa; margin-bottom:4px;"></div>
           <button class="btn btn-primary" id="settings-login-btn" style="width:100%;">🔑 登入 Google 帳號</button>
-          <button class="btn btn-danger" id="settings-logout-btn" style="width:100%; display:none;">🚪 登出帳號</button>
+          <button class="btn btn-danger" id="settings-logout-btn" onclick="promptLogoutConfirm()" style="width:100%; display:none;">🚪 登出帳號</button>
+          <!-- 清除帳號進度按鍵 (登出下方) -->
+          <button class="btn" id="settings-clear-btn" onclick="promptClearAccountConfirm()" style="width:100%; display:none; background:#aa0000; color:#fff; border:none;">🔥 清除帳號進度</button>
         </div>
 
         <button class="btn" onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉設定</button>
@@ -305,7 +343,7 @@
       <div class="modal-content" style="width:460px;">
         <h3 style="color:var(--orange); margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🏆 玩家通關最高波次排行榜</h3>
         <div class="leaderboard-list" id="leaderboard-list-container">
-          <div style="text-align:center; color:#888; padding:15px;">載入中...</div>
+          <div style="text-align:center; color:#888; padding:15px;">數據更新中...</div>
         </div>
         <button class="btn" onclick="document.getElementById('leaderboard-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
@@ -320,6 +358,7 @@
       </div>
     </div>
 
+    <!-- 4. 全局科技 Modal (層級設為 200，讓頂部 Header 與 Toast 能顯示在遮罩上方) -->
     <div class="modal" id="tech-modal">
       <div class="modal-content">
         <h3 style="color:var(--cyan); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">💎 全局科技</h3>
@@ -327,6 +366,7 @@
         <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
+
     <div class="modal" id="codex-modal">
       <div class="modal-content">
         <h3 style="color:var(--purple); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">📖 敵人圖鑑</h3>
@@ -334,7 +374,9 @@
         <button class="btn" onclick="document.getElementById('codex-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
-    <div class="modal" id="codex-detail-modal" style="z-index: 210;">
+
+    <!-- 4. 敵人圖鑑詳情 Modal (層級提升至 500 最頂層) -->
+    <div class="modal" id="codex-detail-modal" style="z-index: 500;">
       <div class="modal-content" style="width: 360px;">
         <h3 id="cd-title" style="color:var(--primary); text-align:center; margin-bottom:10px;"></h3>
         <div id="cd-icon-container" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
@@ -360,6 +402,7 @@
         </div>
       </div>
     </div>
+
     <div class="modal" id="gameover-modal">
       <div class="modal-content" style="text-align:center;">
         <h2 id="go-title" style="color:var(--danger); margin-bottom:10px;">🏰 主城失守！</h2>
@@ -403,15 +446,14 @@
     </div>
   </div>
 
-  <!-- Firebase 與 Firestore 連線腳本 -->
+  <!-- 1. Firebase 服務與數據庫連線模組 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
     import { 
       getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged 
     } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
     import { 
-      getFirestore, doc, setDoc, getDoc, collection, getDocs 
+      getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs 
     } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -425,17 +467,17 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // 靜默備份至 Firestore (波次結束時自動調用)
+    // 完全靜默上傳所有進度數據至 Firestore (波次開始前/波次結束後調用)
     async function saveGameToCloud(user) {
       if (!user) return;
       try {
         const saveData = {
           playerName: window.playerName || user.displayName || "玩家",
+          photoURL: user.photoURL || "",
           currentWave: window.currentWave || 0,
           hp: window.hp ?? 100,
           gold: window.gold ?? 300,
@@ -458,13 +500,13 @@
           lastUpdated: new Date()
         };
         await setDoc(doc(db, "users", user.uid), saveData, { merge: true });
-        console.log("☁️ 雲端同步完成 (靜默)");
+        console.log("☁️ 雲端進度靜默同步完成");
       } catch (e) {
         console.error("雲端存檔失敗：", e);
       }
     }
 
-    // 載入 Firestore 數據
+    // 從 Firestore 讀取玩家資料
     async function loadGameFromCloud(user) {
       if (!user) return false;
       try {
@@ -485,7 +527,18 @@
       }
     }
 
-    // 抓取全伺服器玩家排行榜
+    // 🔥 完全清除該 Google 帳號於 Firestore 的數據
+    async function deleteAccountDataFromCloud(user) {
+      if (!user) return;
+      try {
+        await deleteDoc(doc(db, "users", user.uid));
+        console.log("🔥 雲端帳號數據已徹底清除");
+      } catch (e) {
+        console.error("清除雲端數據失敗：", e);
+      }
+    }
+
+    // 1. 修復並拉取排行榜數據
     async function fetchLeaderboardData() {
       try {
         const querySnapshot = await getDocs(collection(db, "users"));
@@ -508,20 +561,12 @@
     }
 
     window.saveGameToCloud = saveGameToCloud;
+    window.deleteAccountDataFromCloud = deleteAccountDataFromCloud;
     window.fetchLeaderboardData = fetchLeaderboardData;
 
-    // Firebase Auth 事件綁定
+    // Google 登入監聽與按鈕事件
     document.getElementById('settings-login-btn').addEventListener('click', () => {
       signInWithPopup(auth, provider).catch((error) => alert(`登入失敗：${error.message}`));
-    });
-
-    document.getElementById('settings-logout-btn').addEventListener('click', () => {
-      signOut(auth).then(() => {
-        window.currentUser = null;
-        window.playerName = "訪客";
-        updateAuthUI();
-        window.saveGameToLocalStorage();
-      });
     });
 
     document.getElementById('welcome-google-login-btn').addEventListener('click', () => {
@@ -532,24 +577,33 @@
     document.getElementById('welcome-guest-btn').addEventListener('click', () => {
       document.getElementById('welcome-auth-modal').style.display = 'none';
       window.currentUser = null;
-      if (!window.playerName || window.playerName === "訪客") {
-        document.getElementById('name-setting-modal').style.display = 'flex';
-      }
+      if (typeof window.resetToDefaultNewGame === 'function') window.resetToDefaultNewGame();
     });
 
     function updateAuthUI() {
       const infoDiv = document.getElementById('settings-user-info');
       const loginBtn = document.getElementById('settings-login-btn');
       const logoutBtn = document.getElementById('settings-logout-btn');
+      const clearBtn = document.getElementById('settings-clear-btn');
+      const avatarImg = document.getElementById('user-avatar-img');
 
       if (window.currentUser) {
         infoDiv.innerHTML = `已登入：<b>${window.playerName || window.currentUser.displayName || "玩家"}</b> (${window.currentUser.email})`;
         loginBtn.style.display = 'none';
         logoutBtn.style.display = 'block';
+        clearBtn.style.display = 'block';
+        
+        // 6. 已登入狀態下顯示 Google 大頭貼頭像
+        if (avatarImg) {
+          avatarImg.src = window.currentUser.photoURL || 'https://lh3.googleusercontent.com/a/default-user';
+          avatarImg.style.display = 'block';
+        }
       } else {
-        infoDiv.innerHTML = `目前身份：<b>${window.playerName || "訪客"}</b> (離線本機數據)`;
+        infoDiv.innerHTML = `目前身份：<b>${window.playerName || "訪客"}</b> (未登入狀態，不存檔)`;
         loginBtn.style.display = 'block';
         logoutBtn.style.display = 'none';
+        clearBtn.style.display = 'none';
+        if (avatarImg) avatarImg.style.display = 'none';
       }
     }
     window.updateAuthUI = updateAuthUI;
@@ -559,20 +613,17 @@
         window.currentUser = user;
         const exists = await loadGameFromCloud(user);
         if (!exists) {
-          // 當前遊玩進度綁定至新 Google 帳號
-          if (!window.playerName || window.playerName === "訪客") {
-            window.playerName = user.displayName || "玩家";
-          }
-          await saveGameToCloud(user);
+          // 若屬該 Google 帳號首次登入，出現取名字彈窗
+          document.getElementById('name-setting-modal').style.display = 'flex';
         }
         updateAuthUI();
       } else {
+        window.currentUser = null;
         updateAuthUI();
       }
     });
   </script>
-
-  <!-- 遊戲核心 JavaScript 邏輯 -->
+  <!-- 2. 遊戲核心 JavaScript 控制邏輯與機制 -->
   <script>
     let canvas, ctx;
     let gameSpeed = 1, isPaused = false, autoWave = false, waveInProgress = false;
@@ -582,7 +633,7 @@
     let checkpointState = null, savedCheckpointsMap = {}, pendingJumpWave = null, isMouseInput = false;
 
     let waveStarEnemyKills = 0;
-    let waveTookDamage = false; // 是否無傷防守本波
+    let waveTookDamage = false;
     let overdriveState = 'ready'; 
     let overdriveTimer = 0;
     let playerName = "訪客";
@@ -614,7 +665,7 @@
       { id: 'perfect_100', title: '無瑕的神話', desc: '主城滿血狀態下無傷通關第 100 波', type: 'rare', reqWave: 100, reqNoDamage: true, reward: 10, icon: '🏆' }
     ];
 
-    const MAX_TOWER_COUNT = 15, STORAGE_KEY = 'GrowthTD_SaveData_v7';
+    const MAX_TOWER_COUNT = 15;
     const getUpgradeCost = (base, rate, lv) => Math.floor(base * Math.pow(rate, lv - 1));
 
     const TOWER_TYPES = {
@@ -625,7 +676,7 @@
       gold:       { name: '點金之塔', cost: 200, range: 0,   damage: 0,  cd: 4.0, color: '#f1fa8c', specName: '產金量提升', desc: '戰鬥中持續生產金幣 (限建5座)', baseDps: 1, breakThreshold: 75000, targetType: 'gold' },
       knockback:  { name: '震盪重錘', cost: 320, range: 50,  damage: 180, cd: 2.5, color: '#ffb86c', specName: '擊退距離', desc: '高傷慢速向下重壓擊退範圍敵人。升級+1距離', baseDps: 72, breakThreshold: 144000, targetType: 'damage' },
       inferno:    { name: '地獄之塔', cost: 400, range: 110, damage: 16, cd: 0.4, color: '#ff0055', specName: '型態專屬', desc: '每0.4s傷害。型態1漸增傷害；型態2多條射線', baseDps: 40, breakThreshold: 1120000, targetType: 'damage' },
-      builder:    { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 0.5, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱守防禦塔。免疫負護狀態', baseDps: 16, breakThreshold: 64000, targetType: 'damage' },
+      builder:    { name: '建築工人小屋', cost: 250, range: 70, damage: 8, cd: 0.5, color: '#ff9900', specName: '工人移動速度', desc: '範圍內自動修理癱瘓防禦塔。免疫負面狀態', baseDps: 16, breakThreshold: 64000, targetType: 'damage' },
       overcharge: { name: '超能樞紐', cost: 220, range: 90, damage: 20, cd: 0.5, color: '#0055ff', specName: '超能增幅', desc: '持續發射射線攻擊吸收光芒，滿100%觸發超能狀態增幅周圍塔', baseDps: 40, breakThreshold: 100000, targetType: 'damage' }
     };
 
@@ -774,13 +825,56 @@
       playerName = inputVal;
       document.getElementById('name-setting-modal').style.display = 'none';
       if (typeof updateAuthUI === 'function') updateAuthUI();
-      saveGameToLocalStorage();
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
       showToast(`玩家暱稱已設定為：${playerName}`, 'res');
+    }
+
+    /* 5. 防呆警告彈窗控制邏輯 */
+    function showConfirmModal(title, msg, onConfirm) {
+      document.getElementById('confirm-modal-title').innerText = title;
+      document.getElementById('confirm-modal-msg').innerText = msg;
+      const yesBtn = document.getElementById('confirm-modal-yes-btn');
+      yesBtn.onclick = () => {
+        closeConfirmModal();
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+      document.getElementById('confirm-action-modal').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirm-action-modal').style.display = 'none';
+    }
+
+    function promptLogoutConfirm() {
+      showConfirmModal('🚪 帳號登出確認', '您確定要登出當前 Google 帳號嗎？登出後頁面將重置為訪客狀態。', () => {
+        if (window.auth) {
+          window.auth.signOut().then(() => {
+            window.currentUser = null;
+            playerName = "訪客";
+            resetToDefaultNewGame();
+            if (typeof updateAuthUI === 'function') updateAuthUI();
+            showToast('已安全登出帳號！', 'res');
+          });
+        }
+      });
+    }
+
+    function promptClearAccountConfirm() {
+      showConfirmModal('🔥 清除帳號進度確認', '⚠️ 此操作將完全刪除您在雲端保存的所有遊戲紀錄並重置，確定要清除嗎？', async () => {
+        if (window.currentUser && typeof window.deleteAccountDataFromCloud === 'function') {
+          await window.deleteAccountDataFromCloud(window.currentUser);
+        }
+        resetToDefaultNewGame();
+        document.getElementById('name-setting-modal').style.display = 'flex';
+        showToast('帳號進度已完全清除，請重新設定暱稱！', 'res');
+      });
     }
 
     function triggerOverdrive() {
       if (overdriveState !== 'ready') return;
-      if (!waveInProgress) return showToast('⚠️ 只能在戰禦進行中啟動超能過載！', 'towerSkill');
+      if (!waveInProgress) return showToast('⚠️ 只能在戰鬥進行中啟動超能過載！', 'towerSkill');
       if (starParticles < 25) return showToast('🌟 星核微粒不足 (需要 25 個)！', 'res');
       let hasPromotedTower = towers.some(t => t.isPromoted);
       if (!hasPromotedTower) return showToast('⚠️ 場上尚無晉升的防禦塔，無法發動超能過載！', 'towerSkill');
@@ -814,7 +908,11 @@
         gameSettings.audioVolume = vols[(idx + 1) % vols.length];
       } else if (key === 'toastMode') gameSettings.toastMode = (gameSettings.toastMode + 1) % 5;
       else if (key === 'vfxMode') gameSettings.vfxMode = (gameSettings.vfxMode + 1) % 4;
-      saveGameToLocalStorage(); updateSettingsUI();
+      
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
+      updateSettingsUI();
     }
 
     function updateSettingsUI() {
@@ -833,7 +931,6 @@
       if (typeof updateAuthUI === 'function') updateAuthUI();
     }
 
-    /* 成就系統 UI 與檢視邏輯 */
     function checkAchievementsOnWaveComplete() {
       ACHIEVEMENTS_DATA.forEach(ach => {
         if (!unlockedAchievements.has(ach.id)) {
@@ -849,6 +946,7 @@
       updateUI();
     }
 
+    /* 3. 成就 UI 渲染 (未達成套用灰階特效) */
     function openAchievementsModal() {
       document.getElementById('settings-modal').style.display = 'none';
       const modal = document.getElementById('achievements-modal');
@@ -860,7 +958,7 @@
         const hasAlert = newAchievementAlerts.has(ach.id);
         
         const item = document.createElement('div');
-        item.className = `achieve-item achieve-${ach.type} ${isUnlocked ? 'unlocked' : ''}`;
+        item.className = `achieve-item achieve-${ach.type} ${isUnlocked ? 'unlocked' : 'locked'}`;
         item.onclick = () => showAchievementDetail(ach);
 
         item.innerHTML = `
@@ -886,7 +984,9 @@
           showToast(`🎉 獲得成就【${ach.title}】解鎖獎勵 💎${ach.reward} 鑽石！`, 'res');
         }
         updateUI();
-        saveGameToLocalStorage();
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
         openAchievementsModal();
       }
 
@@ -902,7 +1002,7 @@
       document.getElementById('achieve-detail-modal').style.display = 'flex';
     }
 
-    /* 全伺服器排行榜 Modal */
+    /* 1. 全伺服器排行榜 Modal */
     async function openLeaderboardModal() {
       document.getElementById('settings-modal').style.display = 'none';
       const modal = document.getElementById('leaderboard-modal');
@@ -936,13 +1036,6 @@
 
     function viewPlayerAchievements(pName, achList = []) {
       let unlockedSet = new Set(achList);
-      let html = `<div style="text-align:left; font-size:12px; max-height:220px; overflow-y:auto;">`;
-      ACHIEVEMENTS_DATA.forEach(ach => {
-        let ok = unlockedSet.has(ach.id);
-        html += `<div style="margin-bottom:6px; color:${ok ? 'var(--primary)' : '#666'};">${ok ? '✅' : '🔒'} <b>${ach.title}</b> - ${ach.desc}</div>`;
-      });
-      html += `</div>`;
-      
       showToast(`玩家【${pName}】共達成 ${unlockedSet.size} 個成就`, 'res');
     }
 
@@ -1102,36 +1195,20 @@
 
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = [];
       waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
-      updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI(); saveGameToLocalStorage();
+      updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
     }
 
-    function saveGameToLocalStorage() {
-      const saveData = {
-        playerName, currentWave, hp, gold, crystals, starParticles, stats, checkpointState, savedCheckpointsMap, gameSettings,
-        unlockedAchievements: Array.from(unlockedAchievements),
-        claimedAchievements: Array.from(claimedAchievements),
-        newAchievementAlerts: Array.from(newAchievementAlerts),
-        talents: Object.keys(talents).reduce((a, k) => (a[k] = talents[k].lv, a), {}),
-        activeSkills: Object.keys(activeSkills).reduce((a, k) => (a[k] = { valLv: activeSkills[k].valLv, cdLv: activeSkills[k].cdLv, timer: activeSkills[k].timer }, a), {}),
-        towers: towers.map(t => ({ type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv, totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1 })),
-        seenEnemyTypes: Array.from(seenEnemyTypes), unlockedCodexEnemies: Array.from(unlockedCodexEnemies), newCodexAlerts: Array.from(newCodexAlerts)
-      };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData)); } catch(e) {}
-    }
-
-    function loadGameFromLocalStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          // 首次無紀錄，彈出登入選擇彈窗
-          document.getElementById('welcome-auth-modal').style.display = 'flex';
-          return;
-        }
-        const data = JSON.parse(raw);
-        if (data.savedCheckpointsMap) savedCheckpointsMap = data.savedCheckpointsMap;
-        if (data.checkpointState) checkpointState = data.checkpointState;
-        loadSnapshotState(data);
-      } catch(e) {}
+    /* 2. 重置為全預設無紀錄狀態 (移除 LocalStorage) */
+    function resetToDefaultNewGame() {
+      hp = 100; gold = 300; crystals = 0; starParticles = 0; currentWave = 0;
+      seenEnemyTypes = new Set(); unlockedCodexEnemies = new Set(); newCodexAlerts = new Set();
+      unlockedAchievements = new Set(); claimedAchievements = new Set(); newAchievementAlerts = new Set();
+      towers = []; enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
+      waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
+      stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
+      Object.keys(talents).forEach(k => talents[k].lv = 0);
+      Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
+      updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
     }
 
     function toggleAutoWave() {
@@ -1245,7 +1322,11 @@
       
       towers.push(newTower);
       showToast('建造成功！', 'towerSkill');
-      saveGameToLocalStorage(); cancelPlacement(); updateUI();
+      
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
+      cancelPlacement(); updateUI();
     }
 
     function checkTowerPromotion(tower) {
@@ -1260,7 +1341,10 @@
         activeVisualEffects.push({ type: 'overchargeBurst', x: tower.x, y: tower.y, r: 80, life: 1.0, maxLife: 1.0 });
         let msgTargetStr = tInfo.targetType === 'gold' ? `累積金幣生產達 💰${threshold}` : `累積傷害突破 ${threshold}`;
         showToast(`🌟 恭喜！一座【${tInfo.name}】${msgTargetStr}，達成晉升！`, 'towerSkill');
-        saveGameToLocalStorage();
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
         if (selectedTower === tower) openTowerOverlay();
       }
     }
@@ -1293,7 +1377,11 @@
       selectedTower.infernoMode = selectedTower.infernoMode === 1 ? 2 : 1;
       selectedTower.targetLockId = null; selectedTower.lockTime = 0; selectedTower.infernoStage = 0;
       showToast(`地獄之塔切換為：${selectedTower.infernoMode === 1 ? '🔥 單體漸增型態' : '💥 多體散射型態'}`, 'towerSkill');
-      saveGameToLocalStorage(); openTowerOverlay();
+      
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
+      openTowerOverlay();
     }
 
     function openTowerOverlay() {
@@ -1370,7 +1458,11 @@
       let cost = getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]);
       if (gold >= cost) {
         gold -= cost; selectedTower[lvProp]++;
-        saveGameToLocalStorage(); updateUI(); openTowerOverlay();
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        updateUI(); openTowerOverlay();
       } else showToast('金幣不足！', 'res');
     }
 
@@ -1381,7 +1473,11 @@
         gold += parseInt(document.getElementById('tu-sell-val').innerText);
         towers.splice(idx, 1); selectedTower = null;
         document.getElementById('tower-upgrade-overlay').style.display = 'none';
-        saveGameToLocalStorage(); updateUI(); showToast('防禦塔已出售', 'towerSkill');
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        updateUI(); showToast('防禦塔已出售', 'towerSkill');
       }
     }
 
@@ -1447,6 +1543,7 @@
       return { hp: Math.floor(hp), atk: Math.floor(atk), atkSpeedStr, moveSpeedPxStr, speed: speed.toFixed(2), resistances, skills };
     }
 
+    /* 2. 波次開始前時時上傳數據至帳號裡 */
     function startWave() {
       if (waveInProgress) return;
       if (isPaused) {
@@ -1556,7 +1653,11 @@
           shockTimer: 0, shockInterval: shockCdSec, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0, isEnraged: false
         });
       }
-      saveGameToLocalStorage();
+
+      // 波次開始前實時上傳數據至帳號
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
     }
 
     function toggleSkillBubble(key) {
@@ -1659,7 +1760,11 @@
         crystals -= reqCost;
         if (type === 'val') { s.valLv++; showToast(`【${s.name}】數值效果已提升！`, 'res'); }
         else { s.cdLv++; showToast(`【${s.name}】冷卻時間已縮短！`, 'res'); }
-        saveGameToLocalStorage(); updateSkillUI(); updateUI();
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        updateSkillUI(); updateUI();
       } else showToast('鑽石不足！', 'res');
     }
 
@@ -1696,7 +1801,11 @@
         crystals -= reqCost; t.lv++;
         if (key === 'maxHpBonus') hp += 25;
         showToast(`成功升級【${t.name}】！`, 'res');
-        saveGameToLocalStorage(); updateTechUI(); updateUI();
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        updateTechUI(); updateUI();
       } else showToast('鑽石不足！', 'res');
     }
 
@@ -1769,7 +1878,11 @@
       if (newCodexAlerts.has(enemyId)) {
         newCodexAlerts.delete(enemyId); crystals += 10;
         showToast(`🎉 查閱新敵人【${ENEMY_CODEX_DATA.find(e=>e.id===enemyId).name}】！獲得 💎10 鑽石！`, 'res');
-        updateUI(); saveGameToLocalStorage(); openCodexModal();
+        updateUI();
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        openCodexModal();
       }
       showCodexDetailModal(enemyId);
     }
@@ -1794,8 +1907,11 @@
     function saveCheckpoint() {
       checkpointState = createCurrentStateSnapshot();
       savedCheckpointsMap[currentWave] = checkpointState;
-      showToast(`💾 第 ${currentWave} 波自動存檔 Checkpoint 已更新！`, 'res');
-      saveGameToLocalStorage();
+      showToast(`💾 第 ${currentWave} 波存檔點 Checkpoint 已更新！`, 'res');
+      
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
     }
 
     function restartGame() {
@@ -1804,13 +1920,7 @@
       if (checkpointState && checkpointState.currentWave > 0 && pendingJumpWave !== 'restart') {
         loadSnapshotState(checkpointState); showToast(`已載入第 ${currentWave} 波存檔數據！`, 'res');
       } else {
-        hp = 100; gold = 300; crystals = 0; starParticles = 0; currentWave = 0; seenEnemyTypes = new Set();
-        towers = []; enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
-        unlockedAchievements = new Set(); claimedAchievements = new Set(); newAchievementAlerts = new Set();
-        waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0; stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
-        Object.keys(talents).forEach(k => talents[k].lv = 0);
-        Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
-        saveGameToLocalStorage(); updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
+        resetToDefaultNewGame();
       }
     }
 
@@ -2658,7 +2768,7 @@
         if (ft.alpha <= 0) floatingTexts.splice(i, 1);
       }
 
-      // 💥 波次結束結算區塊
+      /* 2. 波次結束自動上傳數據至帳號 */
       if (waveInProgress && enemies.length === 0 && waveSpawnQueue.length === 0) {
         waveInProgress = false;
         resetBossStates();
@@ -2686,7 +2796,7 @@
           }
         });
 
-        if (currentWave % 5 === 0) saveCheckpoint(); else saveGameToLocalStorage();
+        if (currentWave % 5 === 0) saveCheckpoint();
         
         // ✨ 波次結束靜默同步數據至雲端
         if (window.currentUser && typeof window.saveGameToCloud === 'function') {
@@ -3082,8 +3192,11 @@
 
     window.onload = function() {
       canvas = document.getElementById('gameCanvas'); ctx = canvas.getContext('2d');
-      loadGameFromLocalStorage();
       
+      // 2. 移除 LocalStorage 讀取，進入網站預設彈出選擇登入/訪客彈窗
+      document.getElementById('welcome-auth-modal').style.display = 'flex';
+      resetToDefaultNewGame();
+
       const shopContainer = document.getElementById('tower-shop');
       shopContainer.innerHTML = '';
       Object.keys(TOWER_TYPES).forEach(key => {
@@ -3119,6 +3232,7 @@
       });
 
       window.loadSnapshotState = loadSnapshotState;
+      window.resetToDefaultNewGame = resetToDefaultNewGame;
       window.unlockedAchievements = unlockedAchievements;
       window.claimedAchievements = claimedAchievements;
       window.newAchievementAlerts = newAchievementAlerts;
