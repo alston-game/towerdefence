@@ -582,19 +582,41 @@
     }
     window.updateAuthUI = updateAuthUI;
 
-    // 🔥 修改：Firebase 驗證狀態監聽 (需求 1)
+    // 🔥 修改 1 & 2：自動更新 UI 頭像並確保雲端進度成功載入與套用
     window.auth.onAuthStateChanged(async (user) => {
       if (user) {
         window.currentUser = user;
-    // 已登入狀態：自動關閉歡迎彈窗，不讓使用者再次選擇
-        document.getElementById('welcome-auth-modal').style.display = 'none';
     
-    // 嘗試從雲端載入進度
+    // 1. 關閉登入彈窗
+        const welcomeModal = document.getElementById('welcome-auth-modal');
+        if (welcomeModal) welcomeModal.style.display = 'none';
+
+    // 2. 🔥 修正問題 1：登入第一時間立即更新 UI（包含顯示帳號頭像與玩家名稱）
+        if (typeof window.updateAuthUI === 'function') {
+          window.updateAuthUI();
+        }
+
+    // 3. 🔥 修正問題 2：載入該帳號雲端進度並確保畫面更新
         if (typeof window.loadGameFromCloud === 'function') {
-          await window.loadGameFromCloud(user);
+          try {
+            await window.loadGameFromCloud(user);
+        
+        // 載入進度後，再次刷新整體 UI 與遊戲狀態畫面
+            if (typeof window.updateUI === 'function') {
+              window.updateUI();
+            }
+            if (typeof window.updateAuthUI === 'function') {
+              window.updateAuthUI();
+            }
+          } catch (err) {
+            console.error("載入雲端進度失敗：", err);
+          }
         }
       } else {
         window.currentUser = null;
+        if (typeof window.updateAuthUI === 'function') {
+          window.updateAuthUI();
+        }
       }
     });
 
