@@ -495,6 +495,76 @@
       }
     }
 
+    // 🔥 修正：完整定義 loadGameFromCloud 並確保資料正確載入
+    async function loadGameFromCloud(user) {
+      if (!user) return false;
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+      
+      // 1. 更新全域玩家名稱
+          if (data.playerName) {
+            window.playerName = data.playerName;
+          }
+      
+      // 2. 呼叫遊戲主邏輯的 loadSnapshotState 恢復所有波次、金幣、塔等狀態
+          if (typeof window.loadSnapshotState === 'function') {
+            window.loadSnapshotState(data);
+          }
+      
+          console.log("☁️ 雲端進度載入成功！");
+          return true;
+        } else {
+          console.log("☁️ 查無雲端進度，將以新進度自動建立備份");
+          if (typeof window.saveGameToCloud === 'function') {
+            await window.saveGameToCloud(user);
+          }
+          return false;
+        }
+      } catch (e) {
+        console.error("雲端讀檔失敗：", e);
+        return false;
+      }
+    }
+
+// 綁定至 window 供全域與主遊戲邏輯呼叫
+window.loadGameFromCloud = loadGameFromCloud;
+
+// 🔥 修正：AuthState 變更時，立即更新頭像並載入進度
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    window.currentUser = user;
+    
+    // 關閉歡迎選擇彈窗
+    const welcomeModal = document.getElementById('welcome-auth-modal');
+    if (welcomeModal) welcomeModal.style.display = 'none';
+
+    // 1. 登入第一時間立即刷新 UI（確保頭像立刻顯示）
+    if (typeof window.updateAuthUI === 'function') {
+      window.updateAuthUI();
+    }
+
+    // 2. 載入該帳號進度
+    const loaded = await loadGameFromCloud(user);
+    
+    // 3. 再次刷新 UI 與帳號資訊
+    if (typeof window.updateUI === 'function') window.updateUI();
+    if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+
+    if (!loaded && !window.playerName) {
+      document.getElementById('name-setting-modal').style.display = 'flex';
+    }
+  } else {
+    window.currentUser = null;
+    if (typeof window.updateAuthUI === 'function') {
+      window.updateAuthUI();
+    }
+  }
+});
+
     async function deleteAccountDataFromCloud(user) {
       if (!user) return;
       try {
