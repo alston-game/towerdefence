@@ -941,10 +941,14 @@ window.updateAuthUI = updateAuthUI;
     function confirmPlayerName() {
       let inputVal = document.getElementById('player-name-input').value.trim();
       if (!inputVal) inputVal = "玩家";
+  
       playerName = inputVal;
-      window.playerName = playerName;
+      window.playerName = playerName; // 確保全域同步，供後續登入 Google 帳號繼承使用
+  
       document.getElementById('name-setting-modal').style.display = 'none';
       if (typeof updateAuthUI === 'function') updateAuthUI();
+  
+      // 若此時已經是 Google 登入狀態，則立刻存檔至雲端
       if (window.currentUser && typeof window.saveGameToCloud === 'function') {
         window.saveGameToCloud(window.currentUser);
       }
