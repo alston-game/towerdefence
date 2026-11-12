@@ -481,6 +481,7 @@ async function saveGameToCloud(user) {
     
     const saveData = {
       playerName: window.playerName || user.displayName || "玩家",
+      lastNameChangeTime: window.lastNameChangeTime || 0, // 👈 新增這一行：記錄上次修改名稱的時間戳記
       photoURL: user.photoURL || "",
       currentWave: waveToSave,
       hp: window.hp ?? 100,
@@ -526,6 +527,7 @@ async function loadGameFromCloud(user) {
       if (data.playerName) {
         window.playerName = data.playerName;
       }
+      window.lastNameChangeTime = data.lastNameChangeTime || 0; // 👈 新增這一行：還原冷卻時間
       if (typeof window.loadSnapshotState === 'function') {
         window.loadSnapshotState(data);
       }
@@ -1373,6 +1375,7 @@ window.updateAuthUI = updateAuthUI;
     }
 
     function resetToDefaultNewGame() {
+      window.lastNameChangeTime = 0; // 👈 請新增在這裡
       hp = 100; window.hp = hp;
       gold = 300; window.gold = gold;
       crystals = 0; window.crystals = crystals;
