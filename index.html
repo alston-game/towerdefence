@@ -1073,7 +1073,26 @@ function handleEditNameClick() {
       }
     }
 
-    function openSettingsModal() { pauseGameIfRunning(); updateSettingsUI(); document.getElementById('settings-modal').style.display = 'flex'; }
+    function openSettingsModal() {
+      pauseGameIfRunning();
+      updateSettingsUI();
+      renderSettingsUserInfoWithEditBtn(); // 👈 新增這行：每次打開設定都強制畫出最新名稱與鉛筆按鈕
+      document.getElementById('settings-modal').style.display = 'flex';
+    }
+    function renderSettingsUserInfoWithEditBtn() {
+      const infoDiv = document.getElementById('settings-user-info');
+      if (!infoDiv) return;
+
+      const currentName = window.playerName || playerName || (window.currentUser ? window.currentUser.displayName : "訪客");
+      const editBtn = `<button type="button" onclick="handleEditNameClick()" title="修改玩家名稱" style="background:rgba(255,255,255,0.1); border:1px solid var(--cyan); border-radius:4px; color:#fff; cursor:pointer; font-size:12px; padding:1px 6px; margin-left:8px;">✏️ 修改</button>`;
+
+      if (window.currentUser) {
+        infoDiv.innerHTML = `已登入：<b style="color:#fff;">${currentName}</b>${editBtn}<br><span style="font-size:11px; color:#888;">(${window.currentUser.email})</span>`;
+      } else {
+        infoDiv.innerHTML = `目前身份：<b style="color:#fff;">${currentName}</b>${editBtn} <span style="font-size:11px; color:#888;">(未登入狀態，不存檔)</span>`;
+      }
+    }
+    
     function openTechModal() { pauseGameIfRunning(); updateTechUI(); document.getElementById('tech-modal').style.display = 'flex'; }
     function openCodexModalWithPause() { pauseGameIfRunning(); openCodexModal(); }
     function openCheckpointPanelFromSettings() { document.getElementById('settings-modal').style.display = 'none'; openCheckpointPanel(); }
