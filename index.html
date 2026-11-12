@@ -554,7 +554,10 @@ async function loadGameFromCloud(user) {
   }
 }
 
-// 🔥 修正 1 & 2：登入狀態監聽器
+    // 綁定至 window 供全域與主遊戲邏輯呼叫
+    window.loadGameFromCloud = loadGameFromCloud;
+
+    // 🔥 修正 1 & 2：登入狀態監聽器
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     window.currentUser = user;
@@ -578,41 +581,6 @@ onAuthStateChanged(auth, async (user) => {
     window.currentUser = null;
     window.isCloudLoaded = false;
     if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
-  }
-});
-
-// 綁定至 window 供全域與主遊戲邏輯呼叫
-window.loadGameFromCloud = loadGameFromCloud;
-
-// 🔥 修正：AuthState 變更時，立即更新頭像並載入進度
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    window.currentUser = user;
-    
-    // 關閉歡迎選擇彈窗
-    const welcomeModal = document.getElementById('welcome-auth-modal');
-    if (welcomeModal) welcomeModal.style.display = 'none';
-
-    // 1. 登入第一時間立即刷新 UI（確保頭像立刻顯示）
-    if (typeof window.updateAuthUI === 'function') {
-      window.updateAuthUI();
-    }
-
-    // 2. 載入該帳號進度
-    const loaded = await loadGameFromCloud(user);
-    
-    // 3. 再次刷新 UI 與帳號資訊
-    if (typeof window.updateUI === 'function') window.updateUI();
-    if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
-
-    if (!loaded && !window.playerName) {
-      document.getElementById('name-setting-modal').style.display = 'flex';
-    }
-  } else {
-    window.currentUser = null;
-    if (typeof window.updateAuthUI === 'function') {
-      window.updateAuthUI();
-    }
   }
 });
 
