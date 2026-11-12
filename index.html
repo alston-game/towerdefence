@@ -1363,7 +1363,9 @@ window.updateAuthUI = updateAuthUI;
       }
 
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = [];
-      waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
+      waveInProgress = false;
+      window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
+      waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
     }
 
@@ -1384,7 +1386,9 @@ window.updateAuthUI = updateAuthUI;
 
       towers = []; window.towers = towers;
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
-      waveInProgress = false; waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
+      waveInProgress = false; 
+      window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
+      waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
       stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 }; window.stats = stats;
       
       Object.keys(talents).forEach(k => talents[k].lv = 0);
