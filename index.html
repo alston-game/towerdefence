@@ -651,6 +651,9 @@ onAuthStateChanged(auth, async (user) => {
   const clearBtn = document.getElementById('settings-clear-btn');
   const avatarImg = document.getElementById('user-avatar-img');
 
+      // 鉛筆修改名稱按鈕 HTML
+      const editNameBtnHtml = `<button onclick="handleEditNameClick()" title="修改玩家暱稱" style="background:none; border:none; cursor:pointer; font-size:14px; margin-left:6px; vertical-align:middle; filter:drop-shadow(0 0 2px #000);">✏️</button>`;
+
   if (window.currentUser) {
     if (infoDiv) {
       infoDiv.innerHTML = `已登入：<b>${window.playerName || window.currentUser.displayName || "玩家"}</b> (${window.currentUser.email})`;
