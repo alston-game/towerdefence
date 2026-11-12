@@ -3348,8 +3348,11 @@ window.updateAuthUI = updateAuthUI;
     window.onload = function() {
       canvas = document.getElementById('gameCanvas'); ctx = canvas.getContext('2d');
       
-      document.getElementById('welcome-auth-modal').style.display = 'flex';
-      resetToDefaultNewGame();
+      // 🔥 修正 1：只有在「確定未登入」且沒有暫存進度時，才顯示歡迎彈窗並重置為新遊戲
+      if (!window.currentUser && !window.isCloudLoaded) {
+        document.getElementById('welcome-auth-modal').style.display = 'flex';
+        resetToDefaultNewGame();
+      }
 
       const shopContainer = document.getElementById('tower-shop');
       shopContainer.innerHTML = '';
