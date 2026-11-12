@@ -978,21 +978,27 @@ function handleEditNameClick() {
 }
 
     function confirmPlayerName() {
-      let inputVal = document.getElementById('player-name-input').value.trim();
-      if (!inputVal) inputVal = "玩家";
+  let inputVal = document.getElementById('player-name-input').value.trim();
+  if (!inputVal) inputVal = "玩家";
   
-      playerName = inputVal;
-      window.playerName = playerName; // 確保全域同步，供後續登入 Google 帳號繼承使用
+  // 若已登入 Google 帳號，且此次是透過設定按鈕主動修改名稱（非初次創角取名）
+  if (window.currentUser && window.isEditingNameFromSettings) {
+    window.lastNameChangeTime = Date.now(); // 開始計算一週冷卻時間
+  }
+  window.isEditingNameFromSettings = false;
+
+  playerName = inputVal;
+  window.playerName = playerName;
   
-      document.getElementById('name-setting-modal').style.display = 'none';
-      if (typeof updateAuthUI === 'function') updateAuthUI();
+  document.getElementById('name-setting-modal').style.display = 'none';
+  if (typeof updateAuthUI === 'function') updateAuthUI();
   
-      // 若此時已經是 Google 登入狀態，則立刻存檔至雲端
-      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-        window.saveGameToCloud(window.currentUser);
-      }
-      showToast(`玩家暱稱已設定為：${playerName}`, 'res');
-    }
+  // 若已登入 Google 帳號，立即將新名稱與冷卻時間同步儲存至雲端
+  if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+    window.saveGameToCloud(window.currentUser);
+  }
+  showToast(`玩家暱稱已更新為：${playerName}`, 'res');
+}
 
     function showConfirmModal(title, msg, onConfirm) {
       document.getElementById('confirm-modal-title').innerText = title;
