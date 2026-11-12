@@ -943,6 +943,40 @@ window.updateAuthUI = updateAuthUI;
     }
     window.showToast = showToast;
 
+    // 新增：處理點擊設定中的修改名稱（鉛筆）按鈕
+function handleEditNameClick() {
+  // 僅針對「已登入 Google 帳號」檢查一週冷卻限制
+  if (window.currentUser && window.lastNameChangeTime && window.lastNameChangeTime > 0) {
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const elapsed = now - window.lastNameChangeTime;
+
+    if (elapsed < ONE_WEEK_MS) {
+      const remaining = ONE_WEEK_MS - elapsed;
+      const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+      const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+      const minutes = Math.max(1, Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000)));
+
+      let timeParts = [];
+      if (days > 0) timeParts.push(`${days} 天`);
+      if (hours > 0) timeParts.push(`${hours} 小時`);
+      if (days === 0 && minutes > 0) timeParts.push(`${minutes} 分鐘`);
+
+      showToast(`⏳ 修改名稱冷卻中！還需等待 ${timeParts.join(' ')} 才能再次修改。`, 'res');
+      return;
+    }
+  }
+
+  // 標記此次是由「設定頁面」主動觸發的修改名稱
+  window.isEditingNameFromSettings = true;
+  
+  // 關閉設定彈窗並開啟名稱輸入彈窗，預先填入目前名稱
+  document.getElementById('settings-modal').style.display = 'none';
+  const nameInput = document.getElementById('player-name-input');
+  if (nameInput) nameInput.value = window.playerName || "";
+  document.getElementById('name-setting-modal').style.display = 'flex';
+}
+
     function confirmPlayerName() {
       let inputVal = document.getElementById('player-name-input').value.trim();
       if (!inputVal) inputVal = "玩家";
