@@ -513,40 +513,73 @@ async function saveGameToCloud(user) {
 window.saveGameToCloud = saveGameToCloud;
 
 
-    // 🔥 修正：完整定義 loadGameFromCloud 並確保資料正確載入
-    async function loadGameFromCloud(user) {
-      if (!user) return false;
-      try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
+    // 🔥 修正 2：判斷帳號狀態，若為新帳號則直接繼承當前訪客的暱稱與進度
+async function loadGameFromCloud(user) {
+  if (!user) return false;
+  try {
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-      
-      // 1. 更新全域玩家名稱
-          if (data.playerName) {
-            window.playerName = data.playerName;
-          }
-      
-      // 2. 呼叫遊戲主邏輯的 loadSnapshotState 恢復所有波次、金幣、塔等狀態
-          if (typeof window.loadSnapshotState === 'function') {
-            window.loadSnapshotState(data);
-          }
-      
-          console.log("☁️ 雲端進度載入成功！");
-          return true;
-        } else {
-          console.log("☁️ 查無雲端進度，將以新進度自動建立備份");
-          if (typeof window.saveGameToCloud === 'function') {
-            await window.saveGameToCloud(user);
-          }
-          return false;
-        }
-      } catch (e) {
-        console.error("雲端讀檔失敗：", e);
-        return false;
+    if (docSnap.exists()) {
+      // 情況 A：該 Google 帳號已有存檔紀錄 -> 直接載入雲端進度
+      const data = docSnap.data();
+      if (data.playerName) {
+        window.playerName = data.playerName;
       }
+      if (typeof window.loadSnapshotState === 'function') {
+        window.loadSnapshotState(data);
+      }
+      window.isCloudLoaded = true;
+      console.log("☁️ 已載入既有帳號進度");
+      return true;
+    } else {
+      // 情況 B：該 Google 帳號從未登入過（無進度）
+      // 檢查玩家是否已在訪客模式輸入過自訂名稱（非預設的 "訪客"）
+      const hasGuestCustomName = window.playerName && window.playerName !== "訪客";
+      
+      if (!hasGuestCustomName) {
+        // 若連訪客名稱都沒取過，才使用 Google 預設名稱並儲存
+        window.playerName = user.displayName || "玩家";
+      }
+      
+      // 立即將「當前（訪客）的名稱與遊玩進度」直接存入該 Google 帳號
+      await saveGameToCloud(user);
+      window.isCloudLoaded = true;
+      console.log(`☁️ 新帳號已直接綁定並儲存進度，玩家名稱：${window.playerName}`);
+      return true; // 回傳 true，代表帳號已完成初始化，不需再彈出取名視窗
     }
+  } catch (e) {
+    console.error("雲端讀檔/初始化失敗：", e);
+    return false;
+  }
+}
+
+// 🔥 修正 1 & 2：登入狀態監聽器
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    window.currentUser = user;
+    
+    // 隱藏選擇登入彈窗與取名彈窗
+    const welcomeModal = document.getElementById('welcome-auth-modal');
+    if (welcomeModal) welcomeModal.style.display = 'none';
+    const nameModal = document.getElementById('name-setting-modal');
+    if (nameModal) nameModal.style.display = 'none';
+
+    // 第一時間更新 UI（顯示 Google 頭像）
+    if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+
+    // 載入舊進度，或將訪客進度無縫寫入新帳號
+    await loadGameFromCloud(user);
+
+    // 確保主介面與設定介面數字全部同步更新
+    if (typeof window.updateUI === 'function') window.updateUI();
+    if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+  } else {
+    window.currentUser = null;
+    window.isCloudLoaded = false;
+    if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+  }
+});
 
 // 綁定至 window 供全域與主遊戲邏輯呼叫
 window.loadGameFromCloud = loadGameFromCloud;
