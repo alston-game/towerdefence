@@ -1731,7 +1731,9 @@ window.updateAuthUI = updateAuthUI;
         document.getElementById('pause-btn').innerText = '⏸ 暫停';
       }
       
-      waveInProgress = true; currentWave++; window.currentWave = currentWave; updateUI(); updateSkillUI();
+      waveInProgress = true; 
+      window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
+      currentWave++; window.currentWave = currentWave; updateUI(); updateSkillUI();
       waveSpawnQueue = []; deadEnemyGraveyard = []; waveStarEnemyKills = 0; waveTookDamage = false;
       
       let count = Math.floor(8 + currentWave * 1.5 + Math.pow(currentWave, 1.1) * 0.2);
