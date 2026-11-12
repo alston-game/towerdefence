@@ -2951,6 +2951,7 @@ window.updateAuthUI = updateAuthUI;
 
       if (waveInProgress && enemies.length === 0 && waveSpawnQueue.length === 0) {
         waveInProgress = false;
+        window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
         resetBossStates();
         
         checkAchievementsOnWaveComplete();
