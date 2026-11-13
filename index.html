@@ -314,7 +314,7 @@
         <h3 style="color:var(--yellow); margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🎖️ 玩家成就</h3>
         <p style="font-size:11px; color:#aaa;">點擊圓形圖示可查看成就詳情與領取獎勵</p>
         <div class="achieve-grid" id="achieve-grid-container"></div>
-        <button class="btn" onclick="document.getElementById('achievements-modal').style.display='none'; openSettingsModal();" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('achievements-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -337,7 +337,7 @@
         <div class="leaderboard-list" id="leaderboard-list-container">
           <div style="text-align:center; color:#888; padding:15px;">數據更新中...</div>
         </div>
-        <button class="btn" onclick="document.getElementById('leaderboard-modal').style.display='none'; openSettingsModal();" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('leaderboard-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -349,7 +349,7 @@
           <!-- 動態載入玩家成就圖示 -->
         </div>
         <!-- 修正：關閉當前彈窗並確保排行榜視窗顯示 -->
-        <button class="btn" onclick="document.getElementById('player-achievements-modal').style.display='none'; document.getElementById('leaderboard-modal').style.display='flex';" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('player-achievements-modal', 'leaderboard-modal')" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -1399,8 +1399,7 @@ function handleEditNameClick() {
     }
 
     function closeCheckpointPanel() {
-      document.getElementById('checkpoint-panel-modal').style.display = 'none';
-      openSettingsModal(); // 👈 新增這行：關閉後自動返回設定視窗
+      switchModal('checkpoint-panel-modal', 'settings-modal');
     }
 
     function selectCheckpointJump(target) {
