@@ -1108,6 +1108,38 @@ function handleEditNameClick() {
       }
     }
 
+    /**
+     * 統一彈窗切換管理函數
+     * @param {string|null} closeId - 要關閉的彈窗 ID (若無需關閉則傳 null)
+     * @param {string|null} openId  - 要開啟的彈窗 ID (若純粹關閉則傳 null)
+     */
+    function switchModal(closeId, openId) {
+      if (closeId) {
+        const closeEl = document.getElementById(closeId);
+        if (closeEl) {
+          closeEl.style.display = 'none';
+        } else {
+          console.warn(`[switchModal] 找不到要關閉的彈窗 ID: "${closeId}"`);
+        }
+      }
+
+      if (openId) {
+        // 若目標是回到主設定介面，自動執行設定頁面的資料與按鈕刷新
+        if (openId === 'settings-modal') {
+          openSettingsModal();
+          return;
+        }
+
+        const openEl = document.getElementById(openId);
+        if (openEl) {
+          openEl.style.display = 'flex';
+        } else {
+          console.warn(`[switchModal] 找不到要開啟的彈窗 ID: "${openId}"`);
+        }
+      }
+    }
+    window.switchModal = switchModal;
+    
     function openSettingsModal() {
       pauseGameIfRunning();
       updateSettingsUI();
