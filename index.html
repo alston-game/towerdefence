@@ -314,7 +314,7 @@
         <h3 style="color:var(--yellow); margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🎖️ 玩家成就</h3>
         <p style="font-size:11px; color:#aaa;">點擊圓形圖示可查看成就詳情與領取獎勵</p>
         <div class="achieve-grid" id="achieve-grid-container"></div>
-        <button class="btn" onclick="document.getElementById('achievements-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="document.getElementById('leaderboard-modal').style.display='none'; openSettingsModal();" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -348,7 +348,7 @@
         <div id="player-ach-modal-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(60px, 1fr)); gap:10px; max-height:300px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px; margin-bottom:15px;">
     <!-- 動態載入玩家成就圖示 -->
         </div>
-        <button class="btn btn-primary" onclick="document.getElementById('player-achievements-modal').style.display='none'">關閉</button>
+        <button class="btn" onclick="document.getElementById('leaderboard-modal').style.display='none'; openSettingsModal();" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
@@ -1014,12 +1014,17 @@ function handleEditNameClick() {
       }
     }
 
-    function showConfirmModal(title, msg, onConfirm) {
+    let currentConfirmCancelCallback = null;
+
+    function showConfirmModal(title, msg, onConfirm, onCancel = null) {
       document.getElementById('confirm-modal-title').innerText = title;
       document.getElementById('confirm-modal-msg').innerText = msg;
+      currentConfirmCancelCallback = onCancel;
+
       const yesBtn = document.getElementById('confirm-modal-yes-btn');
       yesBtn.onclick = () => {
-        closeConfirmModal();
+        currentConfirmCancelCallback = null; // 確定執行時不觸發取消回呼
+        document.getElementById('confirm-action-modal').style.display = 'none';
         if (typeof onConfirm === 'function') onConfirm();
       };
       document.getElementById('confirm-action-modal').style.display = 'flex';
@@ -1027,41 +1032,56 @@ function handleEditNameClick() {
 
     function closeConfirmModal() {
       document.getElementById('confirm-action-modal').style.display = 'none';
+      if (typeof currentConfirmCancelCallback === 'function') {
+        const cb = currentConfirmCancelCallback;
+        currentConfirmCancelCallback = null;
+        cb(); // 點擊取消時執行返回設定視窗
+      }
     }
 
-    // 🔥 修改：登出後重新跳出登入選擇彈窗 (需求 3)
+    // 登出後重新跳出登入選擇彈窗
     function promptLogoutConfirm() {
       document.getElementById('settings-modal').style.display = 'none';
-      showConfirmModal('🚪 帳號登出確認', '您確定要登出當前 Google 帳號嗎？登出後將重置為初始狀態。', () => {
-        if (window.auth) {
-          window.auth.signOut().then(() => {
-            window.currentUser = null;
-            playerName = "訪客";
-            window.playerName = playerName;
-            resetToDefaultNewGame();
-            if (typeof updateAuthUI === 'function') updateAuthUI();
-        
-        // 顯示歡迎登入彈窗
-            document.getElementById('welcome-auth-modal').style.display = 'flex';
-            showToast('已成功登出帳號！', 'res');
-          }).catch(err => {
-            showToast(`登出失敗：${err.message}`, 'res');
-          });
-        }
-      });
+      showConfirmModal(
+        '🚪 帳號登出確認',
+        '您確定要登出當前 Google 帳號嗎？登出後將重置為初始狀態。',
+        () => {
+          if (window.auth) {
+            window.auth.signOut().then(() => {
+              window.currentUser = null;
+              window.isCloudLoaded = false;
+              window.lastNameChangeTime = 0;
+              playerName = "訪客";
+              window.playerName = playerName;
+              resetToDefaultNewGame();
+              if (typeof updateAuthUI === 'function') updateAuthUI();
+              document.getElementById('welcome-auth-modal').style.display = 'flex';
+              showToast('已成功登出帳號！', 'res');
+            }).catch(err => {
+              showToast(`登出失敗：${err.message}`, 'res');
+            });
+          }
+        },
+        () => openSettingsModal() // 👈 新增：點擊取消時自動切回設定視窗
+      );
     }
 
-    // 🔥 修正 5：清除進度後不彈出身份選擇彈窗，維持原 Google 帳號登入狀態
+    // 清除進度後不彈出身份選擇彈窗，維持原 Google 帳號登入狀態
     function promptClearAccountConfirm() {
       document.getElementById('settings-modal').style.display = 'none';
-      showConfirmModal('🔥 清除帳號進度確認', '⚠️ 此操作將完全刪除您在雲端保存的所有遊戲紀錄並重置，確定要清除嗎？', async () => {
-        if (window.currentUser && typeof window.deleteAccountDataFromCloud === 'function') {
-          await window.deleteAccountDataFromCloud(window.currentUser);
-        }
-        resetToDefaultNewGame();
-        document.getElementById('name-setting-modal').style.display = 'flex';
-        showToast('帳號進度已完全清除，請重新設定暱稱！', 'res');
-      });
+      showConfirmModal(
+        '🔥 清除帳號進度確認',
+        '⚠️ 此操作將完全刪除您在雲端保存的所有遊戲紀錄並重置，確定要清除嗎？',
+        async () => {
+          if (window.currentUser && typeof window.deleteAccountDataFromCloud === 'function') {
+            await window.deleteAccountDataFromCloud(window.currentUser);
+          }
+          resetToDefaultNewGame();
+          document.getElementById('name-setting-modal').style.display = 'flex';
+          showToast('帳號進度已完全清除，請重新設定暱稱！', 'res');
+        },
+        () => openSettingsModal() // 👈 新增：點擊取消時自動切回設定視窗
+      );
     }
 
     function triggerOverdrive() {
@@ -1345,7 +1365,10 @@ function handleEditNameClick() {
       modal.style.display = 'flex';
     }
 
-    function closeCheckpointPanel() { document.getElementById('checkpoint-panel-modal').style.display = 'none'; }
+    function closeCheckpointPanel() {
+      document.getElementById('checkpoint-panel-modal').style.display = 'none';
+      openSettingsModal(); // 👈 新增這行：關閉後自動返回設定視窗
+    }
 
     function selectCheckpointJump(target) {
       closeCheckpointPanel(); pendingJumpWave = target;
