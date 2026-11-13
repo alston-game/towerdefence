@@ -342,13 +342,14 @@
     </div>
 
     <!-- 新增：玩家排行榜成就詳細彈窗 -->
-    <div id="player-achievements-modal" class="modal" style="display:none; align-items:center; justify-content:center;">
-     <div class="modal-content" style="max-width:450px; width:90%; border:2px solid var(--purple); text-align:center;">
+    <div id="player-achievements-modal" class="modal" style="display:none; align-items:center; justify-content:center; z-index: 350;">
+      <div class="modal-content" style="max-width:450px; width:90%; border:2px solid var(--purple); text-align:center;">
         <h3 id="player-ach-modal-title" style="color:var(--primary); margin-top:0;">🏆 玩家成就</h3>
         <div id="player-ach-modal-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(60px, 1fr)); gap:10px; max-height:300px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px; margin-bottom:15px;">
-    <!-- 動態載入玩家成就圖示 -->
+          <!-- 動態載入玩家成就圖示 -->
         </div>
-        <button class="btn" onclick="document.getElementById('achievements-modal').style.display='none'; openAchievementsModal();" style="margin-top:15px; width:100%;">關閉</button>
+        <!-- 修正：關閉當前彈窗並確保排行榜視窗顯示 -->
+        <button class="btn" onclick="document.getElementById('player-achievements-modal').style.display='none'; document.getElementById('leaderboard-modal').style.display='flex';" style="margin-top:15px; width:100%;">關閉</button>
       </div>
     </div>
 
