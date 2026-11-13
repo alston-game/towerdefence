@@ -982,28 +982,37 @@ function handleEditNameClick() {
 }
 
     function confirmPlayerName() {
-  let inputVal = document.getElementById('player-name-input').value.trim();
-  if (!inputVal) inputVal = "玩家";
+      let inputVal = document.getElementById('player-name-input').value.trim();
+      if (!inputVal) inputVal = "玩家";
   
-  // 若已登入 Google 帳號，且此次是透過設定按鈕主動修改名稱（非初次創角取名）
-  if (window.currentUser && window.isEditingNameFromSettings) {
-    window.lastNameChangeTime = Date.now(); // 開始計算一週冷卻時間
-  }
-  window.isEditingNameFromSettings = false;
+      // 若已登入 Google 帳號，且此次是透過設定按鈕主動修改名稱（非初次創角取名）
+      if (window.currentUser && window.isEditingNameFromSettings) {
+        window.lastNameChangeTime = Date.now(); // 開始計算一週冷卻時間
+      }
+      window.isEditingNameFromSettings = false;
 
-  playerName = inputVal;
-  window.playerName = playerName;
+      playerName = inputVal;
+      window.playerName = playerName;
   
-  document.getElementById('name-setting-modal').style.display = 'none';
-  if (typeof updateAuthUI === 'function') updateAuthUI();
-  renderSettingsUserInfoWithEditBtn(); // 👈 同步刷新
+      document.getElementById('name-setting-modal').style.display = 'none';
+      if (typeof updateAuthUI === 'function') updateAuthUI();
+      renderSettingsUserInfoWithEditBtn(); // 👈 同步刷新
   
-  // 若已登入 Google 帳號，立即將新名稱與冷卻時間同步儲存至雲端
-  if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-    window.saveGameToCloud(window.currentUser);
-  }
-  showToast(`玩家暱稱已更新為：${playerName}`, 'res');
-}
+      // 若已登入 Google 帳號，立即將新名稱與冷卻時間同步儲存至雲端
+      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+        window.saveGameToCloud(window.currentUser);
+      }
+      showToast(`玩家暱稱已更新為：${playerName}`, 'res');
+    }
+
+    function cancelPlayerName() {
+      document.getElementById('name-setting-modal').style.display = 'none';
+      // 若是從「遊戲設定」點擊鉛筆按鈕開啟的，取消後自動返回設定視窗
+      if (window.isEditingNameFromSettings) {
+        window.isEditingNameFromSettings = false;
+        document.getElementById('settings-modal').style.display = 'flex';
+      }
+    }
 
     function showConfirmModal(title, msg, onConfirm) {
       document.getElementById('confirm-modal-title').innerText = title;
