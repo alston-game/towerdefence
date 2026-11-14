@@ -3549,13 +3549,6 @@ function handleEditNameClick() {
         if (selectedTower) openTowerOverlay(); else document.getElementById('tower-upgrade-overlay').style.display = 'none';
       });
 
-      window.addEventListener('keydown', (e) => {
-        if (placingType) {
-          if (['Enter', 'NumpadEnter', 'Space'].includes(e.code)) { e.preventDefault(); confirmPlacement(); }
-          else if (e.code === 'Escape') { e.preventDefault(); cancelPlacement(); }
-        } else if (e.code === 'Space') { e.preventDefault(); togglePause(); }
-      });
-
       window.loadSnapshotState = loadSnapshotState;
       window.resetToDefaultNewGame = resetToDefaultNewGame;
       window.unlockedAchievements = unlockedAchievements;
@@ -3574,6 +3567,198 @@ function handleEditNameClick() {
       updateSkillUI(); updateTechUI(); updateSettingsUI(); updateUI();
       requestAnimationFrame(gameLoop);
     };
+    /**
+     * 輔助函數：檢查指定 ID 的彈窗目前是否處於顯示狀態
+     */
+    function isModalOpen(id) {
+      const el = document.getElementById(id);
+      return el && el.style.display !== 'none' && el.style.display !== '';
+    }
+
+    /**
+     * 輔助函數：檢查目前是否有任何「阻擋遊戲操作的彈窗」開啟中
+     */
+    function isAnyModalOpen() {
+      const modalIds = [
+        'welcome-auth-modal',
+        'name-setting-modal',
+        'confirm-action-modal',
+        'wave-jump-confirm-modal',
+        'checkpoint-panel-modal',
+        'player-achievements-modal',
+        'achieve-detail-modal',
+        'achievements-modal',
+        'leaderboard-modal',
+        'settings-modal',
+        'tech-modal',
+        'codex-detail-modal',
+        'codex-modal',
+        'gameover-modal'
+      ];
+      return modalIds.some(id => isModalOpen(id));
+    }
+
+    document.addEventListener('keydown', function (e) {
+      const key = e.key.toLowerCase();
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      const isTyping = activeTag === 'input' || activeTag === 'textarea';
+
+      // ==========================================
+      // 0. 優先處理「放置防禦塔中」的快捷鍵 (保留原本操作習慣)
+      // ==========================================
+      if (placingType) {
+        if (['Enter', 'NumpadEnter', 'Space'].includes(e.code)) {
+          e.preventDefault();
+          confirmPlacement();
+          return;
+        }
+        if (e.code === 'Escape' || e.key === 'Escape') {
+          e.preventDefault();
+          cancelPlacement();
+          return;
+        }
+      }
+
+      // ==========================================
+      // 1. 處理「確認 / 取消」類型的彈窗 (Enter / C / Esc)
+      // ==========================================
+
+      // (A) 設定名稱 / 改名彈窗 (#name-setting-modal)
+      if (isModalOpen('name-setting-modal')) {
+        if (e.key === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault();
+          confirmPlayerName();
+          return;
+        }
+        // 按 Esc 無論是否在輸入框都能取消；按 C 僅在「未聚焦輸入框」時觸發取消（避免無法輸入英文字母 c）
+        if (e.key === 'Escape' || (key === 'c' && !isTyping)) {
+          e.preventDefault();
+          cancelPlayerName();
+          return;
+        }
+        return;
+      }
+
+      // (B) 登出 / 清除帳號進度確認彈窗 (#confirm-action-modal)
+      if (isModalOpen('confirm-action-modal')) {
+        if (e.key === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault();
+          const yesBtn = document.getElementById('confirm-modal-yes-btn');
+          if (yesBtn) yesBtn.click();
+          return;
+        }
+        if (key === 'c' || e.key === 'Escape') {
+          e.preventDefault();
+          closeConfirmModal();
+          return;
+        }
+        return;
+      }
+
+      // (C) 跳回波次確認彈窗 (#wave-jump-confirm-modal)
+      if (isModalOpen('wave-jump-confirm-modal')) {
+        if (e.key === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault();
+          confirmWaveJump();
+          return;
+        }
+        if (key === 'c' || e.key === 'Escape') {
+          e.preventDefault();
+          cancelWaveJump();
+          return;
+        }
+        return;
+      }
+
+      // 若正在其他輸入框打字，不觸發下方快捷鍵
+      if (isTyping) return;
+
+      // ==========================================
+      // 2. Esc 鍵：階層式自動返回上一層彈窗（由最上層往下判斷）
+      // ==========================================
+      if (e.key === 'Escape') {
+        // (1) 排行榜內「玩家個人成就詳情」 -> 返回「玩家排行榜」
+        if (isModalOpen('player-achievements-modal')) {
+          e.preventDefault();
+          switchModal('player-achievements-modal', 'leaderboard-modal');
+          return;
+        }
+        // (2) 玩家排行榜 -> 返回「設定」
+        if (isModalOpen('leaderboard-modal')) {
+          e.preventDefault();
+          switchModal('leaderboard-modal', 'settings-modal');
+          return;
+        }
+        // (3) 玩家成就單項詳情 -> 關閉詳情（保留底下的玩家成就列表）
+        if (isModalOpen('achieve-detail-modal')) {
+          e.preventDefault();
+          switchModal('achieve-detail-modal', null);
+          return;
+        }
+        // (4) 玩家成就列表 -> 返回「設定」
+        if (isModalOpen('achievements-modal')) {
+          e.preventDefault();
+          switchModal('achievements-modal', 'settings-modal');
+          return;
+        }
+        // (5) 跳回存檔點列表 -> 返回「設定」
+        if (isModalOpen('checkpoint-panel-modal')) {
+          e.preventDefault();
+          closeCheckpointPanel();
+          return;
+        }
+        // (6) 主設定視窗 -> 關閉並回到遊戲
+        if (isModalOpen('settings-modal')) {
+          e.preventDefault();
+          switchModal('settings-modal', null);
+          return;
+        }
+        // (7) 敵人圖鑑單項詳情 -> 關閉詳情（保留底下的敵人圖鑑列表）
+        if (isModalOpen('codex-detail-modal')) {
+          e.preventDefault();
+          switchModal('codex-detail-modal', null);
+          return;
+        }
+        // (8) 敵人圖鑑列表 -> 關閉並回到遊戲
+        if (isModalOpen('codex-modal')) {
+          e.preventDefault();
+          switchModal('codex-modal', null);
+          return;
+        }
+        // (9) 全局科技 -> 關閉並回到遊戲
+        if (isModalOpen('tech-modal')) {
+          e.preventDefault();
+          switchModal('tech-modal', null);
+          return;
+        }
+      }
+
+      // ==========================================
+      // 3. 戰鬥與波次操作快捷鍵（僅在沒有任何彈窗遮擋時生效）
+      // ==========================================
+      if (!isAnyModalOpen()) {
+        // [S] 開始波次
+        if (key === 's') {
+          e.preventDefault();
+          startWave();
+          return;
+        }
+
+        // [Space 空白鍵] 暫停 / 繼續遊戲
+        if (e.code === 'Space' || e.key === ' ') {
+          e.preventDefault();
+          togglePause();
+          return;
+        }
+
+        // [F] 切換遊戲倍速 (1x / 2x / 4x / 8x)
+        if (key === 'f') {
+          e.preventDefault();
+          toggleSpeed();
+          return;
+        }
+      }
+    });
   </script>
 </body>
 </html>
