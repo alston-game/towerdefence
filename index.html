@@ -243,8 +243,8 @@
         <input type="text" id="player-name-input" placeholder="請輸入暱稱..." maxlength="12" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:#12131C; color:#fff; font-size:14px; margin-bottom:15px; outline:none;" />
         <!-- 修改處：將單一按鈕改為 flex 並排，新增取消按鈕 -->
         <div style="display:flex; gap:10px; justify-content:center;">
-          <button class="btn btn-primary" onclick="confirmPlayerName()" style="flex:1;">確認暱稱</button>
-          <button class="btn" onclick="cancelPlayerName()" style="flex:1;">取消</button>
+          <button class="btn btn-primary" onclick="confirmPlayerName()" style="flex:1;">確認暱稱 [Enter]</button>
+          <button class="btn" onclick="cancelPlayerName()" style="flex:1;">取消 [C]</button>
         </div>
       </div>
     </div>
@@ -255,8 +255,8 @@
         <h3 style="color:var(--danger); margin-bottom:10px;" id="confirm-modal-title">⚠️ 操作確認</h3>
         <p style="font-size:13px; color:#ddd; margin-bottom:20px; line-height:1.5;" id="confirm-modal-msg">您確定要執行此操作嗎？</p>
         <div style="display:flex; gap:10px; justify-content:center;">
-          <button class="btn btn-danger" id="confirm-modal-yes-btn" style="flex:1;">確定執行</button>
-          <button class="btn" onclick="closeConfirmModal()" style="flex:1;">取消</button>
+          <button class="btn btn-danger" id="confirm-modal-yes-btn" style="flex:1;">確定執行 [Enter]</button>
+          <button class="btn" onclick="closeConfirmModal()" style="flex:1;">取消 [C]</button>
         </div>
       </div>
     </div>
@@ -304,7 +304,7 @@
           <button class="btn" id="settings-clear-btn" onclick="promptClearAccountConfirm()" style="width:100%; display:none; background:#aa0000; color:#fff; border:none;">🔥 清除帳號進度</button>
         </div>
 
-        <button class="btn" onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉設定</button>
+        <button class="btn" onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉設定 [Esc]</button>
       </div>
     </div>
 
@@ -314,7 +314,7 @@
         <h3 style="color:var(--yellow); margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">🎖️ 玩家成就</h3>
         <p style="font-size:11px; color:#aaa;">點擊圓形圖示可查看成就詳情與領取獎勵</p>
         <div class="achieve-grid" id="achieve-grid-container"></div>
-        <button class="btn" onclick="switchModal('achievements-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('achievements-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -326,7 +326,7 @@
         <div id="ach-detail-type" style="font-size:11px; font-weight:bold; margin-bottom:10px;"></div>
         <p id="ach-detail-desc" style="font-size:12px; color:#ddd; margin-bottom:15px; line-height:1.4;"></p>
         <div id="ach-detail-reward" style="font-size:13px; color:var(--yellow); font-weight:bold; margin-bottom:15px;"></div>
-        <button class="btn" onclick="document.getElementById('achieve-detail-modal').style.display='none'" style="width:100%;">關閉</button>
+        <button class="btn" onclick="document.getElementById('achieve-detail-modal').style.display='none'" style="width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -337,7 +337,7 @@
         <div class="leaderboard-list" id="leaderboard-list-container">
           <div style="text-align:center; color:#888; padding:15px;">數據更新中...</div>
         </div>
-        <button class="btn" onclick="switchModal('leaderboard-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('leaderboard-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -349,7 +349,7 @@
           <!-- 動態載入玩家成就圖示 -->
         </div>
         <!-- 修正：關閉當前彈窗並確保排行榜視窗顯示 -->
-        <button class="btn" onclick="switchModal('player-achievements-modal', 'leaderboard-modal')" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="switchModal('player-achievements-modal', 'leaderboard-modal')" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -358,7 +358,7 @@
         <h3 style="color:var(--cyan); margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">📜 歷史波次存檔選擇</h3>
         <p style="font-size:12px; color:#a0a0a0;">請選擇要載入的歷史存檔點或選擇從頭開始：</p>
         <div class="checkpoint-grid" id="checkpoint-grid-list"></div>
-        <button class="btn" onclick="closeCheckpointPanel()" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="closeCheckpointPanel()" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -366,7 +366,7 @@
       <div class="modal-content">
         <h3 style="color:var(--cyan); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">💎 全局科技</h3>
         <div id="tech-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-        <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -374,7 +374,7 @@
       <div class="modal-content">
         <h3 style="color:var(--purple); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">📖 敵人圖鑑</h3>
         <div class="codex-grid" id="codex-grid-container"></div>
-        <button class="btn" onclick="document.getElementById('codex-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉</button>
+        <button class="btn" onclick="document.getElementById('codex-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -390,7 +390,7 @@
           <div style="font-size:12px; font-weight:bold; color:var(--orange); margin-bottom:4px;">🛡️ 第二區：抗性與技能</div>
           <div id="cd-sec2" style="font-size:11px; line-height:1.5; color:#f8f8f2;"></div>
         </div>
-        <button class="btn" onclick="document.getElementById('codex-detail-modal').style.display='none'" style="width:100%;">關閉</button>
+        <button class="btn" onclick="document.getElementById('codex-detail-modal').style.display='none'" style="width:100%;">關閉 [Esc]</button>
       </div>
     </div>
 
@@ -399,8 +399,8 @@
         <h3 style="color:var(--orange); margin-bottom:12px;">⚠️ 狀態跳轉確認</h3>
         <p id="jump-confirm-text" style="font-size:13px; color:#f8f8f2; line-height:1.5; margin-bottom:20px;"></p>
         <div style="display:flex; gap:12px; justify-content:center;">
-          <button class="btn btn-primary" onclick="confirmWaveJump()" style="flex:1;">是 (確定執行)</button>
-          <button class="btn btn-danger" onclick="cancelWaveJump()" style="flex:1;">否 (確定取消)</button>
+          <button class="btn btn-primary" onclick="confirmWaveJump()" style="flex:1;">是 (確定執行) [Enter]</button>
+          <button class="btn btn-danger" onclick="cancelWaveJump()" style="flex:1;">否 (確定取消) [C]</button>
         </div>
       </div>
     </div>
@@ -415,10 +415,10 @@
   </div>
 
   <div id="controls-bar">
-    <button class="btn btn-primary" id="start-wave-btn" onclick="startWave()">▶ 開始波次</button>
+    <button class="btn btn-primary" id="start-wave-btn" onclick="startWave()">▶ 開始波次 [S]</button>
     <button class="btn" id="auto-wave-btn" onclick="toggleAutoWave()">🔄 自動波次: 關</button>
-    <button class="btn" id="pause-btn" onclick="togglePause()">⏸ 暫停</button>
-    <button class="btn" id="speed-btn" onclick="toggleSpeed()">⚡ 1x 速度</button>
+    <button class="btn" id="pause-btn" onclick="togglePause()">⏸ 暫停 [Space]</button>
+    <button class="btn" id="speed-btn" onclick="toggleSpeed()">⚡ 1x 速度 [F]</button>
     <button class="btn" onclick="openTechModal()" style="background:var(--purple); color:#1a1a24;">💎 全局科技</button>
     <button class="btn" id="codex-btn" onclick="openCodexModalWithPause()" style="background:var(--cyan); color:#1a1a24;">
       📖 敵人圖鑑
@@ -1104,7 +1104,7 @@ function handleEditNameClick() {
     function pauseGameIfRunning() {
       if (waveInProgress && !isPaused) {
         isPaused = true;
-        document.getElementById('pause-btn').innerText = '▶ 繼續';
+        document.getElementById('pause-btn').innerText = '▶ 繼續 [Space]';
       }
     }
 
@@ -1544,12 +1544,12 @@ function handleEditNameClick() {
 
     function togglePause() {
       isPaused = !isPaused;
-      document.getElementById('pause-btn').innerText = isPaused ? '▶ 繼續' : '⏸ 暫停';
+      document.getElementById('pause-btn').innerText = isPaused ? '▶ 繼續 [Space]' : '⏸ 暫停 [Space]';
     }
 
     function toggleSpeed() {
       gameSpeed = gameSpeed === 1 ? 2 : (gameSpeed === 2 ? 4 : (gameSpeed === 4 ? 8 : 1));
-      document.getElementById('speed-btn').innerText = `⚡ ${gameSpeed}x 速度`;
+      document.getElementById('speed-btn').innerText = `⚡ ${gameSpeed}x 速度 [F]`;
     }
 
     function updateUI() {
@@ -1870,7 +1870,7 @@ function handleEditNameClick() {
       if (waveInProgress) return;
       if (isPaused) {
         isPaused = false;
-        document.getElementById('pause-btn').innerText = '⏸ 暫停';
+        document.getElementById('pause-btn').innerText = '⏸ 暫停 [Space]';
       }
       
       waveInProgress = true; 
