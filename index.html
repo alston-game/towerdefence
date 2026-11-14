@@ -2156,8 +2156,8 @@ function handleEditNameClick() {
     }
 
     function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
-      let size = enemyType === 'boss' ? 18 : ((enemyType.startsWith('scout')) ? 7 : ((enemyType.startsWith('heavy') || enemyType === 'warlock') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10))));
-      let color = enemyType === 'boss' ? '#ff5555' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))));
+      let size = enemyType === 'boss' ? 18 : (enemyType === 'general' ? 15 : ((enemyType.startsWith('scout')) ? 7 : ((enemyType.startsWith('heavy') || enemyType === 'warlock') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10)))));
+      let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c'))))));
       
       cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
       
@@ -2184,6 +2184,10 @@ function handleEditNameClick() {
 
       if (enemyType === 'priest' || enemyType === 'monk') {
         cCtx.fillStyle = '#f1fa8c'; cCtx.font = 'bold 12px sans-serif'; cCtx.fillText('★', cx - 5, cy + 4);
+      }
+      if (enemyType === 'general') {
+        cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+        cCtx.fillStyle = '#fff200'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
       }
     }
 
@@ -2367,8 +2371,10 @@ function handleEditNameClick() {
           enemy.marks = [];
         }
 
+        if (enemy.isTwoStar) {
+          waveStarEnemyKills += 2; // 2星敵人通關時額外提供 2 顆鑽石加成
         if (enemy.isStar) {
-          waveStarEnemyKills++;
+          waveStarEnemyKills += 1;
         }
 
         let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12);
@@ -2469,15 +2475,17 @@ function handleEditNameClick() {
           let newEnemy = {
             id: Date.now() + Math.random(), type: eData.type, x: path[0].x, y: path[0].y,
             hp: eData.hp, maxHp: eData.hp, atk: eData.atk || 10, speed: eData.speed, baseSpeed: eData.baseSpeed || eData.speed, gold: eData.gold,
-            freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : (eData.type.startsWith('scout') ? 0.8 : 1.0),
-            paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : 1.0,
+            freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : (eData.type.startsWith('scout') || eData.type === 'general' ? 0.8 : 1.0),
+            paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : (eData.type === 'general' ? 0.8 : 1.0),
             paralyzeImmunity: !!eData.paralyzeImmunity,
-            knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : 1.0,
+            knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'general' ? 0.8 : 1.0),
             pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0, dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
             beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 35, blessTimer: 0, blessRadius: eData.blessRadius || 30,
             resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10,
-            cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false, isStar: !!eData.isStar, isEnraged: false,
+            hasteSkillTimer: 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0,
+            cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
+            isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isEnraged: false,
             marks: []
           };
           enemies.push(newEnemy);
@@ -2599,7 +2607,7 @@ function handleEditNameClick() {
           speedMult = 0;
         } else if (e.freezeTimer > 0) {
           e.freezeTimer -= dt;
-          speedMult = (e.type === 'boss') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
+          speedMult = (e.type === 'boss' || e.type === 'general') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
           isBlizzardActive = true;
         }
         if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
@@ -2632,6 +2640,28 @@ function handleEditNameClick() {
             e.chargeTimer -= dt;
             if (e.chargeTimer <= 0) e.isCharging = false;
             else speedMult *= 3.0;
+          }
+          // 受到將軍【疾行軍令】加速狀態
+          if (e.hasteBuffTimer > 0) {
+            e.hasteBuffTimer -= dt;
+            speedMult *= 1.25;
+          }
+
+          // ★★ 將軍技能：每 6 秒使範圍 60px 內的敵人移速加快 25%，持續 3 秒
+          if (e.type === 'general' && e.stunTimer <= 0) {
+            e.hasteSkillTimer = (e.hasteSkillTimer || 0) + dt;
+            if (e.hasteSkillTimer >= 6.0) {
+              e.hasteSkillTimer = 0;
+              enemies.forEach(other => {
+                if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= (e.hasteRadius || 60)) {
+                  other.hasteBuffTimer = Math.max(other.hasteBuffTimer || 0, 3.0);
+                }
+              });
+              addFloatingText(e.x, e.y - 18, '疾行軍令!', '#ffaa00', 13);
+              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
+                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: e.hasteRadius || 60, color: '#ffaa00', life: 0.5, maxLife: 0.5 });
+              }
+            }
           }
 
           if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
@@ -3346,8 +3376,8 @@ function handleEditNameClick() {
       }
       
       enemies.forEach(e => {
-        let color = e.type === 'boss' ? '#ff5555' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))));
-        let size = e.type === 'boss' ? 18 : ((e.type.startsWith('scout')) ? 7 : ((e.type.startsWith('heavy') || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10))));
+        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'general' ? '#ff8800' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))));
+        let size = e.type === 'boss' ? 18 : (e.type === 'general' ? 15 : ((e.type.startsWith('scout')) ? 7 : ((e.type.startsWith('heavy') || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10)))));
         
         if (e.isCharging) color = '#e5e4e2';
 
@@ -3388,6 +3418,11 @@ function handleEditNameClick() {
           ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4);
         }
+        else if (e.type === 'general') {
+          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#fff200'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
+        }
+        if (e.hasteBuffTimer > 0) { ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5; ctx.stroke(); }
 
         if (e.isStar && !e.type.startsWith('soldier2') && e.type !== 'warlock') { ctx.fillStyle = '#f1fa8c'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4); }
         
