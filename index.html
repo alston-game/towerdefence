@@ -1403,7 +1403,10 @@ function handleEditNameClick() {
     }
 
     function selectCheckpointJump(target) {
-      closeCheckpointPanel(); pendingJumpWave = target;
+      // 修改處：僅單純隱藏存檔點選擇視窗，不要呼叫會打開設定的 closeCheckpointPanel()
+      document.getElementById('checkpoint-panel-modal').style.display = 'none';
+      
+      pendingJumpWave = target;
       if (target === 'restart') {
         document.getElementById('jump-confirm-text').innerText = `你是否要從頭開始？\n（選擇「是」後即無法再回到當前第 ${currentWave} 波）`;
       } else {
@@ -1431,7 +1434,8 @@ function handleEditNameClick() {
     }
 
     function cancelWaveJump() {
-      document.getElementById('wave-jump-confirm-modal').style.display = 'none';
+      // 修改處：點擊取消確認後，使用 switchModal 關閉確認視窗並重新打開「跳回存檔點」視窗
+      switchModal('wave-jump-confirm-modal', 'checkpoint-panel-modal');
       pendingJumpWave = null;
     }
 
