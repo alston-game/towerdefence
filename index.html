@@ -829,6 +829,7 @@ window.updateAuthUI = updateAuthUI;
       { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' }, { id: 'heavy1', name: '1號坦克', group: '1號' },
       { id: 'soldier2', name: '2號士兵', group: '2號' }, { id: 'scout2', name: '2號刺客', group: '2號' }, { id: 'heavy2', name: '2號坦克', group: '2號' },
       { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'warlock', name: '★ 巫師', group: '1星' },
+      { id: 'general', name: '★★ 將軍', group: '2星' },
       { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }
     ];
 
@@ -1336,18 +1337,19 @@ function handleEditNameClick() {
     function showEnemyIntro(type) {
       const popup = document.getElementById('enemy-intro-popup');
       const intros = {
-        normal: ['0號士兵', '普通基礎敵人，各項能力均衡。\n攻擊力: 10/1s | 速度: 51px/1s'],
-        scout: ['0號刺客', '特色：移動速度較快、生命值較低、冰凍效果減免 20%。\n攻擊力: 7/1s | 速度: 153px/1s'],
-        heavy: ['0號坦克', '特色：移動速度較慢、生命值較高、免疫麻痺。\n攻擊力: 15/1s | 速度: 25.5px/1s'],
+        normal: ['0號士兵', '普通基礎敵人，各項能力均衡。'],
+        scout: ['0號刺客', '特色：移動速度較快、生命值較低、冰凍效果減免 20%。],
+        heavy: ['0號坦克', '特色：移動速度較慢、生命值較高、免疫麻痺。'],
         soldier1: ['1號士兵', '特色：生命值為0號士兵的1.2倍。\n技能【淨化】：每4秒免疫所有負面狀態1秒。'],
         scout1: ['1號刺客', '特色：生命值為0號刺客的1.2倍。\n技能【閃避】：受到傷害時有65%機率完全免疫傷害。'],
         heavy1: ['1號坦克', '特色：生命值為0號坦克的1.2倍，免疫麻痺。\n技能【自癒】：每秒恢復5%最大生命值。'],
         soldier2: ['2號士兵', '特色：生命值為0號士兵的1.3倍。\n技能【衝鋒陣線】：每4秒免疫所有負面狀態並提升200%移動速度，持續1秒。'],
         scout2: ['2號刺客', '特色：生命值為0號刺客的1.3倍。\n技能：受傷時65%機率完全免疫傷害，若成功閃避則有8%機率向前瞬移5px。'],
         heavy2: ['2號坦克', '特色：生命值為0號坦克的1.3倍，免疫麻痺。\n技能【二度甦醒】：每秒恢復5%最大生命值；死亡時以40%生命值原地復活一次（復活後技能失效）。'],
-        priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍35內盟友15%最大生命值。'],
-        monk: ['★ 祭司', '特色：一星敵人。移動速度36px/1s，生命值為0號的3.5倍。\n技能【祝福】：每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
+        priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍35px內盟友15%最大生命值。'],
+        monk: ['★ 祭司', '特色：生命值高，移動速度稍慢。\n技能【祝福】：每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
         warlock: ['★ 巫師', '特色：生命值高、移動速度慢的敵人。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。']
+        general: ['★★ 將軍', '特色：生命值高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -1831,6 +1833,15 @@ function handleEditNameClick() {
         let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, w - 51) / 5) * 2);
         skills = `【復生】每6秒復活死亡敵人(Boss除外)，最多復活${reviveCap}名`;
       }
+      else if (type === 'general') {
+        hp = (baseHp * 3) * 4; // 0號坦克的4倍
+        atk = baseAtk * 1.8;
+        speed = 1.00; // 比0號士兵(0.85)稍快
+        atkSpeedStr = `${Math.floor(atk)}/1s`;
+        moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`;
+        resistances = '所有負面狀態效果降低 20%';
+        skills = '【疾行軍令】每6秒使範圍60px內的敵人移速加快25%，持續3秒';
+      }
       else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
@@ -1881,28 +1892,33 @@ function handleEditNameClick() {
       let count = Math.floor(8 + currentWave * 1.5 + Math.pow(currentWave, 1.1) * 0.2);
       spawnInterval = Math.max(0.2, Math.min(1.0, 55 / count));
       
-      let priestNum = currentWave >= 21 ? Math.floor((currentWave - 21) / 10) + 1 : 0;
+      let priestNum = currentWave >= 21 ? Math.min(10, Math.floor((currentWave - 21) / 5) + 1) : 0;
       let monkNum = currentWave >= 31 ? Math.min(10, Math.floor((currentWave - 31) / 5) + 1) : 0;
       let warlockNum = currentWave >= 51 ? Math.min(10, Math.floor((currentWave - 51) / 5) + 1) : 0;
+      let generalNum = currentWave >= 66 ? Math.min(8, Math.floor((currentWave - 66) / 5) + 1) : 0;
 
-      let totalSpecial = priestNum + monkNum + warlockNum, specialIndicesMap = new Map();
+      let totalSpecial = priestNum + monkNum + warlockNum + generalNum, specialIndicesMap = new Map();
       if (totalSpecial > 0) {
         let specialTypes = [];
-        let pCount = priestNum, mCount = monkNum, wCount = warlockNum;
+        let pCount = priestNum, mCount = monkNum, wCount = warlockNum, gCount = generalNum;
         for (let k = 0; k < totalSpecial; k++) {
-          let mod = k % 3;
+          let mod = k % 4;
           if (mod === 0) {
-            let selected = pCount > 0 ? 'priest' : (mCount > 0 ? 'monk' : 'warlock');
+            let selected = pCount > 0 ? 'priest' : (mCount > 0 ? 'monk' : (wCount > 0 ? 'warlock' : 'general'));
             specialTypes.push(selected);
-            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else wCount--;
+            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else if (selected === 'warlock') wCount--; else gCount--;
           } else if (mod === 1) {
-            let selected = mCount > 0 ? 'monk' : (wCount > 0 ? 'warlock' : 'priest');
+            let selected = mCount > 0 ? 'monk' : (wCount > 0 ? 'warlock' : (gCount > 0 ? 'general' : 'priest'));
             specialTypes.push(selected);
-            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else wCount--;
+            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else if (selected === 'warlock') wCount--; else gCount--;
+          } else if (mod === 2) {
+            let selected = wCount > 0 ? 'warlock' : (gCount > 0 ? 'general' : (pCount > 0 ? 'priest' : 'monk'));
+            specialTypes.push(selected);
+            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else if (selected === 'warlock') wCount--; else gCount--;
           } else {
-            let selected = wCount > 0 ? 'warlock' : (pCount > 0 ? 'priest' : 'monk');
+            let selected = gCount > 0 ? 'general' : (pCount > 0 ? 'priest' : (mCount > 0 ? 'monk' : 'warlock'));
             specialTypes.push(selected);
-            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else wCount--;
+            if (selected === 'priest') pCount--; else if (selected === 'monk') mCount--; else if (selected === 'warlock') wCount--; else gCount--;
           }
         }
         for (let k = 1; k <= totalSpecial; k++) {
@@ -1917,10 +1933,17 @@ function handleEditNameClick() {
           let sType = specialIndicesMap.get(i);
           let stats = getEnemyStatsForWave(sType, currentWave);
           let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 51) / 5) * 2);
+          let goldMult = sType === 'general' ? 3.5 : (sType === 'priest' ? 2 : 2.5);
           waveSpawnQueue.push({
-            type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * (sType === 'priest' ? 2 : 2.5),
+            type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * goldMult,
             healTimer: 0, healRadius: 35, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5),
-            resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: reviveCap, isStar: true
+            resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: reviveCap,
+            hasteSkillTimer: 0, hasteRadius: 60,
+            freezeEffectiveness: sType === 'general' ? 0.8 : 1.0,
+            paralyzeEffectiveness: sType === 'general' ? 0.8 : 1.0,
+            knockbackEffectiveness: sType === 'general' ? 0.8 : 1.0,
+            isStar: sType !== 'general',
+            isTwoStar: sType === 'general'
           });
           continue;
         }
@@ -1937,14 +1960,14 @@ function handleEditNameClick() {
           }
         } else if (baseCategory === 'scout') {
           enemySpawnCounters.scout++;
-          if (currentWave >= 66 && (enemySpawnCounters.scout % 10 < 7)) {
+          if (currentWave >= 71 && (enemySpawnCounters.scout % 10 < 7)) {
             finalType = 'scout2';
           } else if (currentWave >= 41 && (enemySpawnCounters.scout % 2 === 0)) {
             finalType = 'scout1';
           }
         } else if (baseCategory === 'heavy') {
           enemySpawnCounters.heavy++;
-          if (currentWave >= 71 && (enemySpawnCounters.heavy % 10 < 7)) {
+          if (currentWave >= 81 && (enemySpawnCounters.heavy % 10 < 7)) {
             finalType = 'heavy2';
           } else if (currentWave >= 46 && (enemySpawnCounters.heavy % 2 === 0)) {
             finalType = 'heavy1';
@@ -2366,7 +2389,8 @@ function handleEditNameClick() {
 
     function applyKnockback(enemy, distPx) {
       if (enemy.dead) return;
-      let effectiveDist = distPx * (enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : 1.0);
+      let kbEff = enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : (enemy.type === 'general' ? 0.8 : 1.0);
+      let effectiveDist = distPx * kbEff;
       enemy.knockback = { totalDist: effectiveDist, remDist: effectiveDist, duration: 0.5, timer: 0.5 };
     }
 
@@ -3044,7 +3068,7 @@ function handleEditNameClick() {
               takeDamage(hitEnemy, currentDmg, ve.tower); playSound('zap');
               
               if (!hitEnemy.paralyzeImmunity && hitEnemy.immuneTimer <= 0) {
-                let eff = hitEnemy.paralyzeEffectiveness !== undefined ? hitEnemy.paralyzeEffectiveness : 1.0;
+                let eff = hitEnemy.paralyzeEffectiveness !== undefined ? hitEnemy.paralyzeEffectiveness : (hitEnemy.type === 'general' ? 0.8 : 1.0);
                 hitEnemy.stunTimer = Math.max(hitEnemy.stunTimer || 0, 0.2 * eff);
               }
 
