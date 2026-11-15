@@ -732,7 +732,7 @@ window.updateAuthUI = updateAuthUI;
     const TOWER_TYPES = {
       arrow:      { name: '精準箭塔', cost: 100, range: 140, damage: 30, cd: 0.6, color: '#50fa7b', specName: '遠距增傷', desc: '單體遠程。距離每+10px傷害提高5%', baseDps: 50, breakThreshold: 200000, targetType: 'damage' },
       cannon:     { name: '重型砲塔', cost: 160, range: 110, damage: 75, cd: 1.4, color: '#ff5555', specName: '爆炸範圍', desc: '範圍爆破傷害。初始範圍40，專屬升級+5', baseDps: 53.57, breakThreshold: 642000, targetType: 'damage' },
-      frost:      { name: '寒冰法塔', cost: 130, range: 120, damage: 12, cd: 0.9, color: '#8be9fd', specName: '冰凍時間', desc: '減速敵人。專屬升級每次+0.5秒冰凍時間', baseDps: 13.33, breakThreshold: 53000, targetType: 'damage' },
+      frost:      { name: '寒冰法塔', cost: 130, range: 120, damage: 12, cd: 0.9, color: '#8be9fd', specName: '冰凍時間', desc: '減速敵人。專屬升級每次+0.5秒冰凍時間', baseDps: 13.33, breakThreshold: 63600, targetType: 'damage' },
       tesla:      { name: '特斯拉電塔', cost: 220, range: 130, damage: 40, cd: 1.1, color: '#bd93f9', specName: '連鎖彈跳', desc: '發射可彈跳的閃電，命中麻痺敵人0.2秒，專屬升級+1次彈跳', baseDps: 36.36, breakThreshold: 850000, targetType: 'damage' },
       gold:       { name: '點金之塔', cost: 200, range: 0,   damage: 0,  cd: 4.0, color: '#f1fa8c', specName: '產金量提升', desc: '戰鬥中持續生產金幣 (限建5座)', baseDps: 1, breakThreshold: 75000, targetType: 'gold' },
       knockback:  { name: '震盪重錘', cost: 320, range: 50,  damage: 180, cd: 2.5, color: '#ffb86c', specName: '擊退距離', desc: '高傷慢速向下重壓擊退範圍敵人。升級+1距離', baseDps: 72, breakThreshold: 144000, targetType: 'damage' },
@@ -1282,8 +1282,8 @@ function handleEditNameClick() {
         soldier2: ['2號士兵', '特色：生命值為0號士兵的1.3倍。\n技能【衝鋒陣線】：每4秒免疫所有負面狀態並提升200%移動速度，持續1秒。'],
         scout2: ['2號刺客', '特色：生命值為0號刺客的1.3倍。\n技能：受傷時65%機率完全免疫傷害，若成功閃避則有8%機率向前瞬移5px。'],
         heavy2: ['2號坦克', '特色：生命值為0號坦克的1.3倍，免疫麻痺。\n技能【二度甦醒】：每秒恢復5%最大生命值；死亡時以40%生命值原地復活一次（復活後技能失效）。'],
-        priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍35px內盟友15%最大生命值。'],
-        monk: ['★ 祭司', '特色：生命值高，移動速度稍慢。\n技能【祝福】：每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
+        priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍45px內盟友15%最大生命值。'],
+        monk: ['★ 祭司', '特色：生命值高，移動速度稍慢。\n技能【祝福】：每7秒為範圍30~55px內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
         warlock: ['★ 巫師', '特色：生命值高、移動速度慢的敵人。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。'],
         general: ['★★ 將軍', '特色：生命值高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。']
       };
@@ -1761,15 +1761,18 @@ function handleEditNameClick() {
       else if (type === 'heavy') { hp = baseHp * 3; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; atkSpeedStr = `${Math.floor(baseAtk * 1.5)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`; }
       else if (type === 'heavy1') { hp = baseHp * 3 * 1.2; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; atkSpeedStr = `${Math.floor(baseAtk * 1.5)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`; skills = '【自癒】每秒恢復 5% 最大生命值'; }
       else if (type === 'heavy2') { hp = baseHp * 3 * 1.3; atk = baseAtk * 1.5; speed = 0.425; resistances = '免疫麻痺'; atkSpeedStr = `${Math.floor(baseAtk * 1.5)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`; skills = '【二度甦醒】每秒恢復5%最大生命值；死亡時以40%生命值原地復活一次（復活後技能失效）'; }
-      else if (type === 'priest') { hp = baseHp * 4.0; atk = baseAtk * 1.2; speed = 0.70; atkSpeedStr = `${Math.floor(baseAtk * 1.2)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`; skills = '【治癒】每5秒治療範圍35內盟友15%最大生命值'; }
-      else if (type === 'monk') { hp = baseHp * 3.5; atk = baseAtk * 1.5; speed = 0.60; atkSpeedStr = `${Math.floor(baseAtk * 1.5)}/1s`; moveSpeedPxStr = `36px/1s`; skills = `【祝福】每7秒為範圍內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒`; }
-      else if (type === 'warlock') {
+      else if (type === 'priest') { hp = baseHp * 4.0; atk = baseAtk * 1.2; speed = 0.70; atkSpeedStr = `${Math.floor(baseAtk * 1.2)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`; skills = '【治癒】每5秒治療範圍45px內盟友15%最大生命值'; }
+      else if (type === 'monk') {
+        hp = baseHp * 3.5; atk = baseAtk * 1.5; speed = 0.60;
+        atkSpeedStr = `${Math.floor(baseAtk * 1.5)}/1s`; moveSpeedPxStr = `36px/1s`;
+        let blessR = Math.min(55, 30 + Math.floor(Math.max(0, w - 31) / 5) * 5);
+        skills = `【祝福】每7秒為範圍${blessR}px內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒`;
+      }else if (type === 'warlock') {
         hp = (baseHp * 3) * 1.5; atk = (baseAtk * 1.5) * 0.5; speed = 0.40;
         atkSpeedStr = `${Math.floor(atk)}/1s`; moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`;
         let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, w - 51) / 5) * 2);
         skills = `【復生】每6秒復活死亡敵人(Boss除外)，最多復活${reviveCap}名`;
-      }
-      else if (type === 'general') {
+      }else if (type === 'general') {
         hp = (baseHp * 3) * 4; // 0號坦克的4倍
         atk = baseAtk * 1.8;
         speed = 1.00; // 比0號士兵(0.85)稍快
@@ -1777,8 +1780,7 @@ function handleEditNameClick() {
         moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`;
         resistances = '所有負面狀態效果降低 20%';
         skills = '【疾行軍令】每6秒使範圍60px內的敵人移速加快25%，持續3秒';
-      }
-      else if (type === 'boss') {
+      }else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
         else if (w >= 31) hp *= (1 + 0.8 + (w - 30) * 0.095);
@@ -1872,7 +1874,7 @@ function handleEditNameClick() {
           let goldMult = sType === 'general' ? 3.5 : (sType === 'priest' ? 2 : 2.5);
           waveSpawnQueue.push({
             type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * goldMult,
-            healTimer: 0, healRadius: 35, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5),
+            healTimer: 0, healRadius: 45, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5),
             resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: reviveCap,
             hasteSkillTimer: 0, hasteRadius: 60,
             freezeEffectiveness: sType === 'general' ? 0.8 : 1.0,
@@ -2417,7 +2419,7 @@ function handleEditNameClick() {
             knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'general' ? 0.8 : 1.0),
             pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0, dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
-            beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 35, blessTimer: 0, blessRadius: eData.blessRadius || 30,
+            beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 45, blessTimer: 0, blessRadius: eData.blessRadius || 30,
             resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10,
             hasteSkillTimer: 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0,
             cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
@@ -2595,7 +2597,7 @@ function handleEditNameClick() {
               });
               addFloatingText(e.x, e.y - 18, '疾行軍令!', '#ffaa00', 13);
               if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
-                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: e.hasteRadius || 60, color: '#ffaa00', life: 0.5, maxLife: 0.5 });
+                activeVisualEffects.push({ type: 'generalPulse', x: e.x, y: e.y, r: e.hasteRadius || 60, life: 0.55, maxLife: 0.55 });
               }
             }
           }
@@ -3472,7 +3474,17 @@ function handleEditNameClick() {
             ctx.strokeStyle = ve.color || (ve.type === 'healPulse' ? `rgba(80, 250, 123, ${alpha})` : `rgba(139, 233, 253, ${alpha})`);
             ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(ve.x, ve.y, ve.r * (1 - alpha * 0.2), 0, Math.PI * 2); ctx.stroke();
-          } else if (ve.type === 'teslaChainProcess' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
+          } else if (ve.type === 'generalPulse' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2)) {
+            let curR = ve.r * (1 - alpha * 0.2);
+            ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.18})`;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.stroke();
+            ctx.strokeStyle = `rgba(255, 248, 180, ${alpha * 0.85})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR * 0.75, 0, Math.PI * 2); ctx.stroke();
+          }else if (ve.type === 'teslaChainProcess' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
             ve.arcs.forEach(arc => drawJaggedLine(ctx, arc.x1, arc.y1, arc.x2, arc.y2, ve.isPromoted ? '#ffd700' : '#bd93f9'));
           } else if (ve.type === 'teslaCircleArc' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
             let tEnemy = ve.enemy;
