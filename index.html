@@ -1830,9 +1830,9 @@ function handleEditNameClick() {
       } else if (type === 'mage') {
         hp = (baseHp * 3) * 2; // 0號坦克的2倍
         atk = baseAtk * 1.6;
-        speed = 0.30; // 18px / 1s
+        speed = 0.25; // 15px / 1s
         atkSpeedStr = `${Math.floor(atk)}/1s`;
-        moveSpeedPxStr = `18px/1s`;
+        moveSpeedPxStr = `15px/1s`;
         resistances = '所有負面狀態效果降低 20%';
         skills = '【烈焰火球】每8秒向最近防禦塔發射火球，命中使範圍40px內的防禦塔癱瘓4秒';
       } else if (type === 'boss') {
