@@ -3371,12 +3371,6 @@ function handleEditNameClick() {
         if (selectedTower === t) {
           ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05), 0, Math.PI * 2); ctx.stroke();
         }
-
-        if (t.type === 'builder' && t.workerPos) {
-          ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(t.workerPos.x, t.workerPos.y, 6, 0, Math.PI*2); ctx.fill();
-          ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
-          ctx.fillStyle = '#000'; ctx.font = '8px sans-serif'; ctx.fillText('🛠️', t.workerPos.x - 4, t.workerPos.y + 3);
-        }
       });
       
       if (placingType) {
@@ -3385,6 +3379,14 @@ function handleEditNameClick() {
         ctx.beginPath(); ctx.arc(dragPos.x, dragPos.y, TOWER_TYPES[placingType].range, 0, Math.PI * 2); ctx.stroke();
         drawTowerIcon(ctx, dragPos.x, dragPos.y, placingType, 16);
       }
+      // ✅ 在所有防禦塔之上、攻擊特效之下繪製建築工人
+      towers.forEach(t => {
+        if (t.type === 'builder' && t.workerPos) {
+          ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(t.workerPos.x, t.workerPos.y, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = '#000'; ctx.font = '8px sans-serif'; ctx.fillText('🛠️', t.workerPos.x - 4, t.workerPos.y + 3);
+        }
+      });
       
       if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
         cannonExplosions.forEach(ex => { ctx.fillStyle = `rgba(255, 68, 68, ${ex.alpha})`; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI * 2); ctx.fill(); });
