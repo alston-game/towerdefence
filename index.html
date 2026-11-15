@@ -1889,7 +1889,7 @@ function handleEditNameClick() {
       let monkNum = currentWave >= 31 ? Math.min(10, Math.floor((currentWave - 31) / 5) + 1) : 0;
       let warlockNum = currentWave >= 51 ? Math.min(10, Math.floor((currentWave - 51) / 5) + 1) : 0;
       let generalNum = currentWave >= 66 ? Math.min(8, Math.floor((currentWave - 66) / 5) + 1) : 0;
-      let mageNum = currentWave >= 75 ? Math.min(3, Math.floor((currentWave - 75) / 5) + 1) : 0;
+      let mageNum = currentWave >= 76 ? Math.min(3, Math.floor((currentWave - 76) / 5) + 1) : 0;
 
       let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum, specialIndicesMap = new Map();
       if (totalSpecial > 0) {
