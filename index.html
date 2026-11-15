@@ -3406,8 +3406,8 @@ function handleEditNameClick() {
       }
       
       enemies.forEach(e => {
-        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'general' ? '#ff8800' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))));
-        let size = e.type === 'boss' ? 18 : (e.type === 'general' ? 15 : ((e.type.startsWith('scout')) ? 7 : ((e.type.startsWith('heavy') || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10)))));
+        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))));
+        let size = e.type === 'boss' ? 18 : ((e.type === 'general' || e.type === 'mage') ? 15 : ((e.type.startsWith('scout')) ? 7 : ((e.type.startsWith('heavy') || e.type === 'warlock') ? 14 : (e.type === 'priest' ? 12 : (e.type === 'monk' ? 13 : 10)))));
         
         if (e.isCharging) color = '#e5e4e2';
 
@@ -3447,10 +3447,12 @@ function handleEditNameClick() {
         } else if (e.type === 'warlock') {
           ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4);
-        }
-        else if (e.type === 'general') {
+        } else if (e.type === 'general') {
           ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#fff200'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
+        } else if (e.type === 'mage') {
+          ctx.strokeStyle = '#ff7675'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#ffeaa7'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
         }
         if (e.hasteBuffTimer > 0) { ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5; ctx.stroke(); }
 
@@ -3576,11 +3578,18 @@ function handleEditNameClick() {
             ctx.strokeStyle = `rgba(255, 248, 180, ${alpha * 0.85})`;
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.arc(ve.x, ve.y, curR * 0.75, 0, Math.PI * 2); ctx.stroke();
-          }else if (ve.type === 'teslaChainProcess' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
+          } else if (ve.type === 'teslaChainProcess' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
             ve.arcs.forEach(arc => drawJaggedLine(ctx, arc.x1, arc.y1, arc.x2, arc.y2, ve.isPromoted ? '#ffd700' : '#bd93f9'));
           } else if (ve.type === 'teslaCircleArc' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
             let tEnemy = ve.enemy;
             drawCircleArc(ctx, tEnemy && !tEnemy.dead ? tEnemy.x : ve.x, tEnemy && !tEnemy.dead ? tEnemy.y : ve.y, 12, '#bd93f9');
+          } else if (ve.type === 'mageFireballExplode' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
+            let curR = ve.r * (1 - alpha * 0.25);
+            ctx.fillStyle = `rgba(255, 80, 0, ${alpha * 0.45})`;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = `rgba(255, 220, 60, ${alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.stroke();
           }
         });
       }
@@ -3596,6 +3605,24 @@ function handleEditNameClick() {
             ctx.fillStyle = p.isPromoted ? '#ffd700' : TOWER_TYPES[p.type].color; ctx.beginPath(); ctx.arc(p.x, p.y, p.isPromoted ? 6 : 4, 0, Math.PI * 2); ctx.fill();
           }
         });
+        mageFireballs.forEach(fb => {
+         let t = Math.min(1, fb.progress);
+         let curX = fb.startX + (fb.endX - fb.startX) * t;
+         let curY = fb.startY + (fb.endY - fb.startY) * t - Math.sin(t * Math.PI) * fb.arcHeight;
+         // 火焰拖尾
+         for (let k = 1; k <= 4; k++) {
+           let prevT = Math.max(0, t - k * 0.045);
+           let px = fb.startX + (fb.endX - fb.startX) * prevT;
+           let py = fb.startY + (fb.endY - fb.startY) * prevT - Math.sin(prevT * Math.PI) * fb.arcHeight;
+           ctx.fillStyle = `rgba(255, ${120 - k * 20}, 0, ${0.65 - k * 0.13})`;
+           ctx.beginPath(); ctx.arc(px, py, 8 - k * 1.2, 0, Math.PI * 2); ctx.fill();
+         }
+         // 火球外焰與核心
+         ctx.fillStyle = '#ff4500';
+         ctx.beginPath(); ctx.arc(curX, curY, 9, 0, Math.PI * 2); ctx.fill();
+         ctx.fillStyle = '#ffdd00';
+         ctx.beginPath(); ctx.arc(curX, curY, 5, 0, Math.PI * 2); ctx.fill();
+         });
       }
       
       floatingTexts.forEach(ft => {
