@@ -1326,11 +1326,11 @@ function handleEditNameClick() {
         soldier2: ['2號士兵', '特色：生命值為0號士兵的1.3倍。\n技能【衝鋒陣線】：每4秒免疫所有負面狀態並提升200%移動速度，持續1秒。'],
         scout2: ['2號刺客', '特色：生命值為0號刺客的1.3倍。\n技能：受傷時65%機率完全免疫傷害，若成功閃避則有8%機率向前瞬移5px。'],
         heavy2: ['2號坦克', '特色：生命值為0號坦克的1.3倍，免疫麻痺。\n技能【二度甦醒】：每秒恢復5%最大生命值；死亡時以40%生命值原地復活一次（復活後技能失效）。'],
-        priest: ['★ 牧師', '特色：移動速度稍慢、生命值高。\n技能【治癒】：每5秒治療範圍45px內盟友15%最大生命值。'],
-        monk: ['★ 祭司', '特色：生命值高，移動速度稍慢。\n技能【祝福】：每7秒為範圍30~55px內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
-        warlock: ['★ 巫師', '特色：生命值高、移動速度慢的敵人。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。'],
-        general: ['★★ 將軍', '特色：生命值高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
-        mage: ['★★ 法師', '特色：生命值為0號坦克的2倍，移動速度較慢(18px/1s)。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒停下1秒向最近防禦塔發射火球，命中使範圍40px內防禦塔癱瘓4秒。']
+        priest: ['★ 牧師', '特色：移動速度稍慢、生命值稍高。\n技能【治癒】：每5秒治療範圍45px內盟友15%最大生命值。'],
+        monk: ['★ 祭司', '特色：生命值稍高，移動速度稍慢。\n技能【祝福】：每7秒為範圍30~55px內敵人解除並免疫負面狀態(減速/麻痺/擊退)2.5秒。'],
+        warlock: ['★ 巫師', '特色：生命值稍高、移動速度慢。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。'],
+        general: ['★★ 將軍', '特色：生命值很高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
+        mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -2142,7 +2142,7 @@ function handleEditNameClick() {
     }
 
     function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
-      let size = enemyType === 'boss' ? 18 : ((enemyType === 'general' || enemyType === 'mage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : ((enemyType.startsWith('heavy') || enemyType === 'warlock') ? 14 : (enemyType === 'priest' ? 12 : (enemyType === 'monk' ? 13 : 10)))));
+      let size = enemyType === 'boss' ? 20 : ((enemyType === 'general' || enemyType === 'mage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10))));
       let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))))));
       
       cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
