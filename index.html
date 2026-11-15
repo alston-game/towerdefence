@@ -2525,11 +2525,16 @@ function handleEditNameClick() {
             paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
             paralyzeImmunity: !!eData.paralyzeImmunity,
             knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
-            pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0, fireballTimer: 0, dead: false,
+            pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0,
+            fireballTimer: eData.type === 'mage' ? 4.0 : 0, // 法師原冷卻 8s -> 首次 4s 釋放
+            portalTimer: eData.type === 'archmage' ? 5.0 : 0, // 大魔導師原冷卻 10s -> 首次 5s 釋放
+            dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
-            beamTimer: 0, stopTimer: 0, healTimer: 0, healRadius: eData.healRadius || 45, blessTimer: 0, blessRadius: eData.blessRadius || 30,
-            resurrectTimer: 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10,
-            hasteSkillTimer: 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0,
+            beamTimer: 0, stopTimer: 0,
+            healTimer: eData.type === 'priest' ? 2.5 : 0, healRadius: eData.healRadius || 45, // 牧師原冷卻 5s -> 首次 2.5s 釋放
+            blessTimer: eData.type === 'monk' ? 3.5 : 0, blessRadius: eData.blessRadius || 30, // 祭司原冷卻 7s -> 首次 3.5s 釋放
+            resurrectTimer: eData.type === 'warlock' ? 3.0 : 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10, // 巫師原冷卻 6s -> 首次 3s 釋放
+            hasteSkillTimer: eData.type === 'general' ? 3.0 : 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0, // 將軍原冷卻 6s -> 首次 3s 釋放
             cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
             isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isEnraged: false,
             marks: []
