@@ -2662,18 +2662,19 @@ function handleEditNameClick() {
               if (towers.length > 0) {
                 let nearestTower = towers.slice().sort((a, b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y))[0];
                 let dist = Math.hypot(nearestTower.x - e.x, nearestTower.y - e.y);
-                let flightDuration = Math.max(0.35, Math.min(0.85, dist / 380));
+                // 飛行時間依距離計算（約 0.9 秒 ~ 1.5 秒），讓拋物線軌跡清晰可見
+                let flightDuration = Math.max(0.9, Math.min(1.5, dist / 260));
                 mageFireballs.push({
                   startX: e.x, startY: e.y,
                   endX: nearestTower.x, endY: nearestTower.y,
-                  arcHeight: Math.max(45, dist * 0.28),
-                  progress: 0, duration: flightDuration
+                  // 較高的拋物線弧度，營造越過地面敵人頭頂的立體感
+                  arcHeight: Math.max(75, dist * 0.38),
+                  progress: 0,
+                  duration: flightDuration
                 });
-                addFloatingText(e.x, e.y - 18, '🔥 烈焰火球!', '#ff5500', 13);
               }
             }
           }
-
           if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
             e.regenTimer = (e.regenTimer || 0) + dt;
             if (e.regenTimer >= 1.0) {
@@ -2683,7 +2684,6 @@ function handleEditNameClick() {
               addFloatingText(e.x, e.y - 12, '+', '#50fa7b', 14);
             }
           }
-
           if (e.type === 'monk' && e.stunTimer <= 0) {
             e.blessTimer += dt;
             if (e.blessTimer >= 7.0) {
@@ -2699,7 +2699,6 @@ function handleEditNameClick() {
               }
             }
           }
-
           if (e.type === 'warlock' && e.stunTimer <= 0) {
             e.resurrectTimer += dt;
             if (e.resurrectTimer >= 6.0) {
@@ -2727,7 +2726,6 @@ function handleEditNameClick() {
               }
             }
           }
-
           if (e.type === 'priest' && e.stunTimer <= 0) {
             e.healTimer += dt;
             if (e.healTimer >= 5.0) {
@@ -2744,7 +2742,6 @@ function handleEditNameClick() {
               }
             }
           }
-
           if (e.type === 'boss' && e.stunTimer <= 0) {
             if (currentWave >= 10) {
               e.shockTimer += dt;
@@ -2777,7 +2774,6 @@ function handleEditNameClick() {
             }
           }
         }
-
         let blocked = false;
         for (let j = barriers.length - 1; j >= 0; j--) {
           let b = barriers[j];
@@ -2804,7 +2800,6 @@ function handleEditNameClick() {
           if (hp <= 0) return triggerGameOver();
         }
       }
-
       if (isBlizzardActive) startBlizzardSound(); else stopBlizzardSound();
 
       let boss = enemies.find(e => e.type === 'boss');
@@ -2900,7 +2895,6 @@ function handleEditNameClick() {
             }
           }
         }
-
         if (waveInProgress && t.drumTimer > 0) t.drumTimer -= dt;
         if (t.disableTimer > 0) return;
         let speedMult = t.drumTimer > 0 ? 2.0 : 1.0;
@@ -2920,7 +2914,6 @@ function handleEditNameClick() {
           }
           return;
         }
-
         if (t.type === 'overcharge') {
           if (t.isOvercharged) {
             if (waveInProgress) t.overchargeTimer -= dt;
@@ -2940,7 +2933,6 @@ function handleEditNameClick() {
             if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
               activeVisualEffects.push({ type: 'overchargeBeam', x1: t.x, y1: t.y, x2: target.x, y2: target.y, life: 0.05, maxLife: 0.05, isPromoted: t.isPromoted });
             }
-
             if (t.cooldown >= curCd) {
               t.cooldown = 0;
               takeDamage(target, TOWER_TYPES.overcharge.damage * (1 + (effectiveDmgLv - 1) * 0.1), t);
@@ -2962,7 +2954,6 @@ function handleEditNameClick() {
           }
           return;
         }
-
         if (t.type === 'knockback') {
           if (!t.hammerState) t.hammerState = 'idle';
           if (t.hammerScale === undefined) t.hammerScale = 1.0;
@@ -2999,18 +2990,15 @@ function handleEditNameClick() {
         if (inRangeEnemies.length > 0) {
           inRangeEnemies.sort((a, b) => (a.pathIndex !== b.pathIndex ? b.pathIndex - a.pathIndex : Math.hypot(path[a.pathIndex + 1]?.x - a.x || 0, path[a.pathIndex + 1]?.y - a.y || 0) - Math.hypot(path[b.pathIndex + 1]?.x - b.x || 0, path[b.pathIndex + 1]?.y - b.y || 0)));
         }
-
         if (t.type === 'arrow' && inRangeEnemies.length > 0) {
           t.angle = Math.atan2(inRangeEnemies[0].y - t.y, inRangeEnemies[0].x - t.x);
         }
-
         if (t.type === 'inferno') {
           if (t.infernoMode === 1) {
             let lockTarget = t.targetLockId ? enemies.find(e => !e.dead && e.id === t.targetLockId) : null;
             if (lockTarget && Math.hypot(lockTarget.x - t.x, lockTarget.y - t.y) > curRange) {
               lockTarget = null; t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
-            }
-            
+            }        
             if (!lockTarget && inRangeEnemies.length > 0) {
               lockTarget = inRangeEnemies[0]; t.targetLockId = lockTarget.id; t.lockTime = 0; t.infernoStage = 0;
             } else if (!lockTarget) { t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0; }
@@ -3164,7 +3152,6 @@ function handleEditNameClick() {
           if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
             activeVisualEffects.push({ type: 'mageFireballExplode', x: fb.endX, y: fb.endY, r: 40, life: 0.45, maxLife: 0.45 });
           }
-          showToast('🔥 法師火球命中！範圍 40px 內防禦塔癱瘓 4 秒！', 'enemy');
         }
       }
       updateFireballLoopSound();
@@ -3583,12 +3570,18 @@ function handleEditNameClick() {
           } else if (ve.type === 'teslaCircleArc' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
             let tEnemy = ve.enemy;
             drawCircleArc(ctx, tEnemy && !tEnemy.dead ? tEnemy.x : ve.x, tEnemy && !tEnemy.dead ? tEnemy.y : ve.y, 12, '#bd93f9');
-          } else if (ve.type === 'mageFireballExplode' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
-            let curR = ve.r * (1 - alpha * 0.25);
-            ctx.fillStyle = `rgba(255, 80, 0, ${alpha * 0.45})`;
+          } else if (ve.type === 'mageFireballExplode' && gameSettings.vfxMode !== 3) {
+            let expandRatio = 1 - alpha;
+            let curR = ve.r * (0.35 + expandRatio * 0.65);
+            // 外層火浪填充
+            ctx.fillStyle = `rgba(255, 70, 0, ${alpha * 0.45})`;
             ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = `rgba(255, 220, 60, ${alpha})`;
-            ctx.lineWidth = 3;
+            // 內層白熱核心閃光
+            ctx.fillStyle = `rgba(255, 235, 120, ${alpha * 0.75})`;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, curR * 0.5, 0, Math.PI * 2); ctx.fill();
+            // 爆炸衝擊波外環
+            ctx.strokeStyle = `rgba(255, 200, 40, ${alpha})`;
+            ctx.lineWidth = 3.5;
             ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.stroke();
           }
         });
@@ -3605,24 +3598,45 @@ function handleEditNameClick() {
             ctx.fillStyle = p.isPromoted ? '#ffd700' : TOWER_TYPES[p.type].color; ctx.beginPath(); ctx.arc(p.x, p.y, p.isPromoted ? 6 : 4, 0, Math.PI * 2); ctx.fill();
           }
         });
-        mageFireballs.forEach(fb => {
-         let t = Math.min(1, fb.progress);
-         let curX = fb.startX + (fb.endX - fb.startX) * t;
-         let curY = fb.startY + (fb.endY - fb.startY) * t - Math.sin(t * Math.PI) * fb.arcHeight;
-         // 火焰拖尾
-         for (let k = 1; k <= 4; k++) {
-           let prevT = Math.max(0, t - k * 0.045);
-           let px = fb.startX + (fb.endX - fb.startX) * prevT;
-           let py = fb.startY + (fb.endY - fb.startY) * prevT - Math.sin(prevT * Math.PI) * fb.arcHeight;
-           ctx.fillStyle = `rgba(255, ${120 - k * 20}, 0, ${0.65 - k * 0.13})`;
-           ctx.beginPath(); ctx.arc(px, py, 8 - k * 1.2, 0, Math.PI * 2); ctx.fill();
-         }
-         // 火球外焰與核心
-         ctx.fillStyle = '#ff4500';
-         ctx.beginPath(); ctx.arc(curX, curY, 9, 0, Math.PI * 2); ctx.fill();
-         ctx.fillStyle = '#ffdd00';
-         ctx.beginPath(); ctx.arc(curX, curY, 5, 0, Math.PI * 2); ctx.fill();
-         });
+        if (gameSettings.vfxMode !== 3) {
+          mageFireballs.forEach(fb => {
+            let t = Math.min(1, fb.progress);
+            let heightOffset = Math.sin(t * Math.PI) * fb.arcHeight;
+            let groundX = fb.startX + (fb.endX - fb.startX) * t;
+            let groundY = fb.startY + (fb.endY - fb.startY) * t;
+            let curX = groundX;
+            let curY = groundY - heightOffset;
+            // 隨高度微微放大（最高點放大 1.35 倍），強化躍過半空的立體遠近感
+            let scale = 1.0 + Math.sin(t * Math.PI) * 0.35;
+            // 1. 地面投影陰影（顯示火球在空中越過路徑的位置）
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.35 - Math.sin(t * Math.PI) * 0.15})`;
+            ctx.beginPath();
+            ctx.ellipse(groundX, groundY, 10 / scale, 5 / scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 2. 拋物線火焰拖尾
+            for (let k = 1; k <= 6; k++) {
+              let prevT = Math.max(0, t - k * 0.032);
+              let prevH = Math.sin(prevT * Math.PI) * fb.arcHeight;
+              let px = fb.startX + (fb.endX - fb.startX) * prevT;
+              let py = fb.startY + (fb.endY - fb.startY) * prevT - prevH;
+              let tailR = Math.max(2, (10 - k * 1.3) * scale);
+              ctx.fillStyle = `rgba(255, ${140 - k * 18}, 0, ${0.75 - k * 0.1})`;
+              ctx.beginPath(); ctx.arc(px, py, tailR, 0, Math.PI * 2); ctx.fill();
+            }
+            // 3. 火球外層光暈
+            let grad = ctx.createRadialGradient(curX, curY, 2, curX, curY, 16 * scale);
+            grad.addColorStop(0, 'rgba(255, 255, 180, 1)');
+            grad.addColorStop(0.45, 'rgba(255, 100, 0, 0.9)');
+            grad.addColorStop(1, 'rgba(255, 30, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(curX, curY, 16 * scale, 0, Math.PI * 2); ctx.fill();
+            // 4. 火球核心實體
+            ctx.fillStyle = '#ff4500';
+            ctx.beginPath(); ctx.arc(curX, curY, 9 * scale, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff200';
+            ctx.beginPath(); ctx.arc(curX, curY, 5 * scale, 0, Math.PI * 2); ctx.fill();
+          });
+        }
       }
       
       floatingTexts.forEach(ft => {
