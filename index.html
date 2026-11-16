@@ -1349,7 +1349,7 @@ function handleEditNameClick() {
         warlock: ['★ 巫師', '特色：生命值稍高、移動速度慢。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。'],
         general: ['★★ 將軍', '特色：生命值很高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
-        archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每10秒繪製五芒星陣法，使陣內友軍向前傳送100px。']
+        archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -1861,7 +1861,7 @@ function handleEditNameClick() {
         atkSpeedStr = `${Math.floor(atk)}/1s`;
         moveSpeedPxStr = `30px/1s`;
         resistances = '所有負面狀態效果降低 20%';
-        skills = '【星陣躍遷】每 10 秒繪製範圍 50px 的五芒星陣發，使陣內其他敵人向前傳送 100px';
+        skills = '【星陣躍遷】每 9 秒繪製範圍 50px 的五芒星陣發，使陣內其他敵人向前傳送 120px';
       } else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
@@ -2546,7 +2546,7 @@ function handleEditNameClick() {
             knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
             pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0,
             fireballTimer: eData.type === 'mage' ? 4.0 : 0, // 法師原冷卻 8s -> 首次 4s 釋放
-            portalTimer: eData.type === 'archmage' ? 5.0 : 0, // 大魔導師原冷卻 10s -> 首次 5s 釋放
+            portalTimer: eData.type === 'archmage' ? 4.5 : 0, // 大魔導師原冷卻 10s -> 首次 5s 釋放
             dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
             beamTimer: 0, stopTimer: 0,
@@ -2804,7 +2804,7 @@ function handleEditNameClick() {
           // ★★ 大魔導師技能：每 10 秒停下 1 秒順時針繪製 50px 五芒星陣法
           if (e.type === 'archmage' && e.stunTimer <= 0 && !e.isDrawingPortal) {
             e.portalTimer = (e.portalTimer || 0) + dt;
-            if (e.portalTimer >= 10.0) {
+            if (e.portalTimer >= 9.0) {
               e.portalTimer = 0;
               e.stopTimer = 1.0;
               e.isDrawingPortal = true;
@@ -3324,7 +3324,7 @@ function handleEditNameClick() {
                 // 最大生命值愈高飛行距離愈短（介於 50px ~ 100px 之間）
                 let hpRatio = Math.min(1, en.maxHp / Math.max(1, curMaxEnemyHp));
                 let flyHeight = Math.round(100 - 50 * hpRatio);
-                let dest = advanceAlongPath(en.x, en.y, en.pathIndex, 100);
+                let dest = advanceAlongPath(en.x, en.y, en.pathIndex, 120);
                 en.teleportState = {
                   phase: 'ascend',
                   timer: 0,
