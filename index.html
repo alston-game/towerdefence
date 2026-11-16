@@ -1920,25 +1920,44 @@ function handleEditNameClick() {
       let archmageNum = currentWave >= 86 ? Math.min(3, Math.floor((currentWave - 86) / 5) + 1) : 0;
 
       let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum, specialIndicesMap = new Map();
-     if (totalSpecial > 0) {
-        let specialTypes = [];
-        let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum };
-        let order = ['priest', 'monk', 'warlock', 'general', 'mage', 'archmage'];
-        let idx = 0;
-        while (specialTypes.length < totalSpecial) {
-          let candidate = order[idx % order.length];
-          if (counts[candidate] > 0) {
-            specialTypes.push(candidate);
-            counts[candidate]--;
+    if (totalSpecial > 0) {
+      let specialTypes = new Array(totalSpecial).fill(null);
+      let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum };
+      // 依照「數量由少到多」排序，讓稀有兵種優先佔據最精準的等分點
+      let sortedOrder = ['archmage', 'mage', 'general', 'warlock', 'monk', 'priest']
+        .filter(t => counts[t] > 0)
+        .sort((a, b) => counts[a] - counts[b]);
+
+      sortedOrder.forEach(type => {
+        let c = counts[type];
+        for (let m = 1; m <= c; m++) {
+          // 計算在 totalSpecial 個有星位置中的等分目標索引
+          let idealIdx = Math.round((m / (c + 1)) * (totalSpecial - 1));
+          // 若該格已被佔用，往左右交替尋找距離 idealIdx 最近的空位
+          let placedIdx = idealIdx;
+          if (specialTypes[placedIdx] !== null) {
+            for (let offset = 1; offset < totalSpecial; offset++) {
+              if (idealIdx + offset < totalSpecial && specialTypes[idealIdx + offset] === null) {
+                placedIdx = idealIdx + offset;
+                break;
+              }
+              if (idealIdx - offset >= 0 && specialTypes[idealIdx - offset] === null) {
+                placedIdx = idealIdx - offset;
+                break;
+              }
+            }
           }
-          idx++;
+          specialTypes[placedIdx] = type;
         }
-        for (let k = 1; k <= totalSpecial; k++) {
-          let targetPos = Math.max(1, Math.min(count - 1, Math.round((k / (totalSpecial + 1)) * count)));
-          while (specialIndicesMap.has(targetPos) && targetPos < count - 1) targetPos++;
-          specialIndicesMap.set(targetPos, specialTypes[k - 1]);
-        }
+      });
+
+      for (let k = 1; k <= totalSpecial; k++) {
+        let targetPos = Math.max(1, Math.min(count - 1, Math.round((k / (totalSpecial + 1)) * count)));
+        while (specialIndicesMap.has(targetPos) && targetPos < count - 1) targetPos++;
+        specialIndicesMap.set(targetPos, specialTypes[k - 1]);
       }
+    }
+    
 
       for (let i = 0; i < count; i++) {
         if (specialIndicesMap.has(i)) {
