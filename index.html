@@ -2616,14 +2616,23 @@ function handleEditNameClick() {
 
       towers.forEach(t => {
         if (t.type === 'builder') { t.disableTimer = 0; }
-        else if (t.disableTimer > 0 && waveInProgress) {
-          let prevTimer = t.disableTimer;
-          t.disableTimer = Math.max(0, t.disableTimer - dt);
-          if (t.type === 'inferno' && prevTimer > 0 && t.disableTimer === 0) {
-            t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
+        else if (t.disableTimer > 0) {
+          // 若超能樞紐處於「超能狀態中」遭到癱瘓，立即終止超能狀態且蓄能歸 0%（非超能狀態則保留原蓄能量）
+          if (t.type === 'overcharge' && t.isOvercharged) {
+            t.isOvercharged = false;
+            t.overchargeTimer = 0;
+            t.chargeProgress = 0;
+          }
+          if (waveInProgress) {
+            let prevTimer = t.disableTimer;
+            t.disableTimer = Math.max(0, t.disableTimer - dt);
+            if (t.type === 'inferno' && prevTimer > 0 && t.disableTimer === 0) {
+              t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
+            }
           }
         }
       });
+
 
       let isBlizzardActive = false;
 
