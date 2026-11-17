@@ -2746,7 +2746,7 @@ function handleEditNameClick() {
           speedMult = 0;
         } else if (e.freezeTimer > 0) {
           e.freezeTimer -= dt;
-          speedMult = (e.type === 'boss' || e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
+          speedMult = (e.type === 'boss' || e.type === 'general' || e.type === 'mage' || e.type === 'archmage' || e.type === 'sage') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
           isBlizzardActive = true;
         }
         if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
@@ -3261,8 +3261,8 @@ function handleEditNameClick() {
 
               takeDamage(hitEnemy, currentDmg, ve.tower); playSound('zap');
               
-              if (!hitEnemy.paralyzeImmunity && hitEnemy.immuneTimer <= 0) {
-                let eff = hitEnemy.paralyzeEffectiveness !== undefined ? hitEnemy.paralyzeEffectiveness : ((hitEnemy.type === 'general' || hitEnemy.type === 'mage') ? 0.8 : 1.0);
+              if (!hitEnemy.paralyzeImmunity && hitEnemy.immuneTimer <= 0 && !hitEnemy.lightShieldImmune) {
+                let eff = hitEnemy.paralyzeEffectiveness !== undefined ? hitEnemy.paralyzeEffectiveness : (hitEnemy.type === 'sage' ? 0.6 : ((hitEnemy.type === 'general' || hitEnemy.type === 'mage' || hitEnemy.type === 'archmage') ? 0.8 : 1.0));
                 hitEnemy.stunTimer = Math.max(hitEnemy.stunTimer || 0, 0.2 * eff);
               }
 
@@ -3297,7 +3297,7 @@ function handleEditNameClick() {
             enemies.forEach(e => Math.hypot(e.x - p.target.x, e.y - p.target.y) <= radius && takeDamage(e, p.baseDmg, p.srcTower));
           } else if (p.type === 'frost') {
             takeDamage(p.target, p.baseDmg, p.srcTower);
-            if (!p.target.immuneTimer) p.target.freezeTimer = 1.5 + (p.specLv - 1) * 0.5;
+            if (!p.target.immuneTimer && !p.target.lightShieldImmune) p.target.freezeTimer = 1.5 + (p.specLv - 1) * 0.5;
           } else takeDamage(p.target, p.baseDmg, p.srcTower);
           projectiles.splice(i, 1);
         } else { p.x += (dx / dist) * step; p.y += (dy / dist) * step; }
