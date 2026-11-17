@@ -767,6 +767,7 @@ window.updateAuthUI = updateAuthUI;
       { id: 'soldier2', name: '2號士兵', group: '2號' }, { id: 'scout2', name: '2號刺客', group: '2號' }, { id: 'heavy2', name: '2號坦克', group: '2號' },
       { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'warlock', name: '★ 巫師', group: '1星' },
       { id: 'general', name: '★★ 將軍', group: '2星' },{ id: 'mage', name: '★★ 法師', group: '2星' },{ id: 'archmage', name: '★★ 大魔導師', group: '2星' },
+      { id: 'sage', name: '★★★ 賢者', group: '3星' },
       { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }
     ];
 
@@ -927,8 +928,90 @@ window.updateAuthUI = updateAuthUI;
             gain.gain.exponentialRampToValueAtTime(0.001 * vol, now + 0.5);
             osc.start(now); osc.stop(now + 0.5);
           }
+          light_shield_cast: () => {
+            // 光盾展開時的清脆點亮聲（純淨高音和弦 + 泛音閃爍）
+            [880, 1318.5, 1760].forEach((freq, idx) => {
+              let o = audioCtx.createOscillator(), g = audioCtx.createGain();
+              o.type = idx === 0 ? 'sine' : 'triangle';
+              o.frequency.setValueAtTime(freq, now + idx * 0.03);
+              o.frequency.exponentialRampToValueAtTime(freq * 1.03, now + 0.45 + idx * 0.03);
+              g.gain.setValueAtTime(0.001, now + idx * 0.03);
+              g.gain.linearRampToValueAtTime((0.12 / (idx + 1)) * vol, now + 0.05 + idx * 0.03);
+              g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55 + idx * 0.03);
+              o.connect(g); g.connect(audioCtx.destination);
+              o.start(now + idx * 0.03); o.stop(now + 0.58 + idx * 0.03);
+            });
+          }
         };
         if (soundProfiles[type]) soundProfiles[type]();
+      } catch(e) {}
+    }
+    let lightShieldAmbience = null;
+
+    function updateLightShieldAmbience(hasActiveShield) {
+      let vol = getMasterVolume();
+      if (vol <= 0 || !hasActiveShield || !waveInProgress || isPaused) {
+        if (lightShieldAmbience) stopLightShieldAmbience();
+        return;
+      }
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!lightShieldAmbience) {
+          const now = audioCtx.currentTime;
+          const masterGain = audioCtx.createGain();
+          masterGain.gain.setValueAtTime(0.001, now);
+          masterGain.gain.linearRampToValueAtTime(0.06 * vol, now + 0.25);
+
+          // 低通濾波營造「虛幻且朦朧」的空間包覆感
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(950, now);
+
+          // 緩慢 LFO 讓音色產生神聖呼吸感
+          const lfo = audioCtx.createOscillator();
+          const lfoGain = audioCtx.createGain();
+          lfo.frequency.setValueAtTime(2.0, now);
+          lfoGain.gain.setValueAtTime(180, now);
+          lfo.connect(lfoGain);
+          lfoGain.connect(filter.frequency);
+          lfo.start(now);
+
+          // 聖潔五度/八度泛音疊加 (D5, A5, E6)
+          const freqs = [587.33, 880.0, 1318.51];
+          const oscs = freqs.map((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = i === 0 ? 'sine' : 'triangle';
+            o.frequency.setValueAtTime(f, now);
+            g.gain.setValueAtTime(i === 0 ? 0.5 : 0.22, now);
+            o.connect(g);
+            g.connect(filter);
+            o.start(now);
+            return o;
+          });
+
+          filter.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+          lightShieldAmbience = { masterGain, lfo, oscs };
+        } else {
+          lightShieldAmbience.masterGain.gain.setTargetAtTime(0.06 * vol, audioCtx.currentTime, 0.05);
+        }
+      } catch(e) {}
+    }
+
+    function stopLightShieldAmbience() {
+      if (!lightShieldAmbience) return;
+      const { masterGain, lfo, oscs } = lightShieldAmbience;
+      lightShieldAmbience = null;
+      try {
+        const now = audioCtx.currentTime;
+        masterGain.gain.cancelScheduledValues(now);
+        masterGain.gain.setValueAtTime(Math.max(0.0001, masterGain.gain.value), now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+        setTimeout(() => {
+          try { lfo.stop(); oscs.forEach(o => o.stop()); } catch(e) {}
+        }, 200);
       } catch(e) {}
     }
 
@@ -1363,7 +1446,8 @@ function handleEditNameClick() {
         warlock: ['★ 巫師', '特色：生命值稍高、移動速度慢。\n技能【復生】：每6秒停下1秒施法復活死亡敵人(Boss除外)。'],
         general: ['★★ 將軍', '特色：生命值很高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
-        archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。']
+        archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
+        sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍55px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -1513,6 +1597,7 @@ function handleEditNameClick() {
           workerState: 'idle', workerPos: { x: t.x, y: t.y }, workerTargetTowerId: null, workerActionTimer: 0
         }));
         window.towers = towers;
+        stopLightShieldAmbience();
       }
 
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = [];
@@ -1550,6 +1635,7 @@ function handleEditNameClick() {
       Object.keys(talents).forEach(k => talents[k].lv = 0);
       Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
+      stopLightShieldAmbience();
     }
 
     function toggleAutoWave() {
@@ -1876,6 +1962,14 @@ function handleEditNameClick() {
         moveSpeedPxStr = `30px/1s`;
         resistances = '所有負面狀態效果降低 20%';
         skills = '【星陣躍遷】每 9 秒繪製範圍 50px 的五芒星陣發，使陣內其他敵人向前傳送 120px';
+      } else if (type === 'sage') {
+          hp = (baseHp * 3) * 4; // 0號坦克的4倍
+          atk = baseAtk * 1.8;
+          speed = 0.65; // 0.65 * 60 = 39px / 1s
+          atkSpeedStr = `${Math.floor(atk)}/1s`;
+          moveSpeedPxStr = `39px/1s`;
+          resistances = '所有負面狀態效果降低 40%、降低所受到的傷害 20%';
+          skills = '【聖輝光盾】每 8 秒召喚範圍 55px、持續 3 秒的光盾，使盾內的敵人免疫所有傷害與負面狀態';
       } else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
@@ -1932,17 +2026,17 @@ function handleEditNameClick() {
       let generalNum = currentWave >= 66 ? Math.min(8, Math.floor((currentWave - 66) / 5) + 1) : 0;
       let mageNum = currentWave >= 76 ? Math.min(5, Math.floor((currentWave - 76) / 5) + 1) : 0;
       let archmageNum = currentWave >= 86 ? Math.min(3, Math.floor((currentWave - 86) / 5) + 1) : 0;
+      let sageNum = currentWave >= 96 ? Math.min(2, Math.floor((currentWave - 96) / 5) + 1) : 0;
 
-      let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum, specialIndicesMap = new Map();
-    if (totalSpecial > 0) {
-      let specialTypes = new Array(totalSpecial).fill(null);
-      let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum };
-      // 依照「數量由少到多」排序，讓稀有兵種優先佔據最精準的等分點
-      let sortedOrder = ['archmage', 'mage', 'general', 'warlock', 'monk', 'priest']
-        .filter(t => counts[t] > 0)
-        .sort((a, b) => counts[a] - counts[b]);
-
-      sortedOrder.forEach(type => {
+      let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum + sageNum, specialIndicesMap = new Map();
+      if (totalSpecial > 0) {
+        let specialTypes = new Array(totalSpecial).fill(null);
+        let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum, sage: sageNum };
+        // 依照「數量由少到多」排序，讓稀有兵種優先佔據最精準的等分點
+        let sortedOrder = ['sage', 'archmage', 'mage', 'general', 'warlock', 'monk', 'priest']
+          .filter(t => counts[t] > 0)
+          .sort((a, b) => counts[a] - counts[b]);
+          sortedOrder.forEach(type => {
         let c = counts[type];
         for (let m = 1; m <= c; m++) {
           // 計算在 totalSpecial 個有星位置中的等分目標索引
@@ -1979,7 +2073,9 @@ function handleEditNameClick() {
           let stats = getEnemyStatsForWave(sType, currentWave);
           let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 51) / 5) * 2);
           let isTwoStarType = (sType === 'general' || sType === 'mage' || sType === 'archmage');
-          let goldMult = isTwoStarType ? 3.5 : (sType === 'priest' ? 2 : 2.5);
+          let isThreeStarType = (sType === 'sage');
+          let isTwoStarType = (sType === 'general' || sType === 'mage' || sType === 'archmage');
+          let goldMult = isThreeStarType ? 4.5 : (isTwoStarType ? 3.5 : (sType === 'priest' ? 2 : 2.5));
           waveSpawnQueue.push({
             type: sType, hp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * goldMult,
             healTimer: 0, healRadius: 45, blessTimer: 0, blessRadius: Math.min(55, 30 + Math.floor((currentWave - 31) / 5) * 5),
@@ -1987,11 +2083,13 @@ function handleEditNameClick() {
             hasteSkillTimer: 0, hasteRadius: 60,
             fireballTimer: 0,
             portalTimer: 0,
-            freezeEffectiveness: isTwoStarType ? 0.8 : 1.0,
-            paralyzeEffectiveness: isTwoStarType ? 0.8 : 1.0,
-            knockbackEffectiveness: isTwoStarType ? 0.8 : 1.0,
-            isStar: !isTwoStarType,
-            isTwoStar: isTwoStarType
+            lightShieldTimer: 0,
+            freezeEffectiveness: isThreeStarType ? 0.6 : (isTwoStarType ? 0.8 : 1.0),
+            paralyzeEffectiveness: isThreeStarType ? 0.6 : (isTwoStarType ? 0.8 : 1.0),
+            knockbackEffectiveness: isThreeStarType ? 0.6 : (isTwoStarType ? 0.8 : 1.0),
+            isStar: (!isTwoStarType && !isThreeStarType),
+            isTwoStar: isTwoStarType,
+            isThreeStar: isThreeStarType
           });
           continue;
         }
@@ -2115,7 +2213,7 @@ function handleEditNameClick() {
         showToast(`☄️ 召喚流星雨！5 顆爆破流星即將連續降臨！`, 'towerSkill');
       } else if (key === 'blizzard') {
         let dur = s.val + (s.valLv - 1) * 1;
-        enemies.forEach(e => !e.immuneTimer && (e.freezeTimer = dur));
+        enemies.forEach(e => !e.immuneTimer && !e.lightShieldImmune && (e.freezeTimer = dur));
         activeVisualEffects.push({ type: 'blizzard', life: dur, maxLife: dur });
         startBlizzardSound();
         showToast(`❄ 暴風雪降臨！全場敵軍冰封 ${dur.toFixed(1)} 秒！`, 'towerSkill');
@@ -2133,8 +2231,10 @@ function handleEditNameClick() {
       } else if (key === 'timeReversal') {
         let revDuration = s.val + (s.valLv - 1) * 0.25;
         enemies.forEach(e => {
-          e.reversalTimer = revDuration;
-          clearNegativeStatuses(e);
+          if (!e.lightShieldImmune) {
+            e.reversalTimer = revDuration;
+            clearNegativeStatuses(e);
+          }
         });
         showToast(`⏳ 時空逆流發動！所有敵人退回出生點持續 ${revDuration.toFixed(2)} 秒！`, 'towerSkill');
       } else if (key === 'barrier') {
@@ -2339,7 +2439,10 @@ function handleEditNameClick() {
 
     function takeDamage(enemy, dmg, sourceTower = null) {
       if (enemy.dead || enemy.teleportState) return;
-      if (enemy.dead) return;
+      // 聖輝光盾免疫所有傷害（防禦塔可鎖定，擊中時顯示「免疫」）
+      if (enemy.lightShieldImmune) {
+        addFloatingText(enemy.x, enemy.y - 10, '免疫', '#fff8dc', 11);
+        return;
 
       if (enemy.type === 'scout1' && Math.random() < 0.65) {
         addFloatingText(enemy.x, enemy.y - 10, 'miss', '#ff5555', 11);
@@ -2381,6 +2484,7 @@ function handleEditNameClick() {
 
       let markBonus = (enemy.marks && enemy.marks.length > 0) ? 0.25 : 0;
       let finalDmg = dmg * baseTechMultiplier * (1 + overchargeTotalBonus + markBonus);
+      if (enemy.type === 'sage') finalDmg *= 0.8; // 賢者降低所受傷害 20%
 
       enemy.hp -= finalDmg; stats.totalDamage += finalDmg; window.stats = stats;
       
@@ -2423,7 +2527,9 @@ function handleEditNameClick() {
           enemy.marks = [];
         }
 
-        if (enemy.isTwoStar) {
+        if (enemy.isThreeStar) {
+          waveStarEnemyKills += 3; // 3星敵人通關時額外提供 3 顆鑽石加成
+        } else if (enemy.isTwoStar) {
           waveStarEnemyKills += 2; // 2星敵人通關時額外提供 2 顆鑽石加成
         } else if (enemy.isStar) {
           waveStarEnemyKills += 1;
@@ -2446,8 +2552,8 @@ function handleEditNameClick() {
     }
 
     function applyKnockback(enemy, distPx) {
-      if (enemy.dead) return;
-      let kbEff = enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : ((enemy.type === 'general' || enemy.type === 'mage') ? 0.8 : 1.0);
+      if (enemy.dead || enemy.lightShieldImmune) return;
+      let kbEff = enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : (enemy.type === 'sage' ? 0.6 : ((enemy.type === 'general' || enemy.type === 'mage' || enemy.type === 'archmage') ? 0.8 : 1.0));
       let effectiveDist = distPx * kbEff;
       enemy.knockback = { totalDist: effectiveDist, remDist: effectiveDist, duration: 0.5, timer: 0.5 };
     }
@@ -2480,7 +2586,8 @@ function handleEditNameClick() {
         if (!isPaused) {
           updateGame(dt * gameSpeed);
         } else {
-          updateFireballLoopSound(); // 👈 暫停時立刻停止燃燒音效
+          updateFireballLoopSound();
+          stopLightShieldAmbience();
         }
         renderGame();
         requestAnimationFrame(gameLoop);
@@ -2615,7 +2722,7 @@ function handleEditNameClick() {
           let tm = targetMarkQueue[i];
           tm.delayTimer -= dt;
           if (tm.delayTimer <= 0) {
-            let aliveEnemies = enemies.filter(e => !e.dead);
+            let aliveEnemies = enemies.filter(e => !e.dead && !e.lightShieldImmune);
             if (aliveEnemies.length > 0) {
               let target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               target.marks = target.marks || [];
@@ -3944,6 +4051,7 @@ function handleEditNameClick() {
     function triggerGameOver() {
       isPaused = true;
       resetBossStates();
+      stopLightShieldAmbience();
       document.getElementById('gameover-modal').style.display = 'flex';
       document.getElementById('go-desc').innerHTML = `您在第 ${currentWave} 波落敗了！<br><br>⚔️ 總擊殺敵數: ${stats.totalKills}<br>💥 總累積傷害: ${Math.floor(stats.totalDamage)}<br>💰 總累積金幣: ${Math.floor(stats.totalGoldEarned)}`;
     }
