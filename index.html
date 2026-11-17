@@ -2289,23 +2289,8 @@ function handleEditNameClick() {
     }
 
     function buyTalent(key) {
-      const t = talents[key], reqCost = t.cost + t.lv;
-      if (t.lv >= t.max) return showToast('該科技已達最高等級 (50級)！', 'res');
-      if (crystals >= reqCost) {
-        crystals -= reqCost; window.crystals = crystals; t.lv++;
-        if (key === 'maxHpBonus') { hp += 25; window.hp = hp; }
-        showToast(`成功升級【${t.name}】！`, 'res');
-        
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
-        updateTechUI(); updateUI();
-      } else showToast('鑽石不足！', 'res');
-    }
-
-    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
-      let size = enemyType === 'boss' ? 20 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10))));
-      let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'archmage' ? '#6c5ce7' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
+      let size = enemyType === 'boss' ? 20 : (enemyType === 'sage' ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
+      let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'sage' ? '#fff3b0' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'archmage' ? '#6c5ce7' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
       
       cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
       
@@ -2339,6 +2324,9 @@ function handleEditNameClick() {
       } else if (enemyType === 'archmage') {
         cCtx.strokeStyle = '#a29bfe'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
         cCtx.fillStyle = '#dfe6e9'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
+      } else if (enemyType === 'sage') {
+        cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+        cCtx.fillStyle = '#d4af37'; cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
       }
     }
 
@@ -2661,13 +2649,15 @@ function handleEditNameClick() {
           let newEnemy = {
             id: Date.now() + Math.random(), type: eData.type, x: path[0].x, y: path[0].y,
             hp: eData.hp, maxHp: eData.hp, atk: eData.atk || 10, speed: eData.speed, baseSpeed: eData.baseSpeed || eData.speed, gold: eData.gold,
-            freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : (eData.type.startsWith('scout') || eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
-            paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
+            freezeEffectiveness: eData.freezeEffectiveness !== undefined ? eData.freezeEffectiveness : (eData.type === 'sage' ? 0.6 : (eData.type.startsWith('scout') || eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0)),
+            paralyzeEffectiveness: eData.paralyzeEffectiveness !== undefined ? eData.paralyzeEffectiveness : (eData.type === 'sage' ? 0.6 : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0)),
             paralyzeImmunity: !!eData.paralyzeImmunity,
-            knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0),
+            knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'sage' ? 0.6 : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0)),
             pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0,
             fireballTimer: eData.type === 'mage' ? 4.0 : 0, // 法師原冷卻 8s -> 首次 4s 釋放
-            portalTimer: eData.type === 'archmage' ? 4.5 : 0, // 大魔導師原冷卻 10s -> 首次 5s 釋放
+            portalTimer: eData.type === 'archmage' ? 4.5 : 0, // 大魔導師原冷卻 9s -> 首次 4.5s 釋放
+            lightShieldTimer: eData.type === 'sage' ? 4.0 : 0, // 賢者原冷卻 8s -> 首次 4s 釋放
+            lightShieldActiveTimer: 0, lightShieldGraceTimer: 0, lightShieldSourceId: null, lightShieldImmune: false,
             dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
             beamTimer: 0, stopTimer: 0,
@@ -2948,6 +2938,20 @@ function handleEditNameClick() {
               });
             }
           }
+          // ★★★ 賢者技能【聖輝光盾】：每 8 秒召喚跟隨自身的 55px 金色光盾，持續 3 秒
+        if (e.type === 'sage') {
+          if (e.lightShieldActiveTimer > 0) {
+            e.lightShieldActiveTimer = Math.max(0, e.lightShieldActiveTimer - dt);
+          } else if (e.stunTimer <= 0) {
+            e.lightShieldTimer = (e.lightShieldTimer || 0) + dt;
+            if (e.lightShieldTimer >= 8.0) {
+              e.lightShieldTimer = 0;
+              e.lightShieldActiveTimer = 3.0;
+              playSound('light_shield_cast');
+              addFloatingText(e.x, e.y - 20, '聖輝光盾!', '#ffd700', 13);
+            }
+          }
+        }
           if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
             e.regenTimer = (e.regenTimer || 0) + dt;
             if (e.regenTimer >= 1.0) {
@@ -3073,6 +3077,41 @@ function handleEditNameClick() {
           if (hp <= 0) return triggerGameOver();
         }
       }
+
+      // 結算所有賢者【聖輝光盾】覆蓋範圍與同步解除機制
+    const activeSages = enemies.filter(s => !s.dead && s.type === 'sage' && s.lightShieldActiveTimer > 0);
+    const activeSageIds = new Set(activeSages.map(s => s.id));
+
+    enemies.forEach(en => {
+      if (en.dead) return;
+      let coveringSage = activeSages.find(s => Math.hypot(en.x - s.x, en.y - s.y) <= 55);
+      if (coveringSage) {
+        en.lightShieldImmune = true;
+        en.lightShieldGraceTimer = 0.5;
+        en.lightShieldSourceId = coveringSage.id;
+        // 獲得免疫時立即清除負面狀態與標記
+        clearNegativeStatuses(en);
+        en.reversalTimer = 0;
+        en.marks = [];
+      } else if (en.lightShieldImmune) {
+        if (en.lightShieldSourceId && activeSageIds.has(en.lightShieldSourceId)) {
+          en.lightShieldGraceTimer -= dt;
+          if (en.lightShieldGraceTimer <= 0) {
+            en.lightShieldImmune = false;
+            en.lightShieldGraceTimer = 0;
+            en.lightShieldSourceId = null;
+          }
+        } else {
+          // 光盾消失時，所有在免疫狀態的敵人（包含額外 0.5 秒緩衝內的敵人）同步解除免疫
+          en.lightShieldImmune = false;
+          en.lightShieldGraceTimer = 0;
+          en.lightShieldSourceId = null;
+        }
+      }
+    });
+
+    // 更新光盾持續神聖音效
+    updateLightShieldAmbience(activeSages.length > 0);
       if (isBlizzardActive) startBlizzardSound(); else stopBlizzardSound();
 
       let boss = enemies.find(e => e.type === 'boss');
@@ -3783,8 +3822,8 @@ function handleEditNameClick() {
         if (e.teleportState && e.teleportAlpha <= 0.01) return; // 潛行階段全透明不繪製
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
-        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))))));
-        let size = e.type === 'boss' ? 20 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))));
+        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
+        let size = e.type === 'boss' ? 20 : (e.type === 'sage' ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10)))));
         
         if (e.isCharging) color = '#e5e4e2';
 
@@ -3833,6 +3872,9 @@ function handleEditNameClick() {
         } else if (e.type === 'archmage') {
           ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
+        } else if (e.type === 'sage') {
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#d4af37'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
         }
         if (e.hasteBuffTimer > 0) { ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5; ctx.stroke(); }
 
@@ -3864,6 +3906,19 @@ function handleEditNameClick() {
         ctx.fillStyle = '#000'; ctx.fillRect(e.x - size, e.y - size - 8, size * 2, 4);
         ctx.fillStyle = '#50fa7b'; ctx.fillRect(e.x - size, e.y - size - 8, size * 2 * (e.hp / e.maxHp), 4);
 
+        // 聖輝光盾免疫狀態：白金色連續變換覆蓋層（週期 0.5s，波形類似 y = |cos(x)|）
+        if (e.lightShieldImmune) {
+          const phase = (performance.now() / 1000) * (Math.PI / 0.5);
+          const cosWave = Math.abs(Math.cos(phase)); // 0 ~ 1，靠近 1（不透明）佔據週期最長
+          const whiteGoldAlpha = 0.28 + 0.64 * cosWave; // 半透明(0.28) ~ 近不透明(0.92)連續浮動
+          ctx.fillStyle = `rgba(255, 246, 214, ${whiteGoldAlpha.toFixed(3)})`;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = `rgba(255, 223, 115, ${Math.min(1, whiteGoldAlpha + 0.1).toFixed(3)})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
         // 傳送升空/降落時的本體白光覆蓋層
         if (e.teleportState && e.teleportWhite > 0) {
           ctx.fillStyle = `rgba(255, 255, 255, ${e.teleportWhite})`;
@@ -3874,6 +3929,55 @@ function handleEditNameClick() {
         ctx.restore();
       });
 
+      // 繪製賢者【聖輝光盾】（圖層在所有敵人之上）
+      const shieldNowSec = performance.now() / 1000;
+      enemies.forEach(s => {
+        if (s.dead || s.type !== 'sage' || !(s.lightShieldActiveTimer > 0)) return;
+        const r = 55;
+        const fade = s.lightShieldActiveTimer < 0.3 ? (s.lightShieldActiveTimer / 0.3) : 1.0;
+
+        ctx.save();
+        ctx.globalAlpha = fade;
+
+        // 1. 半透明金色圓圈本體
+        const grad = ctx.createRadialGradient(s.x, s.y, r * 0.15, s.x, s.y, r);
+        grad.addColorStop(0, 'rgba(255, 236, 153, 0.14)');
+        grad.addColorStop(0.75, 'rgba(255, 215, 0, 0.24)');
+        grad.addColorStop(1, 'rgba(255, 200, 0, 0.36)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. 邊緣不透明金色邊圈
+        ctx.strokeStyle = 'rgb(235, 185, 20)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 3. 邊緣持續旋轉環繞的不透明亮金色光輝
+        const rotAngle = shieldNowSec * 2.6;
+        ctx.strokeStyle = 'rgb(255, 248, 185)';
+        ctx.lineWidth = 3.2;
+        ctx.lineCap = 'round';
+        for (let k = 0; k < 3; k++) {
+          const startA = rotAngle + k * ((Math.PI * 2) / 3);
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, r, startA, startA + 0.55);
+          ctx.stroke();
+
+          const tipX = s.x + Math.cos(startA + 0.55) * r;
+          const tipY = s.y + Math.sin(startA + 0.55) * r;
+          ctx.fillStyle = 'rgb(255, 252, 210)';
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      });
+      
       barriers.forEach(b => drawBarrierWall(ctx, b));
 
       if (gameSettings.vfxMode !== 3) {
