@@ -2445,6 +2445,7 @@ function handleEditNameClick() {
       if (enemy.lightShieldImmune) {
         addFloatingText(enemy.x, enemy.y - 10, '免疫', '#fff8dc', 11);
         return;
+      }
 
       if (enemy.type === 'scout1' && Math.random() < 0.65) {
         addFloatingText(enemy.x, enemy.y - 10, 'miss', '#ff5555', 11);
@@ -4420,7 +4421,6 @@ function handleEditNameClick() {
         }
       }
     });
-  }
   </script>
 </body>
 </html>
