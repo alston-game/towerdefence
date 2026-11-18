@@ -927,7 +927,7 @@ window.updateAuthUI = updateAuthUI;
             gain.gain.setValueAtTime(0.18 * vol, now);
             gain.gain.exponentialRampToValueAtTime(0.001 * vol, now + 0.5);
             osc.start(now); osc.stop(now + 0.5);
-          }
+          },
           light_shield_cast: () => {
             // 光盾展開時的清脆點亮聲（純淨高音和弦 + 泛音閃爍）
             [880, 1318.5, 1760].forEach((freq, idx) => {
@@ -2072,7 +2072,6 @@ function handleEditNameClick() {
           let sType = specialIndicesMap.get(i);
           let stats = getEnemyStatsForWave(sType, currentWave);
           let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 51) / 5) * 2);
-          let isTwoStarType = (sType === 'general' || sType === 'mage' || sType === 'archmage');
           let isThreeStarType = (sType === 'sage');
           let isTwoStarType = (sType === 'general' || sType === 'mage' || sType === 'archmage');
           let goldMult = isThreeStarType ? 4.5 : (isTwoStarType ? 3.5 : (sType === 'priest' ? 2 : 2.5));
@@ -2287,6 +2286,21 @@ function handleEditNameClick() {
         container.appendChild(div);
       });
     }
+
+    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
+      const t = talents[key], reqCost = t.cost + t.lv;
+      if (t.lv >= t.max) return showToast('該科技已達最高等級 (50級)！', 'res');
+      if (crystals >= reqCost) {
+        crystals -= reqCost; window.crystals = crystals; t.lv++;
+        if (key === 'maxHpBonus') { hp += 25; window.hp = hp; }
+        showToast(`成功升級【${t.name}】！`, 'res');
+        
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        updateTechUI(); updateUI();
+      } else showToast('鑽石不足！', 'res');
+    } // ← 確認這一個結尾大括號還在！
 
     function buyTalent(key) {
       let size = enemyType === 'boss' ? 20 : (enemyType === 'sage' ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
@@ -4406,6 +4420,7 @@ function handleEditNameClick() {
         }
       }
     });
+  }
   </script>
 </body>
 </html>
