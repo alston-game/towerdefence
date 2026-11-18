@@ -2287,7 +2287,7 @@ function handleEditNameClick() {
       });
     }
 
-    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
+    function buyTalent(key) {
       const t = talents[key], reqCost = t.cost + t.lv;
       if (t.lv >= t.max) return showToast('該科技已達最高等級 (50級)！', 'res');
       if (crystals >= reqCost) {
@@ -2302,7 +2302,7 @@ function handleEditNameClick() {
       } else showToast('鑽石不足！', 'res');
     } // ← 確認這一個結尾大括號還在！
 
-    function buyTalent(key) {
+    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
       let size = enemyType === 'boss' ? 20 : (enemyType === 'sage' ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
       let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'sage' ? '#fff3b0' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'archmage' ? '#6c5ce7' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
       
