@@ -1447,7 +1447,7 @@ function handleEditNameClick() {
         general: ['★★ 將軍', '特色：生命值很高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
         archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
-        sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍55px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。']
+        sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -1969,7 +1969,7 @@ function handleEditNameClick() {
           atkSpeedStr = `${Math.floor(atk)}/1s`;
           moveSpeedPxStr = `39px/1s`;
           resistances = '所有負面狀態效果降低 40%、降低所受到的傷害 20%';
-          skills = '【聖輝光盾】每 8 秒召喚範圍 55px、持續 3 秒的光盾，使盾內的敵人免疫所有傷害與負面狀態';
+          skills = '【聖輝光盾】每 8 秒召喚範圍 65px、持續 3 秒的光盾，使盾內的敵人免疫所有傷害與負面狀態';
       } else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
@@ -2026,7 +2026,7 @@ function handleEditNameClick() {
       let generalNum = currentWave >= 66 ? Math.min(8, Math.floor((currentWave - 66) / 5) + 1) : 0;
       let mageNum = currentWave >= 76 ? Math.min(5, Math.floor((currentWave - 76) / 5) + 1) : 0;
       let archmageNum = currentWave >= 86 ? Math.min(3, Math.floor((currentWave - 86) / 5) + 1) : 0;
-      let sageNum = currentWave >= 96 ? Math.min(2, Math.floor((currentWave - 96) / 5) + 1) : 0;
+      let sageNum = currentWave >= 91 ? Math.min(2, Math.floor((currentWave - 91) / 5) + 1) : 0;
 
       let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum + sageNum, specialIndicesMap = new Map();
       if (totalSpecial > 0) {
@@ -2669,17 +2669,17 @@ function handleEditNameClick() {
             paralyzeImmunity: !!eData.paralyzeImmunity,
             knockbackEffectiveness: eData.knockbackEffectiveness !== undefined ? eData.knockbackEffectiveness : (eData.type === 'sage' ? 0.6 : (eData.type === 'general' || eData.type === 'mage' || eData.type === 'archmage' ? 0.8 : 1.0)),
             pathIndex: 0, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, reversalTimer: 0,
-            fireballTimer: eData.type === 'mage' ? 4.0 : 0, // 法師原冷卻 8s -> 首次 4s 釋放
-            portalTimer: eData.type === 'archmage' ? 4.5 : 0, // 大魔導師原冷卻 9s -> 首次 4.5s 釋放
-            lightShieldTimer: eData.type === 'sage' ? 4.0 : 0, // 賢者原冷卻 8s -> 首次 4s 釋放
+            fireballTimer: eData.type === 'mage' ? 8.0 * (0.4 + Math.random() * 0.2) : 0, // 法師冷卻 8s -> 首次 3.2~4.8s 釋放
+            portalTimer: eData.type === 'archmage' ? 9.0 * (0.4 + Math.random() * 0.2) : 0, // 大魔導師冷卻 9s -> 首次 3.6~5.4s 釋放
+            lightShieldTimer: eData.type === 'sage' ? 8.0 * (0.4 + Math.random() * 0.2) : 0, // 賢者冷卻 8s -> 首次 3.2~4.8s 釋放
             lightShieldActiveTimer: 0, lightShieldGraceTimer: 0, lightShieldSourceId: null, lightShieldImmune: false,
             dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
             beamTimer: 0, stopTimer: 0,
-            healTimer: eData.type === 'priest' ? 2.5 : 0, healRadius: eData.healRadius || 45, // 牧師原冷卻 5s -> 首次 2.5s 釋放
-            blessTimer: eData.type === 'monk' ? 3.5 : 0, blessRadius: eData.blessRadius || 30, // 祭司原冷卻 7s -> 首次 3.5s 釋放
-            resurrectTimer: eData.type === 'warlock' ? 3.0 : 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10, // 巫師原冷卻 6s -> 首次 3s 釋放
-            hasteSkillTimer: eData.type === 'general' ? 3.0 : 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0, // 將軍原冷卻 6s -> 首次 3s 釋放
+            healTimer: eData.type === 'priest' ? 5.0 * (0.4 + Math.random() * 0.2) : 0, healRadius: eData.healRadius || 45, // 牧師冷卻 5s -> 首次 2.0~3.0s 釋放
+            blessTimer: eData.type === 'monk' ? 7.0 * (0.4 + Math.random() * 0.2) : 0, blessRadius: eData.blessRadius || 30, // 祭司冷卻 7s -> 首次 2.8~4.2s 釋放
+            resurrectTimer: eData.type === 'warlock' ? 6.0 * (0.4 + Math.random() * 0.2) : 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10, // 巫師冷卻 6s -> 首次 2.4~3.6s 釋放
+            hasteSkillTimer: eData.type === 'general' ? 6.0 * (0.4 + Math.random() * 0.2) : 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0, // 將軍冷卻 6s -> 首次 2.4~3.6s 釋放
             cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
             isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isEnraged: false,
             marks: []
@@ -3099,7 +3099,7 @@ function handleEditNameClick() {
 
     enemies.forEach(en => {
       if (en.dead) return;
-      let coveringSage = activeSages.find(s => Math.hypot(en.x - s.x, en.y - s.y) <= 55);
+      let coveringSage = activeSages.find(s => Math.hypot(en.x - s.x, en.y - s.y) <= 65);
       if (coveringSage) {
         en.lightShieldImmune = true;
         en.lightShieldGraceTimer = 0.5;
@@ -3948,7 +3948,7 @@ function handleEditNameClick() {
       const shieldNowSec = performance.now() / 1000;
       enemies.forEach(s => {
         if (s.dead || s.type !== 'sage' || !(s.lightShieldActiveTimer > 0)) return;
-        const r = 55;
+        const r = 65;
         const fade = s.lightShieldActiveTimer < 0.3 ? (s.lightShieldActiveTimer / 0.3) : 1.0;
 
         ctx.save();
