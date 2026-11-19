@@ -2286,10 +2286,31 @@ function handleEditNameClick() {
       return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
     }
 
+    function getCanvasLogicalPos(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;   // canvas.width 固定為 1000
+      const scaleY = canvas.height / rect.height; // canvas.height 固定為 600
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+    
+    function getCanvasLogicalPos(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;   // canvas.width 固定為 1000
+      const scaleY = canvas.height / rect.height; // canvas.height 固定為 600
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
     function handleMove(clientX, clientY) {
       if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      if (placingType) dragPos = { x: clientX - rect.left, y: clientY - rect.top };
+      if (placingType) {
+        dragPos = getCanvasLogicalPos(clientX, clientY);
+      }
     }
 
     function getTowerSpecRate(type) {
@@ -4702,7 +4723,23 @@ function handleEditNameClick() {
       
       window.addEventListener('mousemove', () => isMouseInput = true);
       canvas.addEventListener('mousemove', (e) => { isMouseInput = true; handleMove(e.clientX, e.clientY); });
-      canvas.addEventListener('touchmove', (e) => { isMouseInput = false; e.touches.length && handleMove(e.touches[0].clientX, e.touches[0].clientY); });
+      
+      // 支援手機/平板單指按住並拖曳放置防禦塔（並防止觸發外層畫面橫向滑動）
+      canvas.addEventListener('touchstart', (e) => {
+        isMouseInput = false;
+        if (placingType && e.touches.length > 0) {
+          e.preventDefault();
+          handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        isMouseInput = false;
+        if (placingType && e.touches.length > 0) {
+          e.preventDefault();
+          handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: false });
 
       window.addEventListener('click', () => {
         document.querySelectorAll('.skill-bubble-popover').forEach(p => p.style.display = 'none');
@@ -4710,8 +4747,8 @@ function handleEditNameClick() {
 
       canvas.addEventListener('click', (e) => {
         if (placingType) { if (isMouseInput) confirmPlacement(); return; }
-        const rect = canvas.getBoundingClientRect();
-        selectedTower = towers.find(t => Math.hypot(t.x - (e.clientX - rect.left), t.y - (e.clientY - rect.top)) < 22) || null;
+        const pos = getCanvasLogicalPos(e.clientX, e.clientY);
+        selectedTower = towers.find(t => Math.hypot(t.x - pos.x, t.y - pos.y) < 24) || null;
         if (selectedTower) openTowerOverlay(); else document.getElementById('tower-upgrade-overlay').style.display = 'none';
       });
 
