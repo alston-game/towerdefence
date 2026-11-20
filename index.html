@@ -131,16 +131,16 @@
     #boss-traits { font-size: 11px; color: var(--cyan); line-height: 1.3; }
 
     #toast-container {
-      position: absolute;
-      top: 10px;
-      right: 10px;
+      position: fixed;
+      top: 52px; /* 避開頂部資源列 */
+      right: 12px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 6px;
-      z-index: 360;
+      z-index: 800;
       pointer-events: none;
-      max-width: 65%; /* 限制最大寬度，絕不佔滿整個戰鬥畫面 */
+      max-width: 65%;
     }
     .toast {
       background: rgba(20, 20, 30, 0.92);
@@ -202,8 +202,8 @@
     .skill-info-icon:hover { background: var(--purple); color: #000; }
 
     .skill-bubble-popover {
-      position: fixed;
-      width: min(260px, 78vw);
+      position: absolute;
+      width: min(250px, 76vw);
       background: rgba(30, 31, 41, 0.98);
       border: 2px solid var(--purple);
       border-radius: 8px;
@@ -214,13 +214,12 @@
       pointer-events: auto;
       cursor: pointer;
     }
-    /* 下方指向按鈕的三角小箭頭 */
+    /* 三角小箭頭固定在對話框右下角 */
     .skill-bubble-popover::after {
       content: '';
       position: absolute;
       bottom: -8px;
-      left: var(--arrow-left, 50%);
-      transform: translateX(-50%);
+      right: 14px;
       border-width: 8px 8px 0 8px;
       border-style: solid;
       border-color: var(--purple) transparent transparent transparent;
@@ -300,7 +299,7 @@
       #panel-container {
         grid-template-columns: 1fr;
       }
-      #toast-container { top: 6px; right: 6px; max-width: 58%; gap: 4px; }
+      #toast-container { top: 46px; right: 6px; max-width: 58%; gap: 4px; }
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 85%; top: 8px; padding: 5px 10px; }
       #tower-upgrade-overlay { width: 90%; left: 5%; bottom: 10px; padding: 8px; }
@@ -378,7 +377,7 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 6px;
       }
-      #toast-container { top: 6px; right: 6px; max-width: 58%; gap: 4px; }
+      #toast-container { top: 46px; right: 6px; max-width: 58%; gap: 4px; }
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 65%; top: 6px; padding: 4px 8px; }
       #tower-upgrade-overlay { width: 290px; left: 10px; bottom: 10px; padding: 8px; }
@@ -610,7 +609,7 @@
   </div>
 
   <!-- 成就單項詳情 Modal -->
-  <div class="modal" id="achieve-detail-modal" style="z-index:360;">
+  <div class="modal" id="achieve-detail-modal" style="z-index:520;">
     <div class="modal-content" style="width:340px; text-align:center;">
       <div id="ach-detail-icon" style="font-size:36px; margin-bottom:8px;">🏆</div>
       <h3 id="ach-detail-title" style="color:var(--primary); margin-bottom:6px;"></h3>
@@ -633,7 +632,7 @@
   </div>
 
   <!-- 玩家排行榜成就詳細彈窗 -->
-  <div id="player-achievements-modal" class="modal" style="display:none; align-items:center; justify-content:center; z-index: 450;">
+  <div id="player-achievements-modal" class="modal" style="display:none; align-items:center; justify-content:center; z-index: 510;">
     <div class="modal-content" style="max-width:450px; width:90%; border:2px solid var(--purple); text-align:center;">
       <h3 id="player-ach-modal-title" style="color:var(--primary); margin-top:0;">🏆 玩家成就</h3>
       <div id="player-ach-modal-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(60px, 1fr)); gap:10px; max-height:300px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px; margin-bottom:15px;">
@@ -1809,6 +1808,7 @@ function handleEditNameClick() {
     function createCurrentStateSnapshot() {
       return JSON.parse(JSON.stringify({
         playerName, currentWave, hp, gold, crystals, starParticles, stats, gameSettings,
+        overdriveState, overdriveTimer, // 👈 紀錄超能過載狀態與剩餘/冷卻時間
         unlockedAchievements: Array.from(unlockedAchievements),
         claimedAchievements: Array.from(claimedAchievements),
         newAchievementAlerts: Array.from(newAchievementAlerts),
@@ -1817,7 +1817,8 @@ function handleEditNameClick() {
         towers: towers.map(t => ({
           type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
           totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted,
-          infernoMode: t.infernoMode || 1, chargeProgress: t.chargeProgress || 0
+          infernoMode: t.infernoMode || 1, chargeProgress: t.chargeProgress || 0,
+          drumTimer: t.drumTimer || 0, isOvercharged: !!t.isOvercharged, overchargeTimer: t.overchargeTimer || 0 // 👈 紀錄防禦塔增幅剩餘時間
         })),
         seenEnemyTypes: Array.from(seenEnemyTypes),
         unlockedCodexEnemies: Array.from(unlockedCodexEnemies),
@@ -1827,23 +1828,60 @@ function handleEditNameClick() {
 
     function loadSnapshotState(data) {
       if (!data) return;
+
+      // 1. 立即中斷戰鬥，清除場上所有敵人、隊列、飛行物、特效與 UI 覆蓋層
+      waveInProgress = false;
+      window.waveInProgress = false;
+      waveSpawnQueue = [];
+      enemies = [];
+      projectiles = [];
+      barriers = [];
+      shockwaves = [];
+      bossBeams = [];
+      cannonExplosions = [];
+      activeVisualEffects = [];
+      deadEnemyGraveyard = [];
+      meteorQueue = [];
+      targetMarkQueue = [];
+      mageFireballs = [];
+      archmagePortals = [];
+      selectedTower = null;
+      waveStarEnemyKills = 0;
+
+      const upgradeOverlay = document.getElementById('tower-upgrade-overlay');
+      if (upgradeOverlay) upgradeOverlay.style.display = 'none';
+      const bossHpContainer = document.getElementById('boss-hp-container');
+      if (bossHpContainer) bossHpContainer.style.display = 'none';
+
+      updateFireballLoopSound();
+      stopLightShieldAmbience();
+      stopBlizzardSound();
+      stopHumSound();
+
+      // 2. 還原基礎資源、波次與玩家名稱
       if (data.playerName) { playerName = data.playerName; window.playerName = playerName; }
       currentWave = data.currentWave || 0; window.currentWave = currentWave;
       hp = data.hp ?? 100; window.hp = hp;
       gold = data.gold ?? 300; window.gold = gold;
       crystals = data.crystals ?? 0; window.crystals = crystals;
       starParticles = data.starParticles ?? 0; window.starParticles = starParticles;
-      
+
+      // 3. 還原超能過載狀態與剩餘/冷卻時間
+      overdriveState = data.overdriveState || 'ready';
+      overdriveTimer = data.overdriveTimer || 0;
+
+      // 4. 還原統計數據、設定偏好、圖鑑與成就進度
       if (data.stats) { stats = data.stats; window.stats = stats; }
       if (data.gameSettings) { gameSettings = Object.assign(gameSettings, data.gameSettings); window.gameSettings = gameSettings; }
       if (data.seenEnemyTypes) { seenEnemyTypes = new Set(data.seenEnemyTypes); window.seenEnemyTypes = seenEnemyTypes; }
       if (data.unlockedCodexEnemies) { unlockedCodexEnemies = new Set(data.unlockedCodexEnemies); window.unlockedCodexEnemies = unlockedCodexEnemies; }
       if (data.newCodexAlerts) { newCodexAlerts = new Set(data.newCodexAlerts); window.newCodexAlerts = newCodexAlerts; }
-      
+
       if (data.unlockedAchievements) { unlockedAchievements = new Set(data.unlockedAchievements); window.unlockedAchievements = unlockedAchievements; }
       if (data.claimedAchievements) { claimedAchievements = new Set(data.claimedAchievements); window.claimedAchievements = claimedAchievements; }
       if (data.newAchievementAlerts) { newAchievementAlerts = new Set(data.newAchievementAlerts); window.newAchievementAlerts = newAchievementAlerts; }
 
+      // 5. 還原全局科技與主動技能等級、冷卻時間
       if (data.talents) Object.keys(data.talents).forEach(k => talents[k] && (talents[k].lv = data.talents[k]));
       if (data.activeSkills) Object.keys(data.activeSkills).forEach(k => {
         if (activeSkills[k]) {
@@ -1852,42 +1890,50 @@ function handleEditNameClick() {
           activeSkills[k].timer = data.activeSkills[k].timer || 0;
         }
       });
-      
+
+      // 6. 還原防禦塔佈局、等級與增幅狀態（戰鼓加速 / 超能狀態）剩餘時間
       if (Array.isArray(data.towers)) {
         towers = data.towers.map(t => ({
           id: Date.now() + Math.random(), type: t.type, x: t.x, y: t.y,
           dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
           totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted,
-          cooldown: 0, disableTimer: 0, drumTimer: 0, hammerState: 'idle', hammerHeight: 0, hammerRot: 0, hammerScale: 1, attackTickCount: 0, angle: 0,
+          cooldown: 0, disableTimer: 0,
+          drumTimer: t.drumTimer || 0,
+          hammerState: 'idle', hammerHeight: 0, hammerRot: 0, hammerScale: 1, attackTickCount: 0, angle: 0,
           infernoMode: t.infernoMode || 1, targetLockId: null, lockTime: 0, infernoStage: 0,
-          chargeProgress: t.chargeProgress || 0, isOvercharged: false, overchargeTimer: 0,
+          chargeProgress: t.chargeProgress || 0,
+          isOvercharged: !!t.isOvercharged,
+          overchargeTimer: t.overchargeTimer || 0,
           workerState: 'idle', workerPos: { x: t.x, y: t.y }, workerTargetTowerId: null, workerActionTimer: 0
         }));
+      } else {
+        towers = [];
+      }
+      window.towers = towers;
 
-        if (data.savedCheckpointsMap) {
-          savedCheckpointsMap = data.savedCheckpointsMap;
+      // 7. 還原歷史存檔點列表，並為既有高波次帳號自動補齊過去每 5 波的存檔點
+      if (data.savedCheckpointsMap) {
+        savedCheckpointsMap = data.savedCheckpointsMap;
+      }
+      for (let w = 5; w <= currentWave; w += 5) {
+        if (!savedCheckpointsMap[w]) {
+          let snap = createCurrentStateSnapshot();
+          snap.currentWave = w;
+          snap.gold = Math.max(300, Math.floor((gold || 300) * (w / Math.max(1, currentWave))));
+          savedCheckpointsMap[w] = snap;
         }
-        // 若為既有高波次帳號，自動為每 5 波補建可跳回的存檔點（以當前科技與防禦塔為基底並按波次比例縮放金幣）
-        let maxSavedWave = waveToSave || currentWave;
-        for (let w = 5; w <= maxSavedWave; w += 5) {
-          if (!savedCheckpointsMap[w]) {
-            let snap = createCurrentStateSnapshot();
-            snap.currentWave = w;
-            snap.gold = Math.max(300, Math.floor((gold || 300) * (w / Math.max(1, maxSavedWave))));
-            savedCheckpointsMap[w] = snap;
-          }
-        }
-        window.savedCheckpointsMap = savedCheckpointsMap;
-        window.towers = towers;
-        stopLightShieldAmbience();
+      }
+      window.savedCheckpointsMap = savedCheckpointsMap;
+      if (currentWave > 0 && savedCheckpointsMap[currentWave]) {
+        checkpointState = savedCheckpointsMap[currentWave];
       }
 
-      enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = [];
-      mageFireballs = []; archmagePortals = []; updateFireballLoopSound();
-      waveInProgress = false;
-      window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
-      waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
-      updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
+      // 8. 立即更新所有介面與重繪戰鬥畫布
+      updateUI();
+      updateSkillUI();
+      updateTechUI();
+      updateSettingsUI();
+      if (typeof renderGame === 'function') renderGame();
     }
 
     function resetToDefaultNewGame() {
@@ -2461,35 +2507,27 @@ function handleEditNameClick() {
       document.querySelectorAll('.skill-bubble-popover').forEach(p => p.style.display = 'none');
       if (isShow) return;
 
-      // 將氣泡移至 body 最外層，確保圖層永遠在所有防禦塔與技能面板之上
       if (popover.parentElement !== document.body) {
         document.body.appendChild(popover);
       }
-
       popover.style.display = 'block';
-      popover.classList.remove('arrow-top');
 
       const btnRect = iconEl.getBoundingClientRect();
       const popRect = popover.getBoundingClientRect();
-      const margin = 8; // 與手機螢幕邊界的安全距離
+      const margin = 8;
 
-      // 水平位置：以驚嘆號為中心，並自動夾在螢幕左右安全邊界內
-      let left = btnRect.left + btnRect.width / 2 - popRect.width / 2;
+      // 讓對話框右下角的箭頭對準驚嘆號按鈕，並夾在視窗安全邊界內
+      let left = btnRect.right - popRect.width + 12;
       left = Math.max(margin, Math.min(window.innerWidth - popRect.width - margin, left));
 
-      // 垂直位置：預設顯示在按鈕上方；若上方空間不足（例如橫屏時），自動翻轉到按鈕下方
-      let top = btnRect.top - popRect.height - 10;
-      if (top < margin) {
-        top = btnRect.bottom + 10;
-        popover.classList.add('arrow-top');
+      // 加上頁面捲動偏移量，讓對話框隨著網頁滑動一起移動
+      let top = window.scrollY + btnRect.top - popRect.height - 10;
+      if (btnRect.top - popRect.height - 10 < margin) {
+        top = window.scrollY + btnRect.bottom + 10;
       }
 
-      popover.style.left = `${left}px`;
+      popover.style.left = `${window.scrollX + left}px`;
       popover.style.top = `${top}px`;
-
-      // 動態計算小箭頭位置，讓它永遠精準對準驚嘆號中心
-      const arrowX = Math.max(14, Math.min(popRect.width - 14, (btnRect.left + btnRect.width / 2) - left));
-      popover.style.setProperty('--arrow-left', `${arrowX}px`);
     }
 
     function updateSkillUI() {
