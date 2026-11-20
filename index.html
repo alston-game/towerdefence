@@ -203,18 +203,34 @@
 
     .skill-bubble-popover {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: min(290px, 85vw);
+      width: min(260px, 78vw);
       background: rgba(30, 31, 41, 0.98);
       border: 2px solid var(--purple);
-      border-radius: 10px;
-      padding: 14px 16px;
+      border-radius: 8px;
+      padding: 10px 12px;
       display: none;
       z-index: 600;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+      pointer-events: auto;
       cursor: pointer;
+    }
+    /* 下方指向按鈕的三角小箭頭 */
+    .skill-bubble-popover::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: var(--arrow-left, 50%);
+      transform: translateX(-50%);
+      border-width: 8px 8px 0 8px;
+      border-style: solid;
+      border-color: var(--purple) transparent transparent transparent;
+    }
+    /* 若按鈕太靠螢幕頂端，氣泡自動改顯示在按鈕下方，箭頭朝上 */
+    .skill-bubble-popover.arrow-top::after {
+      top: -8px;
+      bottom: auto;
+      border-width: 0 8px 8px 8px;
+      border-color: transparent transparent var(--purple) transparent;
     }
     .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 20; backdrop-filter: blur(2px); border-radius: 6px; pointer-events: auto; }
     #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 340px; display: none; z-index: 60; }
@@ -754,6 +770,7 @@ async function saveGameToCloud(user) {
         type: t.type, x: t.x, y: t.y, dmgLv: t.dmgLv, rngLv: t.rngLv, spdLv: t.spdLv, specLv: t.specLv,
         totalDamageDealt: t.totalDamageDealt || 0, totalGoldEarned: t.totalGoldEarned || 0, isPromoted: !!t.isPromoted, infernoMode: t.infernoMode || 1
       })),
+      savedCheckpointsMap: window.savedCheckpointsMap || {},
       seenEnemyTypes: Array.from(window.seenEnemyTypes || []),
       unlockedCodexEnemies: Array.from(window.unlockedCodexEnemies || []),
       newCodexAlerts: Array.from(window.newCodexAlerts || []),
@@ -1846,6 +1863,21 @@ function handleEditNameClick() {
           chargeProgress: t.chargeProgress || 0, isOvercharged: false, overchargeTimer: 0,
           workerState: 'idle', workerPos: { x: t.x, y: t.y }, workerTargetTowerId: null, workerActionTimer: 0
         }));
+
+        if (data.savedCheckpointsMap) {
+          savedCheckpointsMap = data.savedCheckpointsMap;
+        }
+        // 若為既有高波次帳號，自動為每 5 波補建可跳回的存檔點（以當前科技與防禦塔為基底並按波次比例縮放金幣）
+        let maxSavedWave = waveToSave || currentWave;
+        for (let w = 5; w <= maxSavedWave; w += 5) {
+          if (!savedCheckpointsMap[w]) {
+            let snap = createCurrentStateSnapshot();
+            snap.currentWave = w;
+            snap.gold = Math.max(300, Math.floor((gold || 300) * (w / Math.max(1, maxSavedWave))));
+            savedCheckpointsMap[w] = snap;
+          }
+        }
+        window.savedCheckpointsMap = savedCheckpointsMap;
         window.towers = towers;
         stopLightShieldAmbience();
       }
@@ -2422,15 +2454,46 @@ function handleEditNameClick() {
       }
     }
 
-    function toggleSkillBubble(key) {
+    function toggleSkillBubble(key, iconEl) {
       const popover = document.getElementById(`skill-bubble-${key}`);
       if (!popover) return;
       const isShow = popover.style.display === 'block';
       document.querySelectorAll('.skill-bubble-popover').forEach(p => p.style.display = 'none');
-      popover.style.display = isShow ? 'none' : 'block';
+      if (isShow) return;
+
+      // 將氣泡移至 body 最外層，確保圖層永遠在所有防禦塔與技能面板之上
+      if (popover.parentElement !== document.body) {
+        document.body.appendChild(popover);
+      }
+
+      popover.style.display = 'block';
+      popover.classList.remove('arrow-top');
+
+      const btnRect = iconEl.getBoundingClientRect();
+      const popRect = popover.getBoundingClientRect();
+      const margin = 8; // 與手機螢幕邊界的安全距離
+
+      // 水平位置：以驚嘆號為中心，並自動夾在螢幕左右安全邊界內
+      let left = btnRect.left + btnRect.width / 2 - popRect.width / 2;
+      left = Math.max(margin, Math.min(window.innerWidth - popRect.width - margin, left));
+
+      // 垂直位置：預設顯示在按鈕上方；若上方空間不足（例如橫屏時），自動翻轉到按鈕下方
+      let top = btnRect.top - popRect.height - 10;
+      if (top < margin) {
+        top = btnRect.bottom + 10;
+        popover.classList.add('arrow-top');
+      }
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+
+      // 動態計算小箭頭位置，讓它永遠精準對準驚嘆號中心
+      const arrowX = Math.max(14, Math.min(popRect.width - 14, (btnRect.left + btnRect.width / 2) - left));
+      popover.style.setProperty('--arrow-left', `${arrowX}px`);
     }
 
     function updateSkillUI() {
+      document.querySelectorAll('.skill-bubble-popover').forEach(p => p.remove());
       const container = document.getElementById('skills-list');
       if (!container) return;
       container.innerHTML = '';
@@ -2447,7 +2510,7 @@ function handleEditNameClick() {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <div class="skill-info-icon" onclick="event.stopPropagation(); toggleSkillBubble('${key}')" title="技能詳情">❗️</div>
+          <div class="skill-info-icon" onclick="event.stopPropagation(); toggleSkillBubble('${key}', this)" title="技能詳情">❗️</div>
           <div class="skill-bubble-popover" id="skill-bubble-${key}" onclick="event.stopPropagation(); this.style.display='none';">
             <div style="font-weight:bold; color:var(--primary); font-size:13px; margin-bottom:6px;">${s.name}</div>
             <div style="font-size:12px; color:#f8f8f2; line-height:1.5;">${s.desc}</div>
