@@ -83,11 +83,17 @@
       flex-shrink: 0;
     }
 
-    canvas {
+    #gameCanvas {
       display: block;
       width: 100%;
       height: 100%;
       cursor: crosshair;
+    }
+
+    #cd-icon-container canvas {
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
     }
 
     #side-controls-wrapper {
@@ -124,8 +130,28 @@
     #boss-hp-text { font-size: 12px; margin: 2px 0 4px; font-family: monospace; }
     #boss-traits { font-size: 11px; color: var(--cyan); line-height: 1.3; }
 
-    #toast-container { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 360; pointer-events: none; }
-    .toast { background: rgba(20, 20, 30, 0.95); border-left: 4px solid var(--orange); padding: 10px 15px; border-radius: 4px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    #toast-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      z-index: 360;
+      pointer-events: none;
+      max-width: 65%; /* 限制最大寬度，絕不佔滿整個戰鬥畫面 */
+    }
+    .toast {
+      background: rgba(20, 20, 30, 0.92);
+      border-left: 3px solid var(--orange);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.35;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      word-break: break-word;
+    }
 
     #enemy-intro-popup { position: absolute; bottom: 15px; right: 15px; width: 280px; background: rgba(20, 20, 30, 0.95); border: 2px solid var(--purple); border-radius: 8px; padding: 12px; z-index: 80; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     #enemy-intro-popup .close-btn { position: absolute; top: 6px; right: 10px; color: var(--danger); font-weight: bold; cursor: pointer; font-size: 16px; }
@@ -175,16 +201,28 @@
     .skill-info-icon { position: absolute; top: 4px; right: 4px; background: rgba(189, 147, 249, 0.2); color: var(--purple); font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid var(--purple); z-index: 15; }
     .skill-info-icon:hover { background: var(--purple); color: #000; }
 
-    .skill-bubble-popover { position: absolute; bottom: 100%; right: -2px; width: 280px; background: rgba(30, 31, 41, 0.98); border: 1px solid var(--purple); border-radius: 8px; padding: 10px; display: none; z-index: 300; box-shadow: 0 4px 20px rgba(0,0,0,0.85); backdrop-filter: blur(4px); cursor: pointer; margin-bottom: 8px; }
-    .skill-bubble-popover::after { content: ''; position: absolute; bottom: -8px; right: 8px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--purple); }
-
+    .skill-bubble-popover {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(290px, 85vw);
+      background: rgba(30, 31, 41, 0.98);
+      border: 2px solid var(--purple);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: none;
+      z-index: 600;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+      cursor: pointer;
+    }
     .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 20; backdrop-filter: blur(2px); border-radius: 6px; pointer-events: auto; }
     #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 340px; display: none; z-index: 60; }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
 
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 300; pointer-events: auto; }
-    #tech-modal { z-index: 200; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 400; pointer-events: auto; }
+    #tech-modal { z-index: 400; }
 
     .modal-content { background: var(--panel-bg); border-radius: 10px; padding: 20px; width: 480px; max-width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 8px 30px rgba(0,0,0,0.8); }
     .mode-toggle-btn { background: #333; color: #fff; border: 1px solid var(--purple); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 4px; }
@@ -234,22 +272,20 @@
       }
       .res-item { font-size: 12px; }
       .res-icon { font-size: 14px; margin-right: 3px; }
-
       #game-workspace {
         padding: 6px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
       }
-
       #game-container {
         width: 100%;
         aspect-ratio: 1000 / 600;
       }
-
       #panel-container {
         grid-template-columns: 1fr;
       }
-
+      #toast-container { top: 6px; right: 6px; max-width: 58%; gap: 4px; }
+      .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 85%; top: 8px; padding: 5px 10px; }
       #tower-upgrade-overlay { width: 90%; left: 5%; bottom: 10px; padding: 8px; }
       #confirm-placement-bar { width: 92%; bottom: 10px; padding: 6px 12px; font-size: 11px; }
@@ -266,7 +302,6 @@
       .res-item { font-size: 12px; }
       .res-icon { font-size: 14px; margin-right: 4px; }
       .settings-gear-btn { width: 28px; height: 28px; font-size: 14px; }
-
       #game-workspace {
         flex-direction: row;
         align-items: stretch;
@@ -277,7 +312,6 @@
         padding: 6px;
         gap: 10px;
       }
-
       #game-container {
         height: 100%;
         width: auto;
@@ -285,7 +319,6 @@
         aspect-ratio: 1000 / 600;
         flex-shrink: 0;
       }
-
       #side-controls-wrapper {
         flex-direction: row;
         width: auto;
@@ -294,7 +327,6 @@
         gap: 10px;
         flex-shrink: 0;
       }
-
       #controls-bar {
         flex-direction: column;
         flex-wrap: nowrap;
@@ -312,7 +344,6 @@
         padding: 7px 8px;
         font-size: 12px;
       }
-
       #panel-container {
         display: flex;
         flex-direction: row;
@@ -331,7 +362,8 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 6px;
       }
-
+      #toast-container { top: 6px; right: 6px; max-width: 58%; gap: 4px; }
+      .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 65%; top: 6px; padding: 4px 8px; }
       #tower-upgrade-overlay { width: 290px; left: 10px; bottom: 10px; padding: 8px; }
       #confirm-placement-bar { bottom: 10px; padding: 6px 14px; }
@@ -607,12 +639,17 @@
   <!-- 全局科技 Modal -->
   <div class="modal" id="tech-modal">
     <div class="modal-content">
-      <h3 style="color:var(--cyan); margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">💎 全局科技</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+        <h3 style="color:var(--cyan); margin:0;">💎 全局科技</h3>
+        <div style="background:var(--card-bg); border:1px solid var(--purple); padding:4px 10px; border-radius:20px; font-size:13px; font-weight:bold; color:var(--cyan);">
+          💎 <span id="tech-modal-crystal-val">0</span>
+        </div>
+      </div>
       <div id="tech-list" style="display:flex; flex-direction:column; gap:10px;"></div>
       <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
     </div>
   </div>
-
+  
   <!-- 敵人圖鑑 Modal -->
   <div class="modal" id="codex-modal">
     <div class="modal-content">
@@ -2496,6 +2533,8 @@ function handleEditNameClick() {
     }
 
     function updateTechUI() {
+      const techCrystalEl = document.getElementById('tech-modal-crystal-val');
+      if (techCrystalEl) techCrystalEl.innerText = crystals;
       const container = document.getElementById('tech-list');
       if (!container) return;
       container.innerHTML = '';
