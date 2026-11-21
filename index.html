@@ -1596,9 +1596,7 @@ function handleEditNameClick() {
           showToast(`🎉 獲得成就【${ach.title}】解鎖獎勵 💎${ach.reward} 鑽石！`, 'res');
         }
         updateUI();
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         if (isModalOpen('achievements-modal')) {
           openAchievementsModal();
         }
@@ -2077,9 +2075,7 @@ function handleEditNameClick() {
       towers.push(newTower); window.towers = towers;
       showToast('建造成功！', 'towerSkill');
       
-      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-        window.saveGameToCloud(window.currentUser);
-      }
+      syncActiveCheckpointIfNeeded();
       cancelPlacement(); updateUI();
     }
 
@@ -2153,9 +2149,7 @@ function handleEditNameClick() {
       selectedTower.targetLockId = null; selectedTower.lockTime = 0; selectedTower.infernoStage = 0;
       showToast(`地獄之塔切換為：${selectedTower.infernoMode === 1 ? '🔥 單體漸增型態' : '💥 多體散射型態'}`, 'towerSkill');
       
-      if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-        window.saveGameToCloud(window.currentUser);
-      }
+      syncActiveCheckpointIfNeeded();
       openTowerOverlay();
     }
 
@@ -2234,9 +2228,7 @@ function handleEditNameClick() {
       if (gold >= cost) {
         gold -= cost; window.gold = gold; selectedTower[lvProp]++;
         
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         updateUI(); openTowerOverlay();
       } else showToast('金幣不足！', 'res');
     }
@@ -2250,9 +2242,7 @@ function handleEditNameClick() {
         towers.splice(idx, 1); window.towers = towers; selectedTower = null;
         document.getElementById('tower-upgrade-overlay').style.display = 'none';
         
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         updateUI(); showToast('防禦塔已出售', 'towerSkill');
       }
     }
@@ -2626,9 +2616,7 @@ function handleEditNameClick() {
         if (type === 'val') { s.valLv++; showToast(`【${s.name}】數值效果已提升！`, 'res'); }
         else { s.cdLv++; showToast(`【${s.name}】冷卻時間已縮短！`, 'res'); }
         
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         updateSkillUI(); updateUI();
       } else showToast('鑽石不足！', 'res');
     }
@@ -2669,9 +2657,7 @@ function handleEditNameClick() {
         if (key === 'maxHpBonus') { hp += 25; window.hp = hp; }
         showToast(`成功升級【${t.name}】！`, 'res');
         
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         updateTechUI(); updateUI();
       } else showToast('鑽石不足！', 'res');
     } // ← 確認這一個結尾大括號還在！
@@ -2756,9 +2742,7 @@ function handleEditNameClick() {
         newCodexAlerts.delete(enemyId); crystals += 10; window.crystals = crystals;
         showToast(`🎉 查閱新敵人【${ENEMY_CODEX_DATA.find(e=>e.id===enemyId).name}】！獲得 💎10 鑽石！`, 'res');
         updateUI();
-        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
-          window.saveGameToCloud(window.currentUser);
-        }
+        syncActiveCheckpointIfNeeded();
         openCodexModal();
       }
       showCodexDetailModal(enemyId);
@@ -2786,11 +2770,21 @@ function handleEditNameClick() {
       savedCheckpointsMap[currentWave] = checkpointState;
       showToast(`💾 第 ${currentWave} 波存檔點 Checkpoint 已更新！`, 'res');
       
+      syncActiveCheckpointIfNeeded();
+    }
+
+    function syncActiveCheckpointIfNeeded() {
+      // 若目前處於整備期（非戰鬥中），且當前波次為 5 的倍數（例如通關第 100 波、尚未開始第 101 波前）
+      if (!waveInProgress && currentWave > 0 && currentWave % 5 === 0) {
+        checkpointState = createCurrentStateSnapshot();
+        savedCheckpointsMap[currentWave] = checkpointState;
+        window.savedCheckpointsMap = savedCheckpointsMap;
+      }
       if (window.currentUser && typeof window.saveGameToCloud === 'function') {
         window.saveGameToCloud(window.currentUser);
       }
     }
-
+    
     function restartGame() {
       document.getElementById('gameover-modal').style.display = 'none';
       resetBossStates();
