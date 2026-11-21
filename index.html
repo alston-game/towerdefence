@@ -2300,7 +2300,7 @@ function handleEditNameClick() {
     }
 
     function startPlacement(type) {
-      if (towers.length >= MAX_TOWER_COUNT) return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill');
+      if (towers.length >= getMaxTowerCount()) return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill');
       if (type === 'gold' && towers.filter(t => t.type === 'gold').length >= 5) return showToast('點金之塔上限為 5 座！', 'towerSkill');
       if (gold < TOWER_TYPES[type].cost) return showToast('金幣不足！', 'res');
       placingType = type; dragPos = { x: 500, y: 300 };
@@ -2319,7 +2319,7 @@ function handleEditNameClick() {
 
     function confirmPlacement() {
       if (!placingType) return;
-      if (towers.length >= MAX_TOWER_COUNT) { cancelPlacement(); return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill'); }
+      if (towers.length >= getMaxTowerCount()) { cancelPlacement(); return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill'); }
       if (!isValidPlacement(dragPos.x, dragPos.y)) return showToast('該位置無效（不能重疊道路或其它塔）！', 'towerSkill');
       
       gold -= TOWER_TYPES[placingType].cost; window.gold = gold;
@@ -2425,6 +2425,9 @@ function handleEditNameClick() {
       let curSpdLv = selectedTower.spdLv + odBonus;
       let curSpecLv = selectedTower.specLv + odBonus;
 
+      // 計算深淵矩陣升級金幣減免倍率
+      let upgMult = Math.max(0.1, 1 - getAbyssMatrixBonus('upgCostReduce'));
+
       let nameStr = tInfo.name;
       let breakStatusStr = '';
       if (selectedTower.isPromoted) {
@@ -2446,15 +2449,19 @@ function handleEditNameClick() {
       const baseUpg = document.getElementById('tu-base-upgrades');
       baseUpg.style.display = selectedTower.type === 'gold' ? 'none' : 'block';
       if (selectedTower.type !== 'gold') {
-        document.getElementById('tu-dmg-val').innerText = (tInfo.damage * (1 + (curDmgLv - 1) * 0.1) * (1 + talents.baseAtk.lv * 0.06)).toFixed(0);
+        let atkMult = 1 + talents.baseAtk.lv * 0.06 + getAbyssMatrixBonus('baseAtk');
+        document.getElementById('tu-dmg-val').innerText = (tInfo.damage * (1 + (curDmgLv - 1) * 0.1) * atkMult).toFixed(0);
         document.getElementById('tu-dmg-lv').innerText = curDmgLv + (odBonus ? '⚡' : '');
-        document.getElementById('tu-dmg-cost').innerText = getUpgradeCost(50, 1.5, selectedTower.dmgLv);
+        document.getElementById('tu-dmg-cost').innerText = Math.floor(getUpgradeCost(50, 1.5, selectedTower.dmgLv) * upgMult);
+
         document.getElementById('tu-rng-val').innerText = (tInfo.range * (1 + (curRngLv - 1) * 0.05)).toFixed(0);
         document.getElementById('tu-rng-lv').innerText = curRngLv + (odBonus ? '⚡' : '');
-        document.getElementById('tu-rng-cost').innerText = getUpgradeCost(40, 1.5, selectedTower.rngLv);
+        document.getElementById('tu-rng-cost').innerText = Math.floor(getUpgradeCost(40, 1.5, selectedTower.rngLv) * upgMult);
+
         document.getElementById('tu-spd-val').innerText = `${((1 / tInfo.cd) * (1 + (curSpdLv - 1) * 0.05)).toFixed(2)}/s`;
         document.getElementById('tu-spd-lv').innerText = curSpdLv + (odBonus ? '⚡' : '');
-        document.getElementById('tu-spd-cost').innerText = getUpgradeCost(60, 1.5, selectedTower.spdLv);
+        document.getElementById('tu-spd-cost').innerText = Math.floor(getUpgradeCost(60, 1.5, selectedTower.spdLv) * upgMult);
+
         ['dmg', 'rng', 'spd'].forEach(k => document.getElementById(`tu-${k}-btn`).disabled = isDisable);
       }
       document.getElementById('tu-spec-btn').disabled = (selectedTower.type !== 'gold' && isDisable);
@@ -2474,12 +2481,15 @@ function handleEditNameClick() {
         overcharge: `超能增幅: 攻擊力提升 +${30 + (curSpecLv - 1) * 5}% (可多塔疊加)`
       };
       document.getElementById('tu-spec-val').innerText = specDescs[selectedTower.type];
-      document.getElementById('tu-spec-cost').innerText = getUpgradeCost(100, getTowerSpecRate(selectedTower.type), selectedTower.specLv);
+      document.getElementById('tu-spec-cost').innerText = Math.floor(getUpgradeCost(100, getTowerSpecRate(selectedTower.type), selectedTower.specLv) * upgMult);
+
       let totalSpent = tInfo.cost + (selectedTower.dmgLv-1)*50 + (selectedTower.rngLv-1)*40 + getTowerSpecTotalSpent(selectedTower);
       document.getElementById('tu-sell-val').innerText = Math.floor(totalSpent * 0.6);
     }
 
     function upgradeTowerStat(stat) {
+      let upgMult = Math.max(0.1, 1 - getAbyssMatrixBonus('upgCostReduce'));
+      let cost = Math.floor(getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]) * upgMult);
       if (!selectedTower) return;
       if (selectedTower.type !== 'gold' && selectedTower.disableTimer > 0) return showToast('防禦塔處於癱瘓狀態，無法升級！', 'towerSkill');
       let rate = stat === 'spec' ? getTowerSpecRate(selectedTower.type) : 1.5;
@@ -2742,7 +2752,8 @@ function handleEditNameClick() {
           freezeEffectiveness: 1.0 - freezeReduce,
           paralyzeEffectiveness: 1.0 - paralyzeReduce,
           knockbackEffectiveness: 1.0 - kbReduce,
-          shockTimer: 0, shockInterval: shockCdSec, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0, isEnraged: false
+          shockTimer: 0, shockInterval: shockCdSec, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0, isEnraged: false,
+          isAbyssBoss: currentWave >= 105, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0
         });
       }
 
@@ -2821,6 +2832,10 @@ function handleEditNameClick() {
     }
 
     function useSkill(key) {
+      let skillDurMult = 1 + getAbyssMatrixBonus('skillDur');
+      // 暴風雪：let dur = (s.val + (s.valLv - 1) * 1) * skillDurMult;
+      // 戰鼓激勵：let dur = (s.val + (s.valLv - 1) * 0.5) * skillDurMult;
+      // 時空逆流：let revDuration = (s.val + (s.valLv - 1) * 0.25) * skillDurMult;
       const s = activeSkills[key];
       if (currentWave < s.reqWave) return showToast(`🔒 【${s.name}】需達到第 ${s.reqWave} 波方可解鎖！`, 'towerSkill');
       if (s.timer > 0) return showToast('技能正在冷卻中！', 'towerSkill');
@@ -3311,6 +3326,7 @@ function handleEditNameClick() {
             hasteSkillTimer: eData.type === 'general' ? 6.0 * (0.4 + Math.random() * 0.2) : 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0, // 將軍冷卻 6s -> 首次 2.4~3.6s 釋放
             cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
             isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isEnraged: false,
+            isAbyssBoss: !!eData.isAbyssBoss, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0,
             marks: []
           };
           enemies.push(newEnemy);
@@ -4376,7 +4392,7 @@ function handleEditNameClick() {
       });
       
       if (placingType) {
-        let valid = isValidPlacement(dragPos.x, dragPos.y) && towers.length < MAX_TOWER_COUNT;
+        let valid = isValidPlacement(dragPos.x, dragPos.y) && towers.length < getMaxTowerCount();
         ctx.strokeStyle = valid ? '#50fa7b' : '#ff5555'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(dragPos.x, dragPos.y, TOWER_TYPES[placingType].range, 0, Math.PI * 2); ctx.stroke();
         drawTowerIcon(ctx, dragPos.x, dragPos.y, placingType, 16);
