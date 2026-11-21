@@ -70,6 +70,7 @@
       padding: 10px;
     }
 
+    /* 將 #game-container 的 touch-action: none; 改為 pan-x pan-y */
     #game-container {
       position: relative;
       width: 100%;
@@ -79,7 +80,7 @@
       background: #111;
       border-radius: 8px;
       overflow: hidden;
-      touch-action: none;
+      touch-action: pan-x pan-y;
       flex-shrink: 0;
     }
 
@@ -232,8 +233,9 @@
       border-color: transparent transparent var(--purple) transparent;
     }
     .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 20; backdrop-filter: blur(2px); border-radius: 6px; pointer-events: auto; }
+    /* 桌面版防禦塔升級介面寬度加寬（245px -> 295px） */
     #tower-upgrade-overlay {
-      position: absolute; bottom: 10px; left: 10px; background: rgba(30, 31, 41, 0.94); border: 1px solid var(--purple); border-radius: 8px; padding: 8px 10px; width: 245px; max-width: 55%; display: none; z-index: 60;
+      position: absolute; bottom: 10px; left: 10px; background: rgba(30, 31, 41, 0.94); border: 1px solid var(--purple); border-radius: 8px; padding: 8px 10px; width: 295px; max-width: 72%; display: none; z-index: 60;
     }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
@@ -325,8 +327,8 @@
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 85%; top: 8px; padding: 5px 10px; }
       #tower-upgrade-overlay {
-        width: 205px;
-        max-width: 56%;
+        width: 245px;
+        max-width: 68%;
         left: 6px;
         bottom: 6px;
         padding: 6px 8px;
@@ -414,8 +416,8 @@
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 65%; top: 6px; padding: 4px 8px; }
       #tower-upgrade-overlay {
-        width: 205px;
-        max-width: 56%;
+        width: 245px;
+        max-width: 68%;
         left: 6px;
         bottom: 6px;
         padding: 6px 8px;
@@ -424,6 +426,53 @@
       #tower-upgrade-overlay .upg-row { font-size: 10px; margin-bottom: 4px; }
       #tower-upgrade-overlay .btn { padding: 3px 6px !important; font-size: 10px !important; }
       #confirm-placement-bar { bottom: 10px; padding: 6px 14px; }
+    }
+    .hex-node {
+      position: absolute;
+      width: 112px;
+      height: 98px;
+      margin-left: -56px;
+      margin-top: -49px;
+      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #555555; /* 未解鎖：灰色外框 */
+      transition: transform 0.15s, background 0.2s;
+      cursor: pointer;
+    }
+    .hex-node-inner {
+      width: 106px;
+      height: 92px;
+      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      background: #0c0c0f; /* 未解鎖：黑色底 */
+      color: #777;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6px 12px;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+    /* 已解鎖：底色由黑轉灰 */
+    .hex-node.unlocked .hex-node-inner {
+      background: #3a3b42;
+      color: #f1f1f1;
+    }
+    /* 唯有底色為灰色（已解鎖）且虛空原晶足夠時，才點亮紅色邊框 */
+    .hex-node.unlocked.affordable {
+      background: #ff2a4b;
+      filter: drop-shadow(0 0 6px rgba(255, 42, 75, 0.8));
+    }
+    /* 已升級：底色改為稍暗的紅色 */
+    .hex-node.purchased {
+      background: #a82034;
+    }
+    .hex-node.purchased .hex-node-inner {
+      background: #4a121b;
+      color: #ffd6dc;
     }
   </style>
 </head>
@@ -434,7 +483,13 @@
     <div class="res-item"><span class="res-icon">🏰</span> 主城血量: <span id="hp-val">100</span>/<span id="max-hp-val">100</span></div>
     <div class="res-item"><span class="res-icon">💰</span> 金幣: <span id="gold-val">300</span></div>
     <div class="res-item"><span class="res-icon">💎</span> 鑽石: <span id="crystal-val">0</span></div>
-    <div class="res-item"><span class="res-icon">🌟</span> 星核微粒: <span id="star-particle-val">0</span></div>
+    <div class="res-item" id="star-res-wrapper" style="position: relative; cursor: pointer;" onclick="toggleVoidShardDropdown()">
+      <span class="res-icon">🌟</span> 星核微粒: <span id="star-particle-val">0</span>
+      <span id="star-dropdown-arrow" style="color: #888; font-size: 10px; margin-left: 5px; transition: transform 0.2s;">▼</span>
+      <div id="void-shard-dropdown" style="display: none; position: absolute; top: 100%; left: 0; margin-top: 6px; background: rgba(20, 18, 30, 0.96); border: 1px solid #9d4edd; border-radius: 6px; padding: 6px 10px; white-space: nowrap; z-index: 360; box-shadow: 0 4px 12px rgba(0,0,0,0.75);">
+        <span style="color: #e0aaff; font-weight: bold;">🔮 虛空原晶: <span id="void-shard-val">0</span></span>
+      </div>
+    </div>
     <div class="res-item"><span class="res-icon">🗼</span> 防禦塔: <span id="tower-count-val">0</span>/15</div>
     <div class="res-item">
       <span class="res-icon">🌊</span> 波次: <span id="wave-val" style="margin-right:8px;">0</span>
@@ -522,6 +577,7 @@
         <button class="btn" id="pause-btn" onclick="togglePause()">⏸ 暫停 [Space]</button>
         <button class="btn" id="speed-btn" onclick="toggleSpeed()">⚡ 1x 速度 [F]</button>
         <button class="btn" onclick="openTechModal()" style="background:var(--purple); color:#1a1a24;">💎 全局科技</button>
+        <button class="btn" onclick="openAbyssMatrixModal()" style="background: linear-gradient(135deg, #240046, #5a189a); border: 1px solid #9d4edd; color: #f3d5ff;">🌌 深淵矩陣</button>
         <button class="btn" id="codex-btn" onclick="openCodexModalWithPause()" style="background:var(--cyan); color:#1a1a24;">
           📖 敵人圖鑑
           <span class="btn-alert-badge" id="codex-btn-badge" style="display:none;">❗️</span>
@@ -706,6 +762,22 @@
       <button class="btn" onclick="document.getElementById('tech-modal').style.display='none'" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
     </div>
   </div>
+
+  <!-- 深淵矩陣 Modal -->
+  <div id="abyss-matrix-modal" style="display: none; position: fixed; inset: 0; background: #07060b; z-index: 410; overflow: hidden; user-select: none;">
+    <div style="position: absolute; top: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 10; pointer-events: none;">
+      <div style="color: #e0aaff; font-size: 17px; font-weight: bold; text-shadow: 0 0 10px #7b2cbf;">🌌 深淵矩陣（按住往四面八方拖曳）</div>
+      <div style="display: flex; align-items: center; gap: 10px; pointer-events: auto;">
+        <div style="background: rgba(36, 0, 70, 0.92); border: 1px solid #9d4edd; padding: 6px 12px; border-radius: 20px; color: #e0aaff; font-size: 13px; font-weight: bold;">
+          🔮 虛空原晶: <span id="matrix-void-val">0</span>
+        </div>
+        <button class="btn" style="padding: 6px 12px;" onclick="closeAbyssMatrixModal()">關閉 [Esc]</button>
+      </div>
+    </div>
+    <div id="abyss-hex-viewport" style="width: 100%; height: 100%; cursor: grab; touch-action: none;">
+      <div id="abyss-hex-canvas" style="position: absolute; left: 50%; top: 50%; width: 0; height: 0;"></div>
+    </div>
+  </div>
   
   <!-- 敵人圖鑑 Modal -->
   <div class="modal" id="codex-modal">
@@ -815,7 +887,9 @@ async function saveGameToCloud(user) {
       seenEnemyTypes: Array.from(window.seenEnemyTypes || []),
       unlockedCodexEnemies: Array.from(window.unlockedCodexEnemies || []),
       newCodexAlerts: Array.from(window.newCodexAlerts || []),
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      voidShards: window.voidShards ?? 0,
+      purchasedAbyssNodes: Array.from(window.purchasedAbyssNodes || [])
     };
 
     await setDoc(doc(db, "users", user.uid), saveData, { merge: true });
@@ -841,6 +915,8 @@ async function loadGameFromCloud(user) {
         window.playerName = data.playerName;
       }
       window.lastNameChangeTime = data.lastNameChangeTime || 0; // 👈 新增這一行：還原冷卻時間
+      window.voidShards = data.voidShards ?? 0;
+      window.purchasedAbyssNodes = new Set(data.purchasedAbyssNodes || []);
       if (typeof window.loadSnapshotState === 'function') {
         window.loadSnapshotState(data);
       }
@@ -1000,6 +1076,136 @@ window.updateAuthUI = updateAuthUI;
     let canvas, ctx;
     let gameSpeed = 1, isPaused = false, autoWave = false, waveInProgress = false;
     let currentWave = 0, hp = 100, maxHp = 100, gold = 300, crystals = 0, starParticles = 0;
+    let voidShards = 0;
+    window.voidShards = voidShards;
+    let purchasedAbyssNodes = new Set();
+    window.purchasedAbyssNodes = purchasedAbyssNodes;
+
+    const ABYSS_NODES = [
+      // 第一層（中心）
+      { id: 'L1_1', q: 0, r: 0,  name: '防禦塔上限 +1', cost: 1, type: 'maxTowers', val: 1 },
+      // 第二層（自正上方順時針 1~6 號）
+      { id: 'L2_1', q: 0, r: -1, name: '擊殺金幣 +10%', cost: 2, type: 'killGold', val: 0.10 },
+      { id: 'L2_2', q: 1, r: -1, name: '防禦塔癱瘓時間 -10%', cost: 2, type: 'stunReduce', val: 0.10 },
+      { id: 'L2_3', q: 1, r: 0,  name: '主動技能時間 +10%', cost: 3, type: 'skillDur', val: 0.10 },
+      { id: 'L2_4', q: 0, r: 1,  name: '防禦塔基礎攻擊 +10%', cost: 2, type: 'baseAtk', val: 0.10 },
+      { id: 'L2_5', q: -1, r: 1, name: '超能過載時間 +1秒', cost: 2, type: 'overdriveDur', val: 1.0 },
+      { id: 'L2_6', q: -1, r: 0, name: '升級塔金幣 -10%', cost: 3, type: 'upgCostReduce', val: 0.10 },
+      // 第三層（自正上方順時針 1~12 號）
+      { id: 'L3_1',  q: 0, r: -2,  name: '擊殺金幣 +15%', cost: 4, type: 'killGold', val: 0.15 },
+      { id: 'L3_2',  q: 1, r: -2,  name: '暴擊傷害 +20%', cost: 4, type: 'critDmg', val: 0.20 },
+      { id: 'L3_3',  q: 2, r: -2,  name: '癱瘓時間 -15%', cost: 4, type: 'stunReduce', val: 0.15 },
+      { id: 'L3_4',  q: 2, r: -1,  name: '防禦塔攻速 +10%', cost: 5, type: 'atkSpd', val: 0.10 },
+      { id: 'L3_5',  q: 2, r: 0,   name: '主動技能時間 +15%', cost: 5, type: 'skillDur', val: 0.15 },
+      { id: 'L3_6',  q: 1, r: 1,   name: '主動技能冷卻 -10%', cost: 5, type: 'skillCd', val: 0.10 },
+      { id: 'L3_7',  q: 0, r: 2,   name: '防禦塔基礎攻擊 +15%', cost: 4, type: 'baseAtk', val: 0.15 },
+      { id: 'L3_8',  q: -1, r: 2,  name: '防禦塔射程 +10%', cost: 4, type: 'range', val: 0.10 },
+      { id: 'L3_9',  q: -2, r: 2,  name: '超能過載時間 +1.5秒', cost: 5, type: 'overdriveDur', val: 1.5 },
+      { id: 'L3_10', q: -2, r: 1,  name: '星核微粒獲取 +15%', cost: 5, type: 'particleGain', val: 0.15 },
+      { id: 'L3_11', q: -2, r: 0,  name: '升級塔金幣 -15%', cost: 5, type: 'upgCostReduce', val: 0.15 },
+      { id: 'L3_12', q: -1, r: -1, name: '建造塔金幣 -15%', cost: 4, type: 'buildCostReduce', val: 0.15 }
+    ];
+
+    function isHexAdjacent(a, b) {
+      return (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2 === 1;
+    }
+
+    function isAbyssNodeUnlocked(node) {
+      if (node.q === 0 && node.r === 0) return true;
+      return ABYSS_NODES.some(other => purchasedAbyssNodes.has(other.id) && isHexAdjacent(node, other));
+    }
+
+    function getAbyssMatrixBonus(type) {
+      let sum = 0;
+      ABYSS_NODES.forEach(n => {
+        if (purchasedAbyssNodes.has(n.id) && n.type === type) sum += n.val;
+      });
+      return sum;
+    }
+
+    function getMaxTowerCount() {
+      return MAX_TOWER_COUNT + Math.floor(getAbyssMatrixBonus('maxTowers'));
+    }
+
+    function toggleVoidShardDropdown() {
+      const dd = document.getElementById('void-shard-dropdown');
+      const arrow = document.getElementById('star-dropdown-arrow');
+      if (!dd || !arrow) return;
+      const isHidden = dd.style.display === 'none';
+      dd.style.display = isHidden ? 'block' : 'none';
+      arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    let hexPanX = 0, hexPanY = 0;
+    function openAbyssMatrixModal() {
+      pauseGameIfRunning();
+      hexPanX = 0;
+      hexPanY = 0;
+      const canvasEl = document.getElementById('abyss-hex-canvas');
+      if (canvasEl) canvasEl.style.transform = 'translate(0px, 0px)';
+      document.getElementById('abyss-matrix-modal').style.display = 'block';
+      renderAbyssMatrix();
+    }
+
+    function closeAbyssMatrixModal() {
+      document.getElementById('abyss-matrix-modal').style.display = 'none';
+    }
+
+    function renderAbyssMatrix() {
+      const valEl = document.getElementById('matrix-void-val');
+      if (valEl) valEl.innerText = voidShards;
+      const canvasEl = document.getElementById('abyss-hex-canvas');
+      if (!canvasEl) return;
+      canvasEl.innerHTML = '';
+
+      const hexSize = 60;
+      const horizSpacing = hexSize * 1.5;
+      const vertSpacing = hexSize * Math.sqrt(3);
+
+      ABYSS_NODES.forEach(node => {
+        const x = horizSpacing * node.q;
+        const y = vertSpacing * (node.r + node.q / 2);
+        const isPurchased = purchasedAbyssNodes.has(node.id);
+        const isUnlocked = isAbyssNodeUnlocked(node);
+        const canAfford = !isPurchased && isUnlocked && voidShards >= node.cost;
+
+        const el = document.createElement('div');
+        el.className = 'hex-node' +
+          (isUnlocked ? ' unlocked' : '') +
+          (canAfford ? ' affordable' : '') +
+          (isPurchased ? ' purchased' : '');
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        el.innerHTML = `
+          <div class="hex-node-inner">
+            <div style="font-weight: bold; margin-bottom: 3px;">${node.name}</div>
+            <div style="color: ${isPurchased ? '#ff9ebb' : (canAfford ? '#ff6b81' : '#aaa')};">
+              ${isPurchased ? '✔ 已啟動' : `🔮 ${node.cost}`}
+            </div>
+          </div>
+        `;
+
+        el.addEventListener('click', () => {
+          if (window._hexDragged || isPurchased) return;
+          if (!isUnlocked) return showToast('需先啟動相鄰的深淵節點！', 'towerSkill');
+          if (voidShards < node.cost) return showToast('🔮 虛空原晶不足！', 'res');
+
+          voidShards -= node.cost;
+          window.voidShards = voidShards;
+          purchasedAbyssNodes.add(node.id);
+          window.purchasedAbyssNodes = purchasedAbyssNodes;
+          playSound('overdrive');
+          renderAbyssMatrix();
+          updateUI();
+          if (selectedTower) openTowerOverlay();
+          syncActiveCheckpointIfNeeded();
+          showToast(`🌌 已啟動深淵矩陣：【${node.name}】！`, 'towerSkill');
+        });
+
+        canvasEl.appendChild(el);
+      });
+    }
     let spawnTimer = 0, spawnInterval = 1.0;
     let stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 };
     let checkpointState = null, savedCheckpointsMap = {}, pendingJumpWave = null, isMouseInput = false;
@@ -1485,7 +1691,7 @@ function handleEditNameClick() {
 
       starParticles -= 25;
       overdriveState = 'active';
-      overdriveTimer = 10.0;
+      overdriveTimer = 10.0 + getAbyssMatrixBonus('overdriveDur');
       playSound('overdrive');
       showToast('⚡ 啟動超能過載！場上所有晉升防禦塔等級暫時 +3，轉速變為 2 倍！', 'towerSkill');
       updateUI();
@@ -1862,7 +2068,8 @@ function handleEditNameClick() {
         })),
         seenEnemyTypes: Array.from(seenEnemyTypes),
         unlockedCodexEnemies: Array.from(unlockedCodexEnemies),
-        newCodexAlerts: Array.from(newCodexAlerts)
+        newCodexAlerts: Array.from(newCodexAlerts),
+        voidShards, purchasedAbyssNodes: Array.from(purchasedAbyssNodes)
       }));
     }
 
@@ -1905,6 +2112,8 @@ function handleEditNameClick() {
       gold = data.gold ?? 300; window.gold = gold;
       crystals = data.crystals ?? 0; window.crystals = crystals;
       starParticles = data.starParticles ?? 0; window.starParticles = starParticles;
+      voidShards = data.voidShards ?? 0; window.voidShards = voidShards;
+      purchasedAbyssNodes = new Set(data.purchasedAbyssNodes || []); window.purchasedAbyssNodes = purchasedAbyssNodes;
 
       // 3. 還原超能過載狀態與剩餘/冷卻時間
       overdriveState = data.overdriveState || 'ready';
@@ -2004,6 +2213,8 @@ function handleEditNameClick() {
       Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
       stopLightShieldAmbience();
+      voidShards = 0; window.voidShards = voidShards;
+      purchasedAbyssNodes = new Set(); window.purchasedAbyssNodes = purchasedAbyssNodes;
     }
 
     function toggleAutoWave() {
@@ -2053,14 +2264,20 @@ function handleEditNameClick() {
       const odGold = document.getElementById('od-gold-fill');
       const odGreen = document.getElementById('od-green-fill');
       const odLightning = document.getElementById('od-lightning');
+      const voidEl = document.getElementById('void-shard-val');
+      if (voidEl) voidEl.innerText = voidShards;
+      const matVoidEl = document.getElementById('matrix-void-val');
+      if (matVoidEl) matVoidEl.innerText = voidShards;
+      document.getElementById('tower-count-val').parentElement.innerHTML = `<span class="res-icon">🗼</span> 防禦塔: <span id="tower-count-val">${towers.length}</span>/${getMaxTowerCount()}`;
 
       if (overdriveState === 'ready') {
         odBtn.className = starParticles >= 25 ? 'btn ready-to-activate' : 'btn';
         odText.innerText = '⚡ 超能過載 (🌟25)';
         odGold.style.width = '0%'; odGreen.style.width = '0%'; odLightning.style.display = 'none';
       } else if (overdriveState === 'active') {
+        let maxOdDur = 10.0 + getAbyssMatrixBonus('overdriveDur');
         odBtn.className = 'btn';
-        let p = (overdriveTimer / 10.0) * 100;
+        let p = (overdriveTimer / maxOdDur) * 100;
         odText.innerText = `過載中 (${overdriveTimer.toFixed(1)}s)`;
         odGold.style.width = `${p}%`;
         odLightning.style.display = 'block';
