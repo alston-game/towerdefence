@@ -232,7 +232,9 @@
       border-color: transparent transparent var(--purple) transparent;
     }
     .skill-lock-overlay { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.88); display: flex; justify-content: center; align-items: center; color: var(--danger); font-size: 12px; font-weight: bold; z-index: 20; backdrop-filter: blur(2px); border-radius: 6px; pointer-events: auto; }
-    #tower-upgrade-overlay { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 31, 41, 0.95); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; width: 340px; display: none; z-index: 60; }
+    #tower-upgrade-overlay {
+      position: absolute; bottom: 10px; left: 10px; background: rgba(30, 31, 41, 0.94); border: 1px solid var(--purple); border-radius: 8px; padding: 8px 10px; width: 245px; max-width: 55%; display: none; z-index: 60;
+    }
     .upg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
     #confirm-placement-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 31, 41, 0.95); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 30px; display: none; gap: 12px; z-index: 70; }
 
@@ -297,12 +299,41 @@
         aspect-ratio: 1000 / 600;
       }
       #panel-container {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 左側防禦塔、右側主動技能並排 */
+        gap: 6px;
+        align-items: start;
       }
+      #panel-container .panel {
+        padding: 6px;
+      }
+      #panel-container .panel-title {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+      #tower-shop, #skills-list {
+        grid-template-columns: repeat(2, 1fr) !important; /* 兩邊各佔 2 列，合計 4 列 */
+        gap: 4px;
+      }
+      .card {
+        padding: 5px;
+      }
+      .card-name { font-size: 11px; }
+      .card-stats, .card-desc { font-size: 9px; line-height: 1.2; }
+      
       #toast-container { top: 46px; right: 6px; max-width: 58%; gap: 4px; }
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 85%; top: 8px; padding: 5px 10px; }
-      #tower-upgrade-overlay { width: 90%; left: 5%; bottom: 10px; padding: 8px; }
+      #tower-upgrade-overlay {
+        width: 205px;
+        max-width: 56%;
+        left: 6px;
+        bottom: 6px;
+        padding: 6px 8px;
+      }
+      #tower-upgrade-overlay h4 { font-size: 12px; }
+      #tower-upgrade-overlay .upg-row { font-size: 10px; margin-bottom: 4px; }
+      #tower-upgrade-overlay .btn { padding: 3px 6px !important; font-size: 10px !important; }
       #confirm-placement-bar { width: 92%; bottom: 10px; padding: 6px 12px; font-size: 11px; }
     }
 
@@ -353,11 +384,13 @@
         gap: 6px;
         flex-shrink: 0;
       }
-      #controls-bar .btn, #overdrive-btn {
-        width: 100%;
-        min-width: 0;
-        padding: 7px 8px;
+      #controls-bar .btn {
+        padding: 7px 11px;
         font-size: 12px;
+        gap: 4px;
+      }
+      #overdrive-btn {
+        min-width: 122px;
       }
       #panel-container {
         display: flex;
@@ -380,7 +413,16 @@
       #toast-container { top: 46px; right: 6px; max-width: 58%; gap: 4px; }
       .toast { padding: 4px 8px; font-size: 10px; border-left-width: 2px; }
       #boss-hp-container { width: 65%; top: 6px; padding: 4px 8px; }
-      #tower-upgrade-overlay { width: 290px; left: 10px; bottom: 10px; padding: 8px; }
+      #tower-upgrade-overlay {
+        width: 205px;
+        max-width: 56%;
+        left: 6px;
+        bottom: 6px;
+        padding: 6px 8px;
+      }
+      #tower-upgrade-overlay h4 { font-size: 12px; }
+      #tower-upgrade-overlay .upg-row { font-size: 10px; margin-bottom: 4px; }
+      #tower-upgrade-overlay .btn { padding: 3px 6px !important; font-size: 10px !important; }
       #confirm-placement-bar { bottom: 10px; padding: 6px 14px; }
     }
   </style>
@@ -2046,8 +2088,10 @@ function handleEditNameClick() {
       if (gold < TOWER_TYPES[type].cost) return showToast('金幣不足！', 'res');
       placingType = type; dragPos = { x: 500, y: 300 };
       
-      document.getElementById('confirm-placement-bar').style.display = isMouseInput ? 'none' : 'flex';
-      document.getElementById('trash-cancel-btn').style.display = isMouseInput ? 'inline-flex' : 'none';
+      const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const useTouchBar = !isMouseInput || isTouchDevice;
+      document.getElementById('confirm-placement-bar').style.display = useTouchBar ? 'flex' : 'none';
+      document.getElementById('trash-cancel-btn').style.display = useTouchBar ? 'none' : 'inline-flex';
     }
 
     function cancelPlacement() {
@@ -4572,6 +4616,8 @@ function handleEditNameClick() {
         isMouseInput = false;
         if (placingType && e.touches.length > 0) {
           e.preventDefault();
+          document.getElementById('confirm-placement-bar').style.display = 'flex';
+          document.getElementById('trash-cancel-btn').style.display = 'none';
           handleMove(e.touches[0].clientX, e.touches[0].clientY);
         }
       }, { passive: false });
