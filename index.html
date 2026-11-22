@@ -1275,6 +1275,7 @@ window.updateAuthUI = updateAuthUI;
     window.talents = talents;
     window.activeSkills = activeSkills;
 
+    const isBossType = (t) => t === 'boss' || t === 'abyss_boss';
     const ENEMY_CODEX_DATA = [
       { id: 'normal', name: '0號士兵', group: '0號' }, { id: 'scout', name: '0號刺客', group: '0號' }, { id: 'heavy', name: '0號坦克', group: '0號' }, 
       { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' }, { id: 'heavy1', name: '1號坦克', group: '1號' },
@@ -1282,7 +1283,7 @@ window.updateAuthUI = updateAuthUI;
       { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'warlock', name: '★ 巫師', group: '1星' },
       { id: 'general', name: '★★ 將軍', group: '2星' },{ id: 'mage', name: '★★ 法師', group: '2星' },{ id: 'archmage', name: '★★ 大魔導師', group: '2星' },
       { id: 'sage', name: '★★★ 賢者', group: '3星' },
-      { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }
+      { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }, { id: 'abyss_boss', name: '🌌 深淵 BOSS', group: 'AbyssBoss' }
     ];
 
     const path = [{x:0,y:180},{x:250,y:180},{x:250,y:420},{x:550,y:420},{x:550,y:120},{x:820,y:120},{x:820,y:300},{x:930,y:300}];
@@ -2609,8 +2610,26 @@ function handleEditNameClick() {
           skillArr.push(`🔥【狂暴狀態】生命值低於 20% 時觸發，移動速度提升 ${rageSpeedPlus}%`);
         }
         skills = skillArr.length > 0 ? skillArr.join('\n') : '無';
-      }
+      } else if (type === 'abyss_boss') {
+        let targetW = Math.max(105, w);
+        hp = (800 + targetW * 200 + Math.pow(targetW, 1.5) * 120) * (1 + 0.8 + (targetW - 30) * 0.095);
+        hp = Math.floor(hp);
+        atk = baseAtk * 3.5;
+        speed = 0.6;
+        atkSpeedStr = `${Math.floor(atk)}/1s`;
+        moveSpeedPxStr = `${(speed * 60).toFixed(0)}px/1s`;
 
+        let freezeReduce = Math.min(0.60, Math.floor((targetW - 5) / 5) * 0.05);
+        let paralyzeReduce = Math.min(0.70, 0.20 + Math.floor((targetW - 15) / 5) * 0.05);
+        let kbReduce = Math.min(0.70, Math.floor((targetW - 15) / 5) * 0.05);
+        resistances = `冰凍效果減免 ${Math.round(freezeReduce * 100)}% | 麻痺時間減免 ${Math.round(paralyzeReduce * 100)}% | 擊退距離減免 ${Math.round(kbReduce * 100)}%`;
+
+        skills = [
+          '🌀【虛空旋渦】每 9 秒開啟持續 3 秒的黑色旋渦，期間免疫所有傷害並將受到傷害的 25% 轉化為自身生命值。',
+          '💥【深淵衝擊波】虛空旋渦結束時原地停頓 0.5 秒並釋放全場衝擊波，使全場防禦塔（建築工人小屋除外）癱瘓 4 秒。',
+          '🔥【深淵狂暴】生命值低於 25% 時觸發，移動速度提升 30%。'
+        ].join('\n');
+      }
       return { hp: Math.floor(hp), atk: Math.floor(atk), atkSpeedStr, moveSpeedPxStr, speed: speed.toFixed(2), resistances, skills };
     }
 
@@ -2740,19 +2759,21 @@ function handleEditNameClick() {
       }
       
       if (currentWave % 5 === 0) {
-        let stats = getEnemyStatsForWave('boss', currentWave);
+        let isAbyss = currentWave >= 105;
+        let bossType = isAbyss ? 'abyss_boss' : 'boss';
+        let stats = getEnemyStatsForWave(bossType, currentWave);
         let freezeReduce = Math.min(0.60, Math.floor((currentWave - 5) / 5) * 0.05);
         let paralyzeReduce = currentWave >= 15 ? Math.min(0.70, 0.20 + Math.floor((currentWave - 15) / 5) * 0.05) : 0;
         let kbReduce = currentWave >= 15 ? Math.min(0.70, Math.floor((currentWave - 15) / 5) * 0.05) : 0;
         let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
         
         waveSpawnQueue.push({
-          type: 'boss', hp: stats.hp, maxHp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), baseSpeed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * 3,
+          type: bossType, hp: stats.hp, maxHp: stats.hp, atk: stats.atk, speed: parseFloat(stats.speed), baseSpeed: parseFloat(stats.speed), gold: (15 + currentWave * 2) * (isAbyss ? 5 : 3),
           freezeEffectiveness: 1.0 - freezeReduce,
           paralyzeEffectiveness: 1.0 - paralyzeReduce,
           knockbackEffectiveness: 1.0 - kbReduce,
           shockTimer: 0, shockInterval: shockCdSec, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0, isEnraged: false,
-          isAbyssBoss: currentWave >= 105, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0
+          isAbyssBoss: isAbyss, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0
         });
       }
 
@@ -2938,6 +2959,41 @@ function handleEditNameClick() {
     } // ← 確認這一個結尾大括號還在！
 
     function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
+      if (enemyType === 'abyss_boss') {
+        let size = 17;
+        cCtx.save();
+        cCtx.translate(cx, cy + 3);
+        let abyssGrad = cCtx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 1.3);
+        abyssGrad.addColorStop(0, '#140824');
+        abyssGrad.addColorStop(0.65, '#09050f');
+        abyssGrad.addColorStop(1, 'rgba(138, 43, 226, 0)');
+        cCtx.fillStyle = abyssGrad;
+        cCtx.beginPath(); cCtx.arc(0, 0, size * 1.3, 0, Math.PI * 2); cCtx.fill();
+
+        cCtx.fillStyle = '#0b0b10';
+        cCtx.strokeStyle = '#9d4edd';
+        cCtx.lineWidth = 2.5;
+        cCtx.beginPath(); cCtx.arc(0, 0, size, 0, Math.PI * 2); cCtx.fill(); cCtx.stroke();
+
+        cCtx.fillStyle = '#1f1135';
+        cCtx.strokeStyle = '#e0aaff';
+        cCtx.lineWidth = 1.5;
+        [-1, 1].forEach(dir => {
+          cCtx.beginPath();
+          cCtx.moveTo(dir * size * 0.38, -size * 0.6);
+          cCtx.quadraticCurveTo(dir * size * 1.25, -size * 1.1, dir * size * 0.92, -size * 1.48);
+          cCtx.quadraticCurveTo(dir * size * 0.72, -size * 0.88, dir * size * 0.18, -size * 0.82);
+          cCtx.closePath(); cCtx.fill(); cCtx.stroke();
+        });
+        cCtx.fillStyle = '#c77dff';
+        cCtx.beginPath();
+        cCtx.moveTo(-size * 0.25, -size * 0.85);
+        cCtx.lineTo(0, -size * 1.48);
+        cCtx.lineTo(size * 0.25, -size * 0.85);
+        cCtx.closePath(); cCtx.fill();
+        cCtx.restore();
+        return;
+      }
       let size = enemyType === 'boss' ? 20 : (enemyType === 'sage' ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
       let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'sage' ? '#fff3b0' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'archmage' ? '#6c5ce7' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
       
@@ -3190,11 +3246,12 @@ function handleEditNameClick() {
         let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12 + getAbyssMatrixBonus('killGold'));
         gold += goldGain; window.gold = gold; stats.totalGoldEarned += goldGain; window.stats = stats;
 
-        if (enemy.type !== 'boss') {
+        // 死亡墓碑排除 Boss 與深淵 Boss（避免巫師復活 Boss）：
+        if (enemy.type !== 'boss' && enemy.type !== 'abyss_boss') {
           deadEnemyGraveyard.push({ type: enemy.type, pathIndex: enemy.pathIndex, x: enemy.x, y: enemy.y, gold: enemy.gold });
         }
 
-        if (enemy.type === 'boss') {
+        if (isBossType(enemy.type)) {
           if (enemy.isAbyssBoss) {
             let shardReward = Math.floor((currentWave - 100) / 5);
             let abyssCrystalReward = 5 + Math.floor((100 - 5) / 5) * 2; // 同第 100 波 BOSS 鑽石量 (43)
@@ -3314,7 +3371,8 @@ function handleEditNameClick() {
             seenEnemyTypes.add(eData.type); window.seenEnemyTypes = seenEnemyTypes;
             if (eData.type !== 'boss') showEnemyIntro(eData.type);
           }
-          if (eData.type === 'boss') showToast('⚠️ 強敵 BOSS 降臨！', 'enemy');
+          if (eData.type === 'abyss_boss') showToast('🌌 深淵霸主降臨！小心虛空旋渦與全場衝擊波！', 'enemy');
+          else if (eData.type === 'boss') showToast('⚠️ 強敵 BOSS 降臨！', 'enemy');
 
           let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
 
@@ -3485,13 +3543,15 @@ function handleEditNameClick() {
         if (e.immuneTimer > 0) e.immuneTimer -= dt;
         if (e.stunTimer > 0) e.stunTimer -= dt;
 
+        // 狂暴判定（一般 Boss 為 20%，深淵 Boss 為 25%）：
+        let isAnyBoss = (e.type === 'boss' || e.type === 'abyss_boss');
         let rageThreshold = e.isAbyssBoss ? 0.25 : 0.20;
-        if (e.type === 'boss' && currentWave >= 45) {
+        if (isAnyBoss && currentWave >= 45) {
           if (!e.isEnraged && e.hp / e.maxHp <= rageThreshold) {
             e.isEnraged = true;
             let incRate = currentWave >= 90 ? 0.30 : (currentWave >= 75 ? 0.25 : (currentWave >= 60 ? 0.20 : 0.15));
             e.speed = parseFloat((e.baseSpeed * (1 + incRate)).toFixed(2));
-            showToast(`⚠️ BOSS 進入狂暴狀態！移動速度提升 ${Math.round(incRate * 100)}%！`, 'enemy');
+            showToast(`⚠️ ${e.isAbyssBoss ? '深淵 BOSS' : 'BOSS'} 進入狂暴狀態！移動速度提升 ${Math.round(incRate * 100)}%！`, 'enemy');
           }
         }
 
@@ -3817,12 +3877,25 @@ function handleEditNameClick() {
     updateLightShieldAmbience(activeSages.length > 0);
       if (isBlizzardActive) startBlizzardSound(); else stopBlizzardSound();
 
-      let boss = enemies.find(e => e.type === 'boss');
+      let boss = enemies.find(e => isBossType(e.type));
       const bossHpContainer = document.getElementById('boss-hp-container');
+      const bossHpTitle = document.getElementById('boss-hp-title');
       const line20 = document.getElementById('boss-hp-line-20');
       if (boss) {
         bossHpContainer.style.display = 'block';
-        line20.style.display = currentWave >= 45 ? 'block' : 'none';
+        if (boss.isAbyssBoss) {
+          bossHpContainer.style.borderColor = '#9d4edd';
+          bossHpTitle.style.color = '#e0aaff';
+          bossHpTitle.innerText = '🌌 深淵霸主 BOSS 降臨 🌌';
+          line20.style.display = 'block';
+          line20.style.left = '25%';
+        } else {
+          bossHpContainer.style.borderColor = 'var(--danger)';
+          bossHpTitle.style.color = 'var(--danger)';
+          bossHpTitle.innerText = '⚠️ 強敵 BOSS 登場 ⚠️';
+          line20.style.display = currentWave >= 45 ? 'block' : 'none';
+          line20.style.left = '20%';
+        }
         document.getElementById('boss-hp-bar-fill').style.width = `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%`;
         document.getElementById('boss-hp-text').innerText = `${Math.floor(boss.hp)} / ${Math.floor(boss.maxHp)}`;
 
@@ -3841,17 +3914,23 @@ function handleEditNameClick() {
         document.getElementById('boss-traits-text').innerText = traitTexts.length > 0 ? traitTexts.join(' | ') : '無特殊減免';
 
         const bossSkillsDescElem = document.getElementById('boss-skills-desc');
-        bossSkillsDescElem.style.display = currentWave < 10 ? 'none' : 'inline';
-        if (currentWave >= 10) {
-          let shockDisTimer = currentWave >= 70 ? 5.0 : (currentWave >= 55 ? 4.0 : 3.0);
-          let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
-          let skillTexts = [`能力：每 ${shockCdSec} 秒釋放衝擊波 (癱瘓 ${shockDisTimer.toFixed(1)} 秒)`];
-          if (currentWave >= 15) skillTexts.push(`每 8.0 秒向最近點金塔發射干擾光束`);
-          if (currentWave >= 45) {
-            let rageSpeedPlus = currentWave >= 90 ? 30 : (currentWave >= 75 ? 25 : (currentWave >= 60 ? 20 : 15));
-            skillTexts.push(`🔥狂暴: HP≤20% 移速 +${rageSpeedPlus}%`);
+        if (boss.isAbyssBoss) {
+          bossSkillsDescElem.style.display = 'inline';
+          let vortexStatus = boss.abyssAbsorbTimer > 0 ? `🌀 虛空旋渦吸收中 (${boss.abyssAbsorbTimer.toFixed(1)}s)` : `能力：每 9 秒開啟虛空旋渦 3 秒（吸收傷害轉化 25% 治療），結束時釋放全場衝擊波癱瘓 4 秒`;
+          bossSkillsDescElem.innerText = `${vortexStatus} | 🔥狂暴: HP≤25% 移速 +30%`;
+        } else {
+          bossSkillsDescElem.style.display = currentWave < 10 ? 'none' : 'inline';
+          if (currentWave >= 10) {
+            let shockDisTimer = currentWave >= 70 ? 5.0 : (currentWave >= 55 ? 4.0 : 3.0);
+            let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
+            let skillTexts = [`能力：每 ${shockCdSec} 秒釋放衝擊波 (癱瘓 ${shockDisTimer.toFixed(1)} 秒)`];
+            if (currentWave >= 15) skillTexts.push(`每 8.0 秒向最近點金塔發射干擾光束`);
+            if (currentWave >= 45) {
+              let rageSpeedPlus = currentWave >= 90 ? 30 : (currentWave >= 75 ? 25 : (currentWave >= 60 ? 20 : 15));
+              skillTexts.push(`🔥狂暴: HP≤20% 移速 +${rageSpeedPlus}%`);
+            }
+            bossSkillsDescElem.innerText = skillTexts.join(' | ');
           }
-          bossSkillsDescElem.innerText = skillTexts.join(' | ');
         }
       } else bossHpContainer.style.display = 'none';
 
