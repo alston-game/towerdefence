@@ -515,6 +515,30 @@
       padding: 1px 6px;
       border-radius: 10px;
     }
+      /* 手機/平板跟隨防禦塔的放置控制按鈕組 */
+    #touch-placement-controls { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 75;}
+    .touch-place-btn {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      margin-left: -17px;
+      margin-top: -17px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+      cursor: pointer;
+    }
+    #touch-place-confirm { background: #2ecc71; color: #fff;}
+    #touch-place-cancel { background: #ff5555; color: #fff;}
+    #touch-place-drag-handle { width: 38px; height: 38px; margin-left: -19px; margin-top: -19px; background: rgba(30, 31, 41, 0.92); border: 2px solid var(--cyan); color: var(--cyan); cursor: grab;}
+    #touch-place-drag-handle:active { background: var(--cyan); color: #12131C; cursor: grabbing;}
   </style>
 </head>
         
@@ -607,6 +631,21 @@
         <span style="font-size:13px; line-height:30px;">拖曳標記選擇位置 (確認: Enter/Space，取消: Esc)</span>
         <button class="btn btn-primary" onclick="confirmPlacement()">確認建造 (Enter)</button>
         <button class="btn btn-danger" onclick="cancelPlacement()">取消 (Esc)</button>
+      </div>
+
+      <div id="touch-placement-controls">
+        <button type="button" class="touch-place-btn" id="touch-place-confirm" title="確認建造">✔</button>
+        <button type="button" class="touch-place-btn" id="touch-place-cancel" title="取消放置">✕</button>
+        <div class="touch-place-btn" id="touch-place-drag-handle" title="按住拖曳移動防禦塔">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 5 12 2 15 5"></polyline>
+            <polyline points="9 19 12 22 15 19"></polyline>
+            <polyline points="5 9 2 12 5 15"></polyline>
+            <polyline points="19 9 22 12 19 15"></polyline>
+            <line x1="12" y1="2" x2="12" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+          </svg>
+        </div>
       </div>
     </div> <!-- /#game-container 結束 -->
 
@@ -2369,21 +2408,51 @@ function handleEditNameClick() {
       return !path.some((p, i) => i < path.length - 1 && distToSegment({x, y}, p, path[i+1]) < 35);
     }
 
+    function updateTouchPlacementControlsPos() {
+      const wrap = document.getElementById('touch-placement-controls');
+      if (!wrap || wrap.style.display === 'none' || !placingType || !canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const screenX = (dragPos.x / canvas.width) * rect.width;
+      const screenY = (dragPos.y / canvas.height) * rect.height;
+
+      const btnConfirm = document.getElementById('touch-place-confirm');
+      const btnCancel = document.getElementById('touch-place-cancel');
+      const btnHandle = document.getElementById('touch-place-drag-handle');
+
+      // 左上角打勾、右上角打叉、正下方四向拖曳把手（並夾在畫布內緣避免超出視窗）
+      const clampX = (v) => Math.max(20, Math.min(rect.width - 20, v));
+      const clampY = (v) => Math.max(20, Math.min(rect.height - 20, v));
+
+      btnConfirm.style.left = `${clampX(screenX - 34)}px`;
+      btnConfirm.style.top  = `${clampY(screenY - 34)}px`;
+
+      btnCancel.style.left  = `${clampX(screenX + 34)}px`;
+      btnCancel.style.top   = `${clampY(screenY - 34)}px`;
+
+      btnHandle.style.left  = `${clampX(screenX)}px`;
+      btnHandle.style.top   = `${clampY(screenY + 44)}px`;
+    }
+    
     function startPlacement(type) {
-      if (towers.length >= getMaxTowerCount()) return showToast(`防禦塔數量已達上限 (${MAX_TOWER_COUNT}座)！`, 'towerSkill');
+      if (towers.length >= getMaxTowerCount()) return showToast(`防禦塔數量已達上限 (${getMaxTowerCount()}座)！`, 'towerSkill');
       if (type === 'gold' && towers.filter(t => t.type === 'gold').length >= 5) return showToast('點金之塔上限為 5 座！', 'towerSkill');
       if (gold < TOWER_TYPES[type].cost) return showToast('金幣不足！', 'res');
       placingType = type; dragPos = { x: 500, y: 300 };
       
       const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-      const useTouchBar = !isMouseInput || isTouchDevice;
-      document.getElementById('confirm-placement-bar').style.display = useTouchBar ? 'flex' : 'none';
-      document.getElementById('trash-cancel-btn').style.display = useTouchBar ? 'none' : 'inline-flex';
+      const useTouchControls = !isMouseInput || isTouchDevice;
+      document.getElementById('confirm-placement-bar').style.display = 'none';
+      document.getElementById('touch-placement-controls').style.display = useTouchControls ? 'block' : 'none';
+      document.getElementById('trash-cancel-btn').style.display = useTouchControls ? 'none' : 'inline-flex';
+      if (useTouchControls) updateTouchPlacementControlsPos();
     }
 
     function cancelPlacement() {
       placingType = null;
       document.getElementById('confirm-placement-bar').style.display = 'none';
+      document.getElementById('touch-placement-controls').style.display = 'none';
       document.getElementById('trash-cancel-btn').style.display = 'none';
     }
 
@@ -2457,6 +2526,14 @@ function handleEditNameClick() {
       };
     }
 
+    function handleMove(clientX, clientY) {
+      if (!canvas) return;
+      if (placingType) {
+        dragPos = getCanvasLogicalPos(clientX, clientY);
+        updateTouchPlacementControlsPos();
+      }
+    }
+    
     function handleMove(clientX, clientY) {
       if (!canvas) return;
       if (placingType) {
@@ -2694,7 +2771,7 @@ function handleEditNameClick() {
         resistances = `冰凍效果減免 ${Math.round(freezeReduce * 100)}% | 麻痺時間減免 ${Math.round(paralyzeReduce * 100)}% | 擊退距離減免 ${Math.round(kbReduce * 100)}%`;
 
         skills = [
-          '🌀【虛空旋渦】每 9 秒開啟持續 3 秒的黑色旋渦，期間免疫所有傷害並將受到傷害的 25% 轉化為治療。',
+          '🌀【虛空旋渦】每 7.5 秒開啟持續 3 秒的黑色旋渦，期間免疫所有傷害並將受到傷害的 40% 轉化為治療。',
           '💥【深淵衝擊波】虛空旋渦結束時釋放全場衝擊波，使全場防禦塔癱瘓 4 秒。',
           '🔥【深淵狂暴】生命值低於 25% 時觸發，移動速度提升 30%。'
         ].join('\n');
@@ -3024,9 +3101,10 @@ function handleEditNameClick() {
         const div = document.createElement('div');
         div.style.cssText = 'display:flex; flex-direction:column; background:var(--card-bg); padding:10px 12px; border-radius:6px; border:1px solid var(--border-color);';
 
+        let nextCost = getTalentUpgradeCost(t);
         let btnHtml = isMax
           ? `<button class="btn btn-disabled-gray" style="padding:4px 10px; font-size:11px;">滿級</button>`
-          : `<button class="btn" style="padding:4px 10px; font-size:11px; background:var(--purple); color:#000;" onclick="buyTalent('${key}')">升級 💎${t.cost + t.lv}</button>`;
+          : `<button class="btn" style="padding:4px 10px; font-size:11px; background:var(--purple); color:#000;" onclick="buyTalent('${key}')">升級 💎${nextCost}</button>`;
 
         div.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -3045,12 +3123,19 @@ function handleEditNameClick() {
       });
     }
 
+    function getTalentUpgradeCost(t) {
+      if (t.lv < 50) return t.cost + t.lv;
+      const over = t.lv - 50;
+      const block = Math.floor(over / 10);
+      const rem = over % 10;
+      return 46 + block * 5 + rem;
+    }
+    
     function buyTalent(key) {
       const t = talents[key];
       const currentMaxLv = getTechMaxLevel();
       t.max = currentMaxLv;
-      const reqCost = t.cost + t.lv; // 50->51 級時 t.lv=50 -> cost=1+50=51? 注意：0->1花1, 49->50花50；若要50->51花46..59->60花55：
-      let finalCost = t.lv >= 50 ? (46 + (t.lv - 50)) : (t.cost + t.lv);
+      const finalCost = getTalentUpgradeCost(t);
       if (t.lv >= currentMaxLv) return showToast(`該科技已達最高等級 (${currentMaxLv}級)！`, 'res');
       if (crystals >= finalCost) {
         crystals -= finalCost; window.crystals = crystals; t.lv++;
@@ -3253,7 +3338,7 @@ function handleEditNameClick() {
     function takeDamage(enemy, dmg, sourceTower = null) {
       if (enemy.dead || enemy.teleportState) return;
       if (enemy.isAbyssBoss && enemy.abyssAbsorbTimer > 0) {
-        let healAmt = dmg * 0.25;
+        let healAmt = dmg * 0.40;
         enemy.hp = Math.min(enemy.maxHp, enemy.hp + healAmt);
         addFloatingText(enemy.x, enemy.y - 14, `+${Math.floor(healAmt)}`, '#c77dff', 11);
         return;
@@ -3714,10 +3799,10 @@ function handleEditNameClick() {
               }
             } else {
               e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt;
-              if (e.abyssCycleTimer >= 9.0) {
+              if (e.abyssCycleTimer >= 7.5) {
                 e.abyssCycleTimer = 0;
                 e.abyssAbsorbTimer = 3.0;
-                showToast('🌀 深淵 BOSS 開啟虛空旋渦！3 秒內吸收所有傷害並轉化治療！', 'enemy');
+                showToast('🌀 深淵 BOSS 開啟虛空旋渦！3 秒內吸收所有傷害並轉化 40% 治療！', 'enemy');
               }
             }
           }
@@ -4028,7 +4113,7 @@ function handleEditNameClick() {
         const bossSkillsDescElem = document.getElementById('boss-skills-desc');
         if (boss.isAbyssBoss) {
           bossSkillsDescElem.style.display = 'inline';
-          let vortexStatus = boss.abyssAbsorbTimer > 0 ? `🌀 虛空旋渦吸收中 (${boss.abyssAbsorbTimer.toFixed(1)}s)` : `能力：每 9 秒開啟虛空旋渦 3 秒（吸收傷害轉化 25% 治療），結束時釋放全場衝擊波癱瘓 4 秒`;
+          let vortexStatus = boss.abyssAbsorbTimer > 0 ? `🌀 虛空旋渦吸收中 (${boss.abyssAbsorbTimer.toFixed(1)}s)` : `能力：每 7.5 秒開啟虛空旋渦 3 秒（吸收傷害轉化 40% 治療），結束時釋放全場衝擊波癱瘓 4 秒`;
           bossSkillsDescElem.innerText = `${vortexStatus} | 🔥狂暴: HP≤25% 移速 +30%`;
         } else {
           bossSkillsDescElem.style.display = currentWave < 10 ? 'none' : 'inline';
@@ -5217,7 +5302,8 @@ function handleEditNameClick() {
         isMouseInput = false;
         if (placingType && e.touches.length > 0) {
           e.preventDefault();
-          document.getElementById('confirm-placement-bar').style.display = 'flex';
+          document.getElementById('confirm-placement-bar').style.display = 'none';
+          document.getElementById('touch-placement-controls').style.display = 'block';
           document.getElementById('trash-cancel-btn').style.display = 'none';
           handleMove(e.touches[0].clientX, e.touches[0].clientY);
         }
@@ -5231,6 +5317,55 @@ function handleEditNameClick() {
         }
       }, { passive: false });
 
+      const touchConfirmBtn = document.getElementById('touch-place-confirm');
+      const touchCancelBtn = document.getElementById('touch-place-cancel');
+      const touchHandleBtn = document.getElementById('touch-place-drag-handle');
+
+      if (touchConfirmBtn) {
+        touchConfirmBtn.addEventListener('click', (e) => { e.stopPropagation(); confirmPlacement(); });
+        touchConfirmBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); confirmPlacement(); });
+      }
+      if (touchCancelBtn) {
+        touchCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); cancelPlacement(); });
+        touchCancelBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); cancelPlacement(); });
+      }
+      if (touchHandleBtn) {
+        let handleDragging = false, startLogical = { x: 0, y: 0 }, startTowerPos = { x: 0, y: 0 };
+
+        const beginHandleDrag = (cx, cy) => {
+          if (!placingType) return;
+          handleDragging = true;
+          startLogical = getCanvasLogicalPos(cx, cy);
+          startTowerPos = { x: dragPos.x, y: dragPos.y };
+        };
+        const moveHandleDrag = (cx, cy) => {
+          if (!handleDragging || !placingType) return;
+          const curLogical = getCanvasLogicalPos(cx, cy);
+          dragPos.x = Math.max(30, Math.min(900, startTowerPos.x + (curLogical.x - startLogical.x)));
+          dragPos.y = Math.max(30, Math.min(570, startTowerPos.y + (curLogical.y - startLogical.y)));
+          updateTouchPlacementControlsPos();
+        };
+        const endHandleDrag = () => { handleDragging = false; };
+
+        touchHandleBtn.addEventListener('touchstart', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (e.touches.length > 0) beginHandleDrag(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        touchHandleBtn.addEventListener('touchmove', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (e.touches.length > 0) moveHandleDrag(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        touchHandleBtn.addEventListener('touchend', (e) => { e.stopPropagation(); endHandleDrag(); });
+
+        touchHandleBtn.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          beginHandleDrag(e.clientX, e.clientY);
+        });
+        window.addEventListener('mousemove', (e) => moveHandleDrag(e.clientX, e.clientY));
+        window.addEventListener('mouseup', endHandleDrag);
+      }
+      window.addEventListener('resize', updateTouchPlacementControlsPos);
+      
       window.addEventListener('click', () => {
         document.querySelectorAll('.skill-bubble-popover').forEach(p => p.style.display = 'none');
       });
