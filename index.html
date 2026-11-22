@@ -2495,7 +2495,6 @@ function handleEditNameClick() {
       let rate = stat === 'spec' ? getTowerSpecRate(selectedTower.type) : 1.5;
       let baseMap = { dmg: 50, rng: 40, spd: 60, spec: 100 };
       let lvProp = stat === 'spec' ? 'specLv' : `${stat}Lv`;
-      let cost = getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]);
       if (gold >= cost) {
         gold -= cost; window.gold = gold; selectedTower[lvProp]++;
         
