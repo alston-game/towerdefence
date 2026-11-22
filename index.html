@@ -1296,6 +1296,7 @@ window.updateAuthUI = updateAuthUI;
           renderAbyssMatrix();
           updateUI();
           updateTechUI();
+          updateSkillUI();
           if (selectedTower) openTowerOverlay();
           syncActiveCheckpointIfNeeded();
           showToast(`🌌 已啟動深淵矩陣：【${node.name}】！`, 'towerSkill');
@@ -2959,40 +2960,53 @@ function handleEditNameClick() {
     }
 
     function updateSkillUI() {
-      // 1. 新增這兩行：讀取深淵矩陣的冷卻與持續時間加成
+      document.querySelectorAll('.skill-bubble-popover').forEach(p => p.remove());
+      const container = document.getElementById('skills-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      // 讀取深淵矩陣的冷卻與持續時間加成
       let skillCdMult = Math.max(0.2, 1 - getAbyssMatrixBonus('skillCd'));
       let skillDurMult = 1 + getAbyssMatrixBonus('skillDur');
 
-      for (let key in skills) {
-       let s = skills[key];
-       let card = document.getElementById('skill-' + key);
-       if (!card) continue;
-        let cdEl = card.querySelector('.skill-cd');
-        let infoEl = card.querySelector('.skill-info');
-    
-        // 2. 取代原本計算秒數與冷卻的變數（套用加成）
+      Object.keys(activeSkills).forEach(key => {
+        const s = activeSkills[key];
+        const isUnlocked = currentWave >= s.reqWave;
+        const cdText = s.timer > 0 ? `(${s.timer.toFixed(1)}s)` : '';
+        let meteorDmg = s.val + (s.valLv - 1) * 60;
         let revDur = ((s.val + (s.valLv - 1) * 0.25) * skillDurMult).toFixed(2);
+        let markCount = s.val + (s.valLv - 1);
         let actualCd = Math.max(2, (s.cd - (s.cdLv - 1) * 0.5) * skillCdMult);
-        let meteorDmg = s.val + (s.valLv - 1) * 100;
-        let markCount = s.val + (s.valLv - 1) * 1;
-    
+
         let infoVal = key === 'meteor' ? `傷害: ${meteorDmg}x5` : 
           (key === 'blizzard' ? `凍結: ${((s.val + (s.valLv - 1) * 1) * skillDurMult).toFixed(1)}s` : 
           (key === 'warDrum' ? `加速: ${((s.val + (s.valLv - 1) * 0.5) * skillDurMult).toFixed(1)}s` : 
           (key === 'targetMark' ? `次數: ${markCount}次` : 
           (key === 'timeReversal' ? `逆流: ${revDur}s` : `血量: ${s.val + (s.valLv - 1) * 250}`))));
-    
-        // 3. 更新卡片顯示文字（注意這裡的 CD 改用 actualCd）
-       if (infoEl) infoEl.innerHTML = `${infoVal}<br>CD: ${actualCd.toFixed(1)}s`;
-    
-       if (s.currentCd > 0) {
-          card.classList.add('on-cd');
-          if (cdEl) cdEl.innerText = Math.ceil(s.currentCd);
-        } else {
-          card.classList.remove('on-cd');
-          if (cdEl) cdEl.innerText = '';
+        let valLabel = key === 'meteor' ? '傷害' : (key === 'barrier' ? '血量' : (key === 'targetMark' ? '次數' : '時間'));
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="skill-info-icon" onclick="event.stopPropagation(); toggleSkillBubble('${key}', this)" title="技能詳情">❗️</div>
+          <div class="skill-bubble-popover" id="skill-bubble-${key}" onclick="event.stopPropagation(); this.style.display='none';">
+            <div style="font-weight:bold; color:var(--primary); font-size:13px; margin-bottom:6px;">${s.name}</div>
+            <div style="font-size:12px; color:#f8f8f2; line-height:1.5;">${s.desc}</div>
+          </div>
+          <div class="card-name" style="color:#ffb86c">${s.name} <span id="cd-display-${key}" style="color:var(--danger)">${cdText}</span></div>
+          <div class="card-stats">${infoVal} | CD: ${actualCd.toFixed(1)}s</div>
+          <button class="btn btn-primary" style="padding:3px 6px; font-size:10px; width:100%; margin-bottom:4px;" onclick="useSkill('${key}')">施放</button>
+          <div style="display:flex; gap:4px;">
+            <button class="btn" style="padding:2px 4px; font-size:9px; background:var(--purple); color:#000; flex:1;" onclick="upgradeSkill('${key}', 'val')">+${valLabel} (Lv.${s.valLv}) 💎${s.cost + s.valLv - 1}</button>
+            <button class="btn" style="padding:2px 4px; font-size:9px; background:var(--cyan); color:#000; flex:1;" onclick="upgradeSkill('${key}', 'cd')">-CD (Lv.${s.cdLv}) 💎${s.cost + s.cdLv - 1}</button>
+          </div>`;
+        if (!isUnlocked) {
+          const lockOverlay = document.createElement('div');
+          lockOverlay.className = 'skill-lock-overlay'; lockOverlay.innerHTML = `🔒 第 ${s.reqWave} 波解鎖`;
+          card.appendChild(lockOverlay);
         }
-      }
+        container.appendChild(card);
+      });
     }
 
     function useSkill(key) {
