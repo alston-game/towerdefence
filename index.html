@@ -3085,6 +3085,12 @@ function handleEditNameClick() {
 
     function takeDamage(enemy, dmg, sourceTower = null) {
       if (enemy.dead || enemy.teleportState) return;
+      if (enemy.isAbyssBoss && enemy.abyssAbsorbTimer > 0) {
+        let healAmt = dmg * 0.25;
+        enemy.hp = Math.min(enemy.maxHp, enemy.hp + healAmt);
+        addFloatingText(enemy.x, enemy.y - 14, `+${Math.floor(healAmt)}`, '#c77dff', 11);
+        return;
+      }
       // 聖輝光盾免疫所有傷害（防禦塔可鎖定，擊中時顯示「免疫」）
       if (enemy.lightShieldImmune) {
         addFloatingText(enemy.x, enemy.y - 10, '免疫', '#fff8dc', 11);
@@ -3115,7 +3121,7 @@ function handleEditNameClick() {
         return;
       }
 
-      let baseTechMultiplier = (1 + talents.baseAtk.lv * 0.06);
+      let baseTechMultiplier = (1 + talents.baseAtk.lv * 0.06 + getAbyssMatrixBonus('baseAtk'));
       let overchargeTotalBonus = 0;
 
       if (sourceTower) {
@@ -3182,7 +3188,7 @@ function handleEditNameClick() {
           waveStarEnemyKills += 1;
         }
 
-        let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12);
+        let goldGain = enemy.gold * (1 + talents.goldBonus.lv * 0.12 + getAbyssMatrixBonus('killGold'));
         gold += goldGain; window.gold = gold; stats.totalGoldEarned += goldGain; window.stats = stats;
 
         if (enemy.type !== 'boss') {
@@ -3190,9 +3196,17 @@ function handleEditNameClick() {
         }
 
         if (enemy.type === 'boss') {
-          let bossCrystalReward = 5 + Math.floor((currentWave - 5) / 5) * 2;
-          crystals += bossCrystalReward; window.crystals = crystals;
-          showToast(`🎉 擊殺 BOSS！獲得 ${bossCrystalReward} 顆鑽石與巨額金幣！`, 'res');
+          if (enemy.isAbyssBoss) {
+            let shardReward = Math.floor((currentWave - 100) / 5);
+            let abyssCrystalReward = 5 + Math.floor((100 - 5) / 5) * 2; // 同第 100 波 BOSS 鑽石量 (43)
+            voidShards += shardReward; window.voidShards = voidShards;
+            crystals += abyssCrystalReward; window.crystals = crystals;
+            showToast(`🌌 擊殺深淵 BOSS！獲得 🔮+${shardReward} 虛空原晶、💎+${abyssCrystalReward} 鑽石！`, 'res');
+          } else {
+            let bossCrystalReward = 5 + Math.floor((currentWave - 5) / 5) * 2;
+            crystals += bossCrystalReward; window.crystals = crystals;
+            showToast(`🎉 擊殺 BOSS！獲得 ${bossCrystalReward} 顆鑽石與巨額金幣！`, 'res');
+          }
         }
         updateUI();
       }
@@ -3472,8 +3486,9 @@ function handleEditNameClick() {
         if (e.immuneTimer > 0) e.immuneTimer -= dt;
         if (e.stunTimer > 0) e.stunTimer -= dt;
 
+        let rageThreshold = e.isAbyssBoss ? 0.25 : 0.20;
         if (e.type === 'boss' && currentWave >= 45) {
-          if (!e.isEnraged && e.hp / e.maxHp <= 0.20) {
+          if (!e.isEnraged && e.hp / e.maxHp <= rageThreshold) {
             e.isEnraged = true;
             let incRate = currentWave >= 90 ? 0.30 : (currentWave >= 75 ? 0.25 : (currentWave >= 60 ? 0.20 : 0.15));
             e.speed = parseFloat((e.baseSpeed * (1 + incRate)).toFixed(2));
@@ -3507,6 +3522,35 @@ function handleEditNameClick() {
           isBlizzardActive = true;
         }
         if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
+        if (e.isAbyssBoss) {
+          if (e.abyssPauseTimer > 0) {
+            e.abyssPauseTimer -= dt;
+            speedMult = 0;
+          }
+          if (e.freezeTimer <= 0 && e.stunTimer <= 0) {
+            if (e.abyssAbsorbTimer > 0) {
+              e.abyssAbsorbTimer -= dt;
+              if (e.abyssAbsorbTimer <= 0) {
+                e.abyssPauseTimer = 0.5;
+                speedMult = 0;
+                shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: 1200, alpha: 1.0 });
+                let stunReduce = getAbyssMatrixBonus('stunReduce');
+                let finalStunDur = 4.0 * Math.max(0.1, 1 - stunReduce);
+                towers.forEach(t => {
+                  if (t.type !== 'builder') t.disableTimer = Math.max(t.disableTimer || 0, finalStunDur);
+                });
+                showToast(`🌌 深淵 BOSS 釋放全場衝擊波！全場防禦塔癱瘓 ${finalStunDur.toFixed(1)} 秒！`, 'enemy');
+              }
+            } else {
+              e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt;
+              if (e.abyssCycleTimer >= 9.0) {
+                e.abyssCycleTimer = 0;
+                e.abyssAbsorbTimer = 3.0;
+                showToast('🌀 深淵 BOSS 開啟虛空旋渦！3 秒內吸收所有傷害並轉化治療！', 'enemy');
+              }
+            }
+          }
+        }
 
         if (e.freezeTimer <= 0) {
           if (e.type === 'soldier1' && e.stunTimer <= 0) {
@@ -3679,7 +3723,7 @@ function handleEditNameClick() {
               }
             }
           }
-          if (e.type === 'boss' && e.stunTimer <= 0) {
+          if (e.type === 'boss' && !e.isAbyssBoss && e.stunTimer <= 0) {
             if (currentWave >= 10) {
               e.shockTimer += dt;
               let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
@@ -4483,7 +4527,7 @@ function handleEditNameClick() {
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
         let color = e.type === 'boss' ? '#ff5555' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
-        let size = e.type === 'boss' ? 20 : (e.type === 'sage' ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10)))));
+        let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : (e.type === 'sage' ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))))));
         
         if (e.isCharging) color = '#e5e4e2';
 
@@ -4503,6 +4547,62 @@ function handleEditNameClick() {
         }
 
         ctx.fillStyle = color; ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.fill();
+        if (e.isAbyssBoss) {
+          ctx.save();
+          ctx.translate(e.x, e.y);
+          // 暗黑深淵能量外暈
+          let abyssGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 1.35);
+          abyssGrad.addColorStop(0, '#140824');
+          abyssGrad.addColorStop(0.65, '#09050f');
+          abyssGrad.addColorStop(1, 'rgba(138, 43, 226, 0)');
+          ctx.fillStyle = abyssGrad;
+          ctx.beginPath(); ctx.arc(0, 0, size * 1.35, 0, Math.PI * 2); ctx.fill();
+
+          // 黑曜石主體與紫金鑲邊
+          ctx.fillStyle = '#0b0b10';
+          ctx.strokeStyle = '#9d4edd';
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+          // 華麗頭飾：雙側黑曜石彎角 + 中央紫晶三叉王冠
+          ctx.fillStyle = '#1f1135';
+          ctx.strokeStyle = '#e0aaff';
+          ctx.lineWidth = 2;
+          [-1, 1].forEach(dir => {
+            ctx.beginPath();
+            ctx.moveTo(dir * size * 0.38, -size * 0.6);
+            ctx.quadraticCurveTo(dir * size * 1.25, -size * 1.1, dir * size * 0.92, -size * 1.48);
+            ctx.quadraticCurveTo(dir * size * 0.72, -size * 0.88, dir * size * 0.18, -size * 0.82);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+          });
+          ctx.fillStyle = '#c77dff';
+          ctx.beginPath();
+          ctx.moveTo(-size * 0.25, -size * 0.85);
+          ctx.lineTo(0, -size * 1.48);
+          ctx.lineTo(size * 0.25, -size * 0.85);
+          ctx.closePath(); ctx.fill();
+
+          // 吸收期間：黑色逆時針內旋旋渦（持續 3 秒）
+          if (e.abyssAbsorbTimer > 0) {
+            let swirlT = performance.now() * 0.008;
+            for (let arm = 0; arm < 4; arm++) {
+              ctx.beginPath();
+              for (let step = 0; step <= 24; step++) {
+                let prog = step / 24;
+                let dist = size * 1.85 * (1 - prog);
+                let ang = -swirlT + (arm * Math.PI / 2) + prog * 3.5; // 負號：逆時針內旋
+                let vx = Math.cos(ang) * dist;
+                let vy = Math.sin(ang) * dist;
+                if (step === 0) ctx.moveTo(vx, vy);
+                else ctx.lineTo(vx, vy);
+              }
+              ctx.strokeStyle = arm % 2 === 0 ? 'rgba(8, 4, 14, 0.94)' : 'rgba(157, 78, 221, 0.78)';
+              ctx.lineWidth = 4;
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
         
         if (e.type === 'soldier1') {
           ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
@@ -4840,6 +4940,28 @@ function handleEditNameClick() {
       });
 
       document.getElementById('tu-close').onclick = () => { document.getElementById('tower-upgrade-overlay').style.display = 'none'; };
+
+      const abyssViewport = document.getElementById('abyss-hex-viewport');
+      const abyssCanvas = document.getElementById('abyss-hex-canvas');
+      if (abyssViewport && abyssCanvas) {
+        let isHexDragging = false, hexStartX = 0, hexStartY = 0;
+        const startHexDrag = (cx, cy) => { isHexDragging = true; window._hexDragged = false; hexStartX = cx - hexPanX; hexStartY = cy - hexPanY; abyssViewport.style.cursor = 'grabbing'; };
+        const moveHexDrag = (cx, cy) => {
+          if (!isHexDragging) return;
+          let nx = cx - hexStartX, ny = cy - hexStartY;
+          if (Math.hypot(nx - hexPanX, ny - hexPanY) > 5) window._hexDragged = true;
+          hexPanX = nx; hexPanY = ny;
+          abyssCanvas.style.transform = `translate(${hexPanX}px, ${hexPanY}px)`;
+        };
+        const endHexDrag = () => { isHexDragging = false; abyssViewport.style.cursor = 'grab'; setTimeout(() => { window._hexDragged = false; }, 50); };
+
+        abyssViewport.addEventListener('mousedown', e => { if (e.button === 0) startHexDrag(e.clientX, e.clientY); });
+        window.addEventListener('mousemove', e => moveHexDrag(e.clientX, e.clientY));
+        window.addEventListener('mouseup', endHexDrag);
+        abyssViewport.addEventListener('touchstart', e => { if (e.touches.length === 1) startHexDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+        abyssViewport.addEventListener('touchmove', e => { if (isHexDragging && e.touches.length === 1) { e.preventDefault(); moveHexDrag(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+        abyssViewport.addEventListener('touchend', endHexDrag);
+      }
       
       window.addEventListener('mousemove', () => isMouseInput = true);
       canvas.addEventListener('mousemove', (e) => { isMouseInput = true; handleMove(e.clientX, e.clientY); });
@@ -4918,7 +5040,8 @@ function handleEditNameClick() {
         'tech-modal',
         'codex-detail-modal',
         'codex-modal',
-        'gameover-modal'
+        'gameover-modal',
+        'abyss-matrix-modal'
       ];
       return modalIds.some(id => isModalOpen(id));
     }
@@ -5054,6 +5177,12 @@ function handleEditNameClick() {
         if (isModalOpen('tech-modal')) {
           e.preventDefault();
           switchModal('tech-modal', null);
+          return;
+        }
+        // (10) 深淵矩陣 -> 關閉並回到遊戲
+        if (isModalOpen('abyss-matrix-modal')) {
+          e.preventDefault();
+          closeAbyssMatrixModal();
           return;
         }
       }
