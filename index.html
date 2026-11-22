@@ -2477,8 +2477,8 @@ function handleEditNameClick() {
         knockback: `擊退距離: ${5 + (curSpecLv - 1)}px (範圍擊退)`,
         builder: `工人移速: +${(curSpecLv - 1) * 15}%`,
         gold: `產金週期: 💰${15 + (curSpecLv - 1) * 10} / ${tInfo.cd.toFixed(1)}s`,
-        inferno: selectedTower.infernoMode === 1 ? `型態一(單體): 最高增傷 ${300 + (curSpecLv - 1) * 40}%` : `型態二(散射): 同時發射 ${4 + (curSpecLv - 1)} 條射線`,
-        overcharge: `超能增幅: 攻擊力提升 +${30 + (curSpecLv - 1) * 5}% (可多塔疊加)`
+        inferno: selectedTower.infernoMode === 1 ? `型態一: 最高增傷 ${300 + (curSpecLv - 1) * 40}%` : `型態二: 同時發射 ${4 + (curSpecLv - 1)} 條射線`,
+        overcharge: `攻擊力提升 +${30 + (curSpecLv - 1) * 5}% (可多塔疊加)`
       };
       document.getElementById('tu-spec-val').innerText = specDescs[selectedTower.type];
       document.getElementById('tu-spec-cost').innerText = Math.floor(getUpgradeCost(100, getTowerSpecRate(selectedTower.type), selectedTower.specLv) * upgMult);
