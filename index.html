@@ -2601,7 +2601,7 @@ function handleEditNameClick() {
         document.getElementById('tu-dmg-lv').innerText = curDmgLv + (odBonus ? '⚡' : '');
         document.getElementById('tu-dmg-cost').innerText = Math.floor(getUpgradeCost(50, 1.5, selectedTower.dmgLv) * upgMult);
 
-        document.getElementById('tu-rng-val').innerText = (tInfo.range * (1 + (curRngLv - 1) * 0.05)).toFixed(0);
+        document.getElementById('tu-rng-val').innerText = (tInfo.range * (1 + (curRngLv - 1) * 0.05) * rangeMult).toFixed(0);
         document.getElementById('tu-rng-lv').innerText = curRngLv + (odBonus ? '⚡' : '');
         document.getElementById('tu-rng-cost').innerText = Math.floor(getUpgradeCost(40, 1.5, selectedTower.rngLv) * upgMult);
 
@@ -2919,7 +2919,7 @@ function handleEditNameClick() {
           paralyzeEffectiveness: 1.0 - paralyzeReduce,
           knockbackEffectiveness: 1.0 - kbReduce,
           shockTimer: 0, shockInterval: shockCdSec, shockRadius: Math.min(110, 50 + Math.floor((currentWave - 10) / 5) * 8), beamTimer: 0, stopTimer: 0, isEnraged: false,
-          isAbyssBoss: isAbyss, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0
+          isAbyssBoss: isAbyss, abyssCycleTimer: isAbyss ? 4.0 : 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0
         });
       }
 
@@ -2959,42 +2959,40 @@ function handleEditNameClick() {
     }
 
     function updateSkillUI() {
-      document.querySelectorAll('.skill-bubble-popover').forEach(p => p.remove());
-      const container = document.getElementById('skills-list');
-      if (!container) return;
-      container.innerHTML = '';
-      Object.keys(activeSkills).forEach(key => {
-        const s = activeSkills[key];
-        const isUnlocked = currentWave >= s.reqWave;
-        const cdText = s.timer > 0 ? `(${s.timer.toFixed(1)}s)` : '';
-        let meteorDmg = s.val + (s.valLv - 1) * 60;
-        let revDur = (s.val + (s.valLv - 1) * 0.25).toFixed(2);
-        let markCount = s.val + (s.valLv - 1);
-        let infoVal = key === 'meteor' ? `傷害: ${meteorDmg}x5` : (key === 'blizzard' ? `凍結: ${(s.val + (s.valLv-1)*1).toFixed(1)}s` : (key === 'warDrum' ? `加速: ${(s.val + (s.valLv-1)*0.5).toFixed(1)}s` : (key === 'targetMark' ? `次數: ${markCount}次` : (key === 'timeReversal' ? `逆流: ${revDur}s` : `血量: ${s.val + (s.valLv-1)*250}`))));
-        let valLabel = key === 'meteor' ? '傷害' : (key === 'barrier' ? '血量' : (key === 'targetMark' ? '次數' : '時間'));
-        
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="skill-info-icon" onclick="event.stopPropagation(); toggleSkillBubble('${key}', this)" title="技能詳情">❗️</div>
-          <div class="skill-bubble-popover" id="skill-bubble-${key}" onclick="event.stopPropagation(); this.style.display='none';">
-            <div style="font-weight:bold; color:var(--primary); font-size:13px; margin-bottom:6px;">${s.name}</div>
-            <div style="font-size:12px; color:#f8f8f2; line-height:1.5;">${s.desc}</div>
-          </div>
-          <div class="card-name" style="color:#ffb86c">${s.name} <span id="cd-display-${key}" style="color:var(--danger)">${cdText}</span></div>
-          <div class="card-stats">${infoVal} | CD: ${Math.max(2, s.cd - (s.cdLv - 1) * 0.5).toFixed(1)}s</div>
-          <button class="btn btn-primary" style="padding:3px 6px; font-size:10px; width:100%; margin-bottom:4px;" onclick="useSkill('${key}')">施放</button>
-          <div style="display:flex; gap:4px;">
-            <button class="btn" style="padding:2px 4px; font-size:9px; background:var(--purple); color:#000; flex:1;" onclick="upgradeSkill('${key}', 'val')">+${valLabel} (Lv.${s.valLv}) 💎${s.cost + s.valLv - 1}</button>
-            <button class="btn" style="padding:2px 4px; font-size:9px; background:var(--cyan); color:#000; flex:1;" onclick="upgradeSkill('${key}', 'cd')">-CD (Lv.${s.cdLv}) 💎${s.cost + s.cdLv - 1}</button>
-          </div>`;
-        if (!isUnlocked) {
-          const lockOverlay = document.createElement('div');
-          lockOverlay.className = 'skill-lock-overlay'; lockOverlay.innerHTML = `🔒 第 ${s.reqWave} 波解鎖`;
-          card.appendChild(lockOverlay);
+      // 1. 新增這兩行：讀取深淵矩陣的冷卻與持續時間加成
+      let skillCdMult = Math.max(0.2, 1 - getAbyssMatrixBonus('skillCd'));
+      let skillDurMult = 1 + getAbyssMatrixBonus('skillDur');
+
+      for (let key in skills) {
+       let s = skills[key];
+       let card = document.getElementById('skill-' + key);
+       if (!card) continue;
+        let cdEl = card.querySelector('.skill-cd');
+        let infoEl = card.querySelector('.skill-info');
+    
+        // 2. 取代原本計算秒數與冷卻的變數（套用加成）
+        let revDur = ((s.val + (s.valLv - 1) * 0.25) * skillDurMult).toFixed(2);
+        let actualCd = Math.max(2, (s.cd - (s.cdLv - 1) * 0.5) * skillCdMult);
+        let meteorDmg = s.val + (s.valLv - 1) * 100;
+        let markCount = s.val + (s.valLv - 1) * 1;
+    
+        let infoVal = key === 'meteor' ? `傷害: ${meteorDmg}x5` : 
+          (key === 'blizzard' ? `凍結: ${((s.val + (s.valLv - 1) * 1) * skillDurMult).toFixed(1)}s` : 
+          (key === 'warDrum' ? `加速: ${((s.val + (s.valLv - 1) * 0.5) * skillDurMult).toFixed(1)}s` : 
+          (key === 'targetMark' ? `次數: ${markCount}次` : 
+          (key === 'timeReversal' ? `逆流: ${revDur}s` : `血量: ${s.val + (s.valLv - 1) * 250}`))));
+    
+        // 3. 更新卡片顯示文字（注意這裡的 CD 改用 actualCd）
+       if (infoEl) infoEl.innerHTML = `${infoVal}<br>CD: ${actualCd.toFixed(1)}s`;
+    
+       if (s.currentCd > 0) {
+          card.classList.add('on-cd');
+          if (cdEl) cdEl.innerText = Math.ceil(s.currentCd);
+        } else {
+          card.classList.remove('on-cd');
+          if (cdEl) cdEl.innerText = '';
         }
-        container.appendChild(card);
-      });
+      }
     }
 
     function useSkill(key) {
@@ -3016,24 +3014,18 @@ function handleEditNameClick() {
         }
         showToast(`☄️ 召喚流星雨！5 顆爆破流星即將連續降臨！`, 'towerSkill');
       } else if (key === 'blizzard') {
-        let dur = s.val + (s.valLv - 1) * 1;
+        let dur = (s.val + (s.valLv - 1) * 1) * skillDurMult; // 加上 * skillDurMult
         enemies.forEach(e => !e.immuneTimer && !e.lightShieldImmune && (e.freezeTimer = dur));
         activeVisualEffects.push({ type: 'blizzard', life: dur, maxLife: dur });
         startBlizzardSound();
         showToast(`❄ 暴風雪降臨！全場敵軍冰封 ${dur.toFixed(1)} 秒！`, 'towerSkill');
       } else if (key === 'warDrum') {
-        let dur = s.val + (s.valLv - 1) * 0.5;
+        let dur = (s.val + (s.valLv - 1) * 0.5) * skillDurMult; // 加上 * skillDurMult
         towers.forEach(t => t.drumTimer = dur);
         activeVisualEffects.push({ type: 'warDrum', life: 1.2, maxLife: 1.2 });
         showToast(`🥁 戰鼓響起！全塔攻擊與生產速度提升 100% 保持 ${dur.toFixed(1)} 秒！`, 'towerSkill');
-      } else if (key === 'targetMark') {
-        let markTimes = s.val + (s.valLv - 1);
-        for (let i = 0; i < markTimes; i++) {
-          targetMarkQueue.push({ delayTimer: i * 0.2 });
-        }
-        showToast(`🎯 發動目標標記！準備隨機標記 ${markTimes} 名敵人！`, 'towerSkill');
       } else if (key === 'timeReversal') {
-        let revDuration = s.val + (s.valLv - 1) * 0.25;
+        let revDuration = (s.val + (s.valLv - 1) * 0.25) * skillDurMult; // 加上 * skillDurMult
         enemies.forEach(e => {
           if (!e.lightShieldImmune) {
             e.reversalTimer = revDuration;
@@ -3041,6 +3033,12 @@ function handleEditNameClick() {
           }
         });
         showToast(`⏳ 時空逆流發動！所有敵人退回出生點持續 ${revDuration.toFixed(2)} 秒！`, 'towerSkill');
+      } else if (key === 'targetMark') {
+        let markTimes = s.val + (s.valLv - 1);
+        for (let i = 0; i < markTimes; i++) {
+          targetMarkQueue.push({ delayTimer: i * 0.2 });
+        }
+        showToast(`🎯 發動目標標記！準備隨機標記 ${markTimes} 名敵人！`, 'towerSkill');
       } else if (key === 'barrier') {
         let frontEnemy = enemies.slice().sort((a,b) => b.pathIndex - a.pathIndex)[0];
         let spawnX = frontEnemy ? frontEnemy.x : 200, spawnY = frontEnemy ? frontEnemy.y : 180;
@@ -3783,27 +3781,25 @@ function handleEditNameClick() {
             e.abyssPauseTimer -= dt;
             speedMult = 0;
           }
-          if (e.freezeTimer <= 0 && e.stunTimer <= 0) {
-            if (e.abyssAbsorbTimer > 0) {
-              e.abyssAbsorbTimer -= dt;
-              if (e.abyssAbsorbTimer <= 0) {
-                e.abyssPauseTimer = 0.5;
-                speedMult = 0;
-                shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: 1200, isFullScreen: true, alpha: 1.0 });
-                let stunReduce = getAbyssMatrixBonus('stunReduce');
-                let finalStunDur = 4.0 * Math.max(0.1, 1 - stunReduce);
-                towers.forEach(t => {
-                  if (t.type !== 'builder') t.disableTimer = Math.max(t.disableTimer || 0, finalStunDur);
-                });
-                showToast(`🌌 深淵 BOSS 釋放全場衝擊波！全場防禦塔癱瘓 ${finalStunDur.toFixed(1)} 秒！`, 'enemy');
-              }
-            } else {
-              e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt;
-              if (e.abyssCycleTimer >= 7.5) {
-                e.abyssCycleTimer = 0;
-                e.abyssAbsorbTimer = 3.0;
-                showToast('🌀 深淵 BOSS 開啟虛空旋渦！3 秒內吸收所有傷害並轉化 40% 治療！', 'enemy');
-              }
+          if (e.abyssAbsorbTimer > 0) {
+            e.abyssAbsorbTimer -= dt;
+            if (e.abyssAbsorbTimer <= 0) {
+              e.abyssPauseTimer = 0.5;
+              speedMult = 0;
+              shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: 1200, isFullScreen: true, alpha: 1.0 });
+              let stunReduce = getAbyssMatrixBonus('stunReduce');
+              let finalStunDur = 4.0 * Math.max(0.1, 1 - stunReduce);
+              towers.forEach(t => {
+                if (t.type !== 'builder') t.disableTimer = Math.max(t.disableTimer || 0, finalStunDur);
+              });
+              showToast(`🌌 深淵 BOSS 釋放全場衝擊波！全場防禦塔癱瘓 ${finalStunDur.toFixed(1)} 秒！`, 'enemy');
+            }
+          } else if (e.stunTimer <= 0) {
+            e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt;
+            if (e.abyssCycleTimer >= 7.5) {
+              e.abyssCycleTimer = 0;
+              e.abyssAbsorbTimer = 3.0;
+              showToast('🌀 深淵 BOSS 開啟虛空旋渦！3 秒內吸收所有傷害並轉化 40% 治療！', 'enemy');
             }
           }
         }
@@ -4516,7 +4512,7 @@ function handleEditNameClick() {
         let promotedTowerCount = towers.filter(t => t.isPromoted).length;
         let earnedParticles = Math.round(promotedTowerCount * particleMult);
         starParticles += earnedParticles;
-        starParticles += promotedTowerCount; window.starParticles = starParticles;
+        window.starParticles = starParticles;
         
         crystals += totalCrystalsEarned; window.crystals = crystals;
         if (talents.castleRegen.lv > 0) { hp = Math.min(maxHp, hp + talents.castleRegen.lv * 5); window.hp = hp; }
@@ -4711,7 +4707,10 @@ function handleEditNameClick() {
         }
         
         if (selectedTower === t) {
-          ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)'; ctx.beginPath(); ctx.arc(t.x, t.y, TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05), 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(80, 250, 123, 0.4)';
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, TOWER_TYPES[t.type].range * (1 + (t.rngLv - 1) * 0.05) * rangeMult, 0, Math.PI * 2);
+          ctx.stroke();
         }
       });
       
