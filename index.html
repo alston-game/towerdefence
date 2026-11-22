@@ -2488,13 +2488,13 @@ function handleEditNameClick() {
     }
 
     function upgradeTowerStat(stat) {
-      let upgMult = Math.max(0.1, 1 - getAbyssMatrixBonus('upgCostReduce'));
-      let cost = Math.floor(getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]) * upgMult);
       if (!selectedTower) return;
       if (selectedTower.type !== 'gold' && selectedTower.disableTimer > 0) return showToast('防禦塔處於癱瘓狀態，無法升級！', 'towerSkill');
       let rate = stat === 'spec' ? getTowerSpecRate(selectedTower.type) : 1.5;
       let baseMap = { dmg: 50, rng: 40, spd: 60, spec: 100 };
       let lvProp = stat === 'spec' ? 'specLv' : `${stat}Lv`;
+      let upgMult = Math.max(0.1, 1 - getAbyssMatrixBonus('upgCostReduce'));
+      let cost = Math.floor(getUpgradeCost(baseMap[stat], rate, selectedTower[lvProp]) * upgMult);
       if (gold >= cost) {
         gold -= cost; window.gold = gold; selectedTower[lvProp]++;
         
