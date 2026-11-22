@@ -461,18 +461,59 @@
       background: #3a3b42;
       color: #f1f1f1;
     }
-    /* 唯有底色為灰色（已解鎖）且虛空原晶足夠時，才點亮紅色邊框 */
+    /* 深淵矩陣亮紫色邊框 & 紫色已升級樣式 */
     .hex-node.unlocked.affordable {
-      background: #ff2a4b;
-      filter: drop-shadow(0 0 6px rgba(255, 42, 75, 0.8));
+      background: #d500f9;
+      filter: drop-shadow(0 0 7px rgba(213, 0, 249, 0.9));
     }
-    /* 已升級：底色改為稍暗的紅色 */
     .hex-node.purchased {
-      background: #a82034;
+      background: #9d4edd;
     }
     .hex-node.purchased .hex-node-inner {
-      background: #4a121b;
-      color: #ffd6dc;
+      background: #3c096c;
+      color: #f3d5ff;
+    }
+
+    /* 全局科技 50 格分割進度條 */
+    .tech-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .tech-progress-bar {
+      display: grid;
+      grid-template-columns: repeat(50, 1fr);
+      flex: 1;
+      height: 10px;
+      background: #555868;
+      border: 1px solid #ffffff;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .tech-progress-seg {
+      height: 100%;
+      background: #636675;
+      border-right: 1px solid rgba(255, 255, 255, 0.85);
+    }
+    .tech-progress-seg:last-child {
+      border-right: none;
+    }
+    .tech-progress-seg.filled-green {
+      background: #50fa7b;
+    }
+    .tech-progress-seg.filled-blue {
+      background: #38bdf8;
+    }
+    .tech-reward-tag {
+      font-size: 11px;
+      font-weight: bold;
+      color: #e0aaff;
+      white-space: nowrap;
+      background: rgba(60, 9, 108, 0.65);
+      border: 1px solid #9d4edd;
+      padding: 1px 6px;
+      border-radius: 10px;
     }
   </style>
 </head>
@@ -763,19 +804,24 @@
     </div>
   </div>
 
-  <!-- 深淵矩陣 Modal -->
-  <div id="abyss-matrix-modal" style="display: none; position: fixed; inset: 0; background: #07060b; z-index: 410; overflow: hidden; user-select: none;">
-    <div style="position: absolute; top: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 10; pointer-events: none;">
-      <div style="color: #e0aaff; font-size: 17px; font-weight: bold; text-shadow: 0 0 10px #7b2cbf;">🌌 深淵矩陣（按住往四面八方拖曳）</div>
-      <div style="display: flex; align-items: center; gap: 10px; pointer-events: auto;">
-        <div style="background: rgba(36, 0, 70, 0.92); border: 1px solid #9d4edd; padding: 6px 12px; border-radius: 20px; color: #e0aaff; font-size: 13px; font-weight: bold;">
-          🔮 虛空原晶: <span id="matrix-void-val">0</span>
+  <!-- 深淵矩陣 Modal（大小比照全局科技視窗，並支援邊緣阻尼回彈拖曳） -->
+  <div class="modal" id="abyss-matrix-modal" style="z-index: 410;">
+    <div class="modal-content" style="width: 560px; max-width: 94%; display: flex; flex-direction: column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+        <h3 style="color:#e0aaff; margin:0; text-shadow: 0 0 8px #7b2cbf;">🌌 深淵矩陣 <span style="font-size:11px; color:#aaa; font-weight:normal;">(拖曳移動)</span></h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="background:rgba(36,0,70,0.92); border:1px solid #9d4edd; padding:3px 9px; border-radius:20px; font-size:12px; font-weight:bold; color:#e0aaff;">
+            🔮 <span id="matrix-void-val">0</span>
+          </div>
+          <div style="background:var(--card-bg); border:1px solid var(--yellow); padding:3px 9px; border-radius:20px; font-size:12px; font-weight:bold; color:var(--yellow);">
+            🌟 <span id="matrix-particle-val">0</span>
+          </div>
         </div>
-        <button class="btn" style="padding: 6px 12px;" onclick="closeAbyssMatrixModal()">關閉 [Esc]</button>
       </div>
-    </div>
-    <div id="abyss-hex-viewport" style="width: 100%; height: 100%; cursor: grab; touch-action: none;">
-      <div id="abyss-hex-canvas" style="position: absolute; left: 50%; top: 50%; width: 0; height: 0;"></div>
+      <div id="abyss-hex-viewport" style="position: relative; width: 100%; height: 390px; background: #07060b; border: 1px solid #5a189a; border-radius: 8px; overflow: hidden; cursor: grab; touch-action: none;">
+        <div id="abyss-hex-canvas" style="position: absolute; left: 50%; top: 50%; width: 0; height: 0;"></div>
+      </div>
+      <button class="btn" onclick="closeAbyssMatrixModal()" style="margin-top:12px; width:100%;">關閉 [Esc]</button>
     </div>
   </div>
   
@@ -943,6 +989,8 @@ async function loadGameFromCloud(user) {
     console.error("雲端讀檔/初始化失敗：", e);
     return false;
   }
+  let nextCost = t.lv >= 50 ? (46 + (t.lv - 50)) : (t.cost + t.lv);
+
 }
 
     // 綁定至 window 供全域與主遊戲邏輯呼叫
@@ -1093,17 +1141,17 @@ window.updateAuthUI = updateAuthUI;
       { id: 'L2_6', q: -1, r: 0, name: '升級塔金幣 -10%', cost: 3, type: 'upgCostReduce', val: 0.10 },
       // 第三層（自正上方順時針 1~12 號）
       { id: 'L3_1',  q: 0, r: -2,  name: '擊殺金幣 +15%', cost: 4, type: 'killGold', val: 0.15 },
-      { id: 'L3_2',  q: 1, r: -2,  name: '暴擊傷害 +20%', cost: 4, type: 'critDmg', val: 0.20 },
+      { id: 'L3_2',  q: 1, r: -2,  name: '鑽石獲取 +10%', cost: 4, type: 'crystalGain', val: 0.10 },
       { id: 'L3_3',  q: 2, r: -2,  name: '癱瘓時間 -15%', cost: 4, type: 'stunReduce', val: 0.15 },
       { id: 'L3_4',  q: 2, r: -1,  name: '防禦塔攻速 +10%', cost: 5, type: 'atkSpd', val: 0.10 },
       { id: 'L3_5',  q: 2, r: 0,   name: '主動技能時間 +15%', cost: 5, type: 'skillDur', val: 0.15 },
       { id: 'L3_6',  q: 1, r: 1,   name: '主動技能冷卻 -10%', cost: 5, type: 'skillCd', val: 0.10 },
       { id: 'L3_7',  q: 0, r: 2,   name: '防禦塔基礎攻擊 +15%', cost: 4, type: 'baseAtk', val: 0.15 },
-      { id: 'L3_8',  q: -1, r: 2,  name: '防禦塔射程 +10%', cost: 4, type: 'range', val: 0.10 },
+      { id: 'L3_8',  q: -1, r: 2,  name: '全局科技解放等級 +10', cost: 10, type: 'techCapBonus', val: 10 },
       { id: 'L3_9',  q: -2, r: 2,  name: '超能過載時間 +1.5秒', cost: 5, type: 'overdriveDur', val: 1.5 },
       { id: 'L3_10', q: -2, r: 1,  name: '星核微粒獲取 +15%', cost: 5, type: 'particleGain', val: 0.15 },
       { id: 'L3_11', q: -2, r: 0,  name: '升級塔金幣 -15%', cost: 5, type: 'upgCostReduce', val: 0.15 },
-      { id: 'L3_12', q: -1, r: -1, name: '建造塔金幣 -15%', cost: 4, type: 'buildCostReduce', val: 0.15 }
+      { id: 'L3_12', q: -1, r: -1, name: '防禦塔射程 +10%', cost: 4, type: 'range', val: 0.10 }
     ];
 
     function isHexAdjacent(a, b) {
@@ -1142,8 +1190,11 @@ window.updateAuthUI = updateAuthUI;
       hexPanX = 0;
       hexPanY = 0;
       const canvasEl = document.getElementById('abyss-hex-canvas');
-      if (canvasEl) canvasEl.style.transform = 'translate(0px, 0px)';
-      document.getElementById('abyss-matrix-modal').style.display = 'block';
+      if (canvasEl) {
+        canvasEl.style.transition = 'none';
+        canvasEl.style.transform = 'translate(0px, 0px)';
+      }
+      document.getElementById('abyss-matrix-modal').style.display = 'flex';
       renderAbyssMatrix();
     }
 
@@ -1154,6 +1205,8 @@ window.updateAuthUI = updateAuthUI;
     function renderAbyssMatrix() {
       const valEl = document.getElementById('matrix-void-val');
       if (valEl) valEl.innerText = voidShards;
+      const partEl = document.getElementById('matrix-particle-val');
+      if (partEl) partEl.innerText = starParticles;
       const canvasEl = document.getElementById('abyss-hex-canvas');
       if (!canvasEl) return;
       canvasEl.innerHTML = '';
@@ -1167,7 +1220,8 @@ window.updateAuthUI = updateAuthUI;
         const y = vertSpacing * (node.r + node.q / 2);
         const isPurchased = purchasedAbyssNodes.has(node.id);
         const isUnlocked = isAbyssNodeUnlocked(node);
-        const canAfford = !isPurchased && isUnlocked && voidShards >= node.cost;
+        const particleCost = node.cost * 30;
+        const canAfford = !isPurchased && isUnlocked && voidShards >= node.cost && starParticles >= particleCost;
 
         const el = document.createElement('div');
         el.className = 'hex-node' +
@@ -1179,9 +1233,9 @@ window.updateAuthUI = updateAuthUI;
 
         el.innerHTML = `
           <div class="hex-node-inner">
-            <div style="font-weight: bold; margin-bottom: 3px;">${node.name}</div>
-            <div style="color: ${isPurchased ? '#ff9ebb' : (canAfford ? '#ff6b81' : '#aaa')};">
-              ${isPurchased ? '✔ 已啟動' : `🔮 ${node.cost}`}
+            <div style="font-weight: bold; margin-bottom: 3px; font-size: 10.5px;">${node.name}</div>
+            <div style="font-size: 10px; color: ${isPurchased ? '#e0aaff' : (canAfford ? '#f38bff' : '#aaa')};">
+              ${isPurchased ? '✔ 已啟動' : `🔮${node.cost} 🌟${particleCost}`}
             </div>
           </div>
         `;
@@ -1189,15 +1243,20 @@ window.updateAuthUI = updateAuthUI;
         el.addEventListener('click', () => {
           if (window._hexDragged || isPurchased) return;
           if (!isUnlocked) return showToast('需先啟動相鄰的深淵節點！', 'towerSkill');
-          if (voidShards < node.cost) return showToast('🔮 虛空原晶不足！', 'res');
+          if (voidShards < node.cost || starParticles < particleCost) {
+            return showToast(`資源不足！需要 🔮${node.cost} 虛空原晶與 🌟${particleCost} 星核微粒！`, 'res');
+          }
 
           voidShards -= node.cost;
+          starParticles -= particleCost;
           window.voidShards = voidShards;
+          window.starParticles = starParticles;
           purchasedAbyssNodes.add(node.id);
           window.purchasedAbyssNodes = purchasedAbyssNodes;
           playSound('overdrive');
           renderAbyssMatrix();
           updateUI();
+          updateTechUI();
           if (selectedTower) openTowerOverlay();
           syncActiveCheckpointIfNeeded();
           showToast(`🌌 已啟動深淵矩陣：【${node.name}】！`, 'towerSkill');
@@ -2131,8 +2190,14 @@ function handleEditNameClick() {
       if (data.claimedAchievements) { claimedAchievements = new Set(data.claimedAchievements); window.claimedAchievements = claimedAchievements; }
       if (data.newAchievementAlerts) { newAchievementAlerts = new Set(data.newAchievementAlerts); window.newAchievementAlerts = newAchievementAlerts; }
 
-      // 5. 還原全局科技與主動技能等級、冷卻時間
-      if (data.talents) Object.keys(data.talents).forEach(k => talents[k] && (talents[k].lv = data.talents[k]));
+      // 5. 還原全局科技與主動技能等級、冷卻時間（依已還原的深淵節點同步動態上限）
+      const dynamicTechMax = getTechMaxLevel();
+      Object.keys(talents).forEach(k => {
+        if (data.talents && data.talents[k] !== undefined) {
+          talents[k].lv = typeof data.talents[k] === 'object' ? (data.talents[k].lv || 0) : data.talents[k];
+        }
+        talents[k].max = dynamicTechMax;
+      });
       if (data.activeSkills) Object.keys(data.activeSkills).forEach(k => {
         if (activeSkills[k]) {
           activeSkills[k].valLv = data.activeSkills[k].valLv;
@@ -2187,11 +2252,13 @@ function handleEditNameClick() {
     }
 
     function resetToDefaultNewGame() {
-      window.lastNameChangeTime = 0; // 👈 請新增在這裡
+      window.lastNameChangeTime = 0;
       hp = 100; window.hp = hp;
       gold = 300; window.gold = gold;
       crystals = 0; window.crystals = crystals;
       starParticles = 0; window.starParticles = starParticles;
+      voidShards = 0; window.voidShards = voidShards;
+      purchasedAbyssNodes = new Set(); window.purchasedAbyssNodes = purchasedAbyssNodes;
       currentWave = 0; window.currentWave = currentWave;
 
       seenEnemyTypes = new Set(); window.seenEnemyTypes = seenEnemyTypes;
@@ -2206,16 +2273,18 @@ function handleEditNameClick() {
       enemies = []; projectiles = []; barriers = []; shockwaves = []; bossBeams = []; cannonExplosions = []; activeVisualEffects = []; deadEnemyGraveyard = []; meteorQueue = []; targetMarkQueue = []; savedCheckpointsMap = {}; checkpointState = null;
       mageFireballs = []; archmagePortals = []; updateFireballLoopSound();
       waveInProgress = false; 
-      window.waveInProgress = waveInProgress; // 👈 【請在這裡新增這一行】
+      window.waveInProgress = waveInProgress;
       waveStarEnemyKills = 0; overdriveState = 'ready'; overdriveTimer = 0;
       stats = { totalKills: 0, totalDamage: 0, totalGoldEarned: 300 }; window.stats = stats;
       
-      Object.keys(talents).forEach(k => talents[k].lv = 0);
+      const dynamicTechMax = getTechMaxLevel();
+      Object.keys(talents).forEach(k => {
+        talents[k].lv = 0;
+        talents[k].max = dynamicTechMax;
+      });
       Object.keys(activeSkills).forEach(k => { activeSkills[k].valLv = 1; activeSkills[k].cdLv = 1; activeSkills[k].timer = 0; });
       updateUI(); updateSkillUI(); updateTechUI(); updateSettingsUI();
       stopLightShieldAmbience();
-      voidShards = 0; window.voidShards = voidShards;
-      purchasedAbyssNodes = new Set(); window.purchasedAbyssNodes = purchasedAbyssNodes;
     }
 
     function toggleAutoWave() {
@@ -2852,6 +2921,7 @@ function handleEditNameClick() {
     }
 
     function useSkill(key) {
+      let skillCdMult = Math.max(0.2, 1 - getAbyssMatrixBonus('skillCd'));
       let skillDurMult = 1 + getAbyssMatrixBonus('skillDur');
       // 暴風雪：let dur = (s.val + (s.valLv - 1) * 1) * skillDurMult;
       // 戰鼓激勵：let dur = (s.val + (s.valLv - 1) * 0.5) * skillDurMult;
@@ -2859,7 +2929,7 @@ function handleEditNameClick() {
       const s = activeSkills[key];
       if (currentWave < s.reqWave) return showToast(`🔒 【${s.name}】需達到第 ${s.reqWave} 波方可解鎖！`, 'towerSkill');
       if (s.timer > 0) return showToast('技能正在冷卻中！', 'towerSkill');
-      s.timer = Math.max(2, s.cd - (s.cdLv - 1) * 0.5);
+      s.timer = Math.max(2, (s.cd - (s.cdLv - 1) * 0.5) * skillCdMult); // 暴風雪、戰鼓激勵、時空逆流的持續時間乘上 skillDurMult
       playSound('skill');
       
       if (key === 'meteor') {
@@ -2917,46 +2987,88 @@ function handleEditNameClick() {
       } else showToast('鑽石不足！', 'res');
     }
 
+    function getTechMaxLevel() {
+      return 50 + Math.floor(getAbyssMatrixBonus('techCapBonus'));
+    }
+
     function updateTechUI() {
       const techCrystalEl = document.getElementById('tech-modal-crystal-val');
       if (techCrystalEl) techCrystalEl.innerText = crystals;
       const container = document.getElementById('tech-list');
       if (!container) return;
       container.innerHTML = '';
+      const currentMaxLv = getTechMaxLevel();
+
       Object.keys(talents).forEach(key => {
         const t = talents[key];
-        let isMax = t.lv >= t.max;
-        let totalValStr = key === 'goldBonus' ? `加成: +${t.lv * 12}% 金幣` : (key === 'baseAtk' ? `加成: +${t.lv * 6}% 基礎攻擊` : (key === 'maxHpBonus' ? `加成: +${t.lv * 25} 主城血量上限` : `回復: 波次結束 +${t.lv * 5} 血量`));
+        t.max = currentMaxLv;
+        let isMax = t.lv >= currentMaxLv;
+        let totalValStr = key === 'goldBonus'
+          ? `加成: +${t.lv * 12}% 金幣`
+          : (key === 'baseAtk' ? `加成: +${t.lv * 6}% 基礎攻擊`
+          : (key === 'maxHpBonus' ? `加成: +${t.lv * 25} 主城血量上限`
+          : `回復: 波次結束 +${t.lv * 5} 血量`));
+
+        // 50 等分進度條：1~50 級由左至右綠色填滿；51~100 級由左至右藍色覆蓋綠色
+        let segsHtml = '';
+        for (let i = 1; i <= 50; i++) {
+          let cls = 'tech-progress-seg';
+          if (t.lv > 50 && i <= (t.lv - 50)) {
+            cls += ' filled-blue';
+          } else if (i <= t.lv) {
+            cls += ' filled-green';
+          }
+          segsHtml += `<div class="${cls}"></div>`;
+        }
+
         const div = document.createElement('div');
-        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:8px 12px; border-radius:6px; border:1px solid var(--border-color);';
-        
-        let btnHtml = isMax 
+        div.style.cssText = 'display:flex; flex-direction:column; background:var(--card-bg); padding:10px 12px; border-radius:6px; border:1px solid var(--border-color);';
+
+        let btnHtml = isMax
           ? `<button class="btn btn-disabled-gray" style="padding:4px 10px; font-size:11px;">滿級</button>`
           : `<button class="btn" style="padding:4px 10px; font-size:11px; background:var(--purple); color:#000;" onclick="buyTalent('${key}')">升級 💎${t.cost + t.lv}</button>`;
 
         div.innerHTML = `
-          <div>
-            <div style="font-weight:bold; color:var(--primary);">${t.name} (Lv.${t.lv}/${t.max})</div>
-            <div style="font-size:11px; color:#a0a0a0;">${t.desc}</div>
-            <div style="font-size:11px; color:var(--cyan); margin-top:2px;">${totalValStr}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:bold; color:var(--primary);">${t.name} (Lv.${t.lv}/${currentMaxLv})</div>
+              <div style="font-size:11px; color:#a0a0a0;">${t.desc}</div>
+              <div style="font-size:11px; color:var(--cyan); margin-top:2px;">${totalValStr}</div>
+            </div>
+            ${btnHtml}
           </div>
-          ${btnHtml}`;
+          <div class="tech-progress-row">
+            <div class="tech-progress-bar">${segsHtml}</div>
+            <div class="tech-reward-tag" title="升滿階段獎勵 10 虛空原晶">🔮 10</div>
+          </div>`;
         container.appendChild(div);
       });
     }
 
     function buyTalent(key) {
-      const t = talents[key], reqCost = t.cost + t.lv;
-      if (t.lv >= t.max) return showToast('該科技已達最高等級 (50級)！', 'res');
-      if (crystals >= reqCost) {
-        crystals -= reqCost; window.crystals = crystals; t.lv++;
+      const t = talents[key];
+      const currentMaxLv = getTechMaxLevel();
+      t.max = currentMaxLv;
+      const reqCost = t.cost + t.lv; // 50->51 級時 t.lv=50 -> cost=1+50=51? 注意：0->1花1, 49->50花50；若要50->51花46..59->60花55：
+      let finalCost = t.lv >= 50 ? (46 + (t.lv - 50)) : (t.cost + t.lv);
+      if (t.lv >= currentMaxLv) return showToast(`該科技已達最高等級 (${currentMaxLv}級)！`, 'res');
+      if (crystals >= finalCost) {
+        crystals -= finalCost; window.crystals = crystals; t.lv++;
         if (key === 'maxHpBonus') { hp += 25; window.hp = hp; }
-        showToast(`成功升級【${t.name}】！`, 'res');
-        
+        showToast(`成功升級【${t.name}】至 Lv.${t.lv}！`, 'res');
+
+        // 達到 50 級或 100 級時，獲得 10 個虛空原晶
+        if (t.lv === 50 || t.lv === 100) {
+          voidShards += 10;
+          window.voidShards = voidShards;
+          playSound('overdrive');
+          showToast(`🌌 【${t.name}】達成 Lv.${t.lv} 里程碑！獲得 🔮+10 虛空原晶！`, 'res');
+        }
+
         syncActiveCheckpointIfNeeded();
         updateTechUI(); updateUI();
       } else showToast('鑽石不足！', 'res');
-    } // ← 確認這一個結尾大括號還在！
+    }
 
     function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
       if (enemyType === 'abyss_boss') {
@@ -3254,7 +3366,7 @@ function handleEditNameClick() {
         if (isBossType(enemy.type)) {
           if (enemy.isAbyssBoss) {
             let shardReward = Math.floor((currentWave - 100) / 5);
-            let abyssCrystalReward = 5 + Math.floor((100 - 5) / 5) * 2; // 同第 100 波 BOSS 鑽石量 (43)
+            let abyssCrystalReward = Math.round((5 + Math.floor((100 - 5) / 5) * 2) * (1 + getAbyssMatrixBonus('crystalGain')));
             voidShards += shardReward; window.voidShards = voidShards;
             crystals += abyssCrystalReward; window.crystals = crystals;
             showToast(`🌌 擊殺深淵 BOSS！獲得 🔮+${shardReward} 虛空原晶、💎+${abyssCrystalReward} 鑽石！`, 'res');
@@ -3577,7 +3689,7 @@ function handleEditNameClick() {
           speedMult = 0;
         } else if (e.freezeTimer > 0) {
           e.freezeTimer -= dt;
-          speedMult = (e.type === 'boss' || e.type === 'general' || e.type === 'mage' || e.type === 'archmage' || e.type === 'sage') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
+          speedMult = (isBossType(e.type) || e.type === 'general' || e.type === 'mage' || e.type === 'archmage' || e.type === 'sage') ? (1.0 - e.freezeEffectiveness) : (e.type.startsWith('scout') ? 0.2 : 0.0);
           isBlizzardActive = true;
         }
         if (e.stopTimer > 0) { e.stopTimer -= dt; speedMult = 0; }
@@ -3592,7 +3704,7 @@ function handleEditNameClick() {
               if (e.abyssAbsorbTimer <= 0) {
                 e.abyssPauseTimer = 0.5;
                 speedMult = 0;
-                shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: 1200, alpha: 1.0 });
+                shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: 1200, isFullScreen: true, alpha: 1.0 });
                 let stunReduce = getAbyssMatrixBonus('stunReduce');
                 let finalStunDur = 4.0 * Math.max(0.1, 1 - stunReduce);
                 towers.forEach(t => {
@@ -3934,7 +4046,7 @@ function handleEditNameClick() {
         }
       } else bossHpContainer.style.display = 'none';
 
-      shockwaves.forEach((sw, idx) => { sw.r += 60 * dt; sw.alpha -= 1.0 * dt; if (sw.alpha <= 0) shockwaves.splice(idx, 1); });
+      shockwaves.forEach((sw, idx) => { sw.r += (sw.isFullScreen ? 1400 : 60) * dt; sw.alpha -= (sw.isFullScreen ? 1.2 : 1.0) * dt; if (sw.alpha <= 0) shockwaves.splice(idx, 1); });
       bossBeams.forEach((bm, idx) => { bm.alpha -= 1.5 * dt; if (bm.alpha <= 0) bossBeams.splice(idx, 1); });
       cannonExplosions.forEach((ex, idx) => { ex.alpha -= 2.0 * dt; if (ex.alpha <= 0) cannonExplosions.splice(idx, 1); });
       activeVisualEffects.forEach((ve, idx) => {
@@ -3992,8 +4104,10 @@ function handleEditNameClick() {
         if (waveInProgress && t.drumTimer > 0) t.drumTimer -= dt;
         if (t.disableTimer > 0) return;
         let speedMult = t.drumTimer > 0 ? 2.0 : 1.0;
-        let curCd = (TOWER_TYPES[t.type].cd / (1 + (effectiveSpdLv - 1) * 0.05)) / speedMult;
-        let curRange = TOWER_TYPES[t.type].range * (1 + (effectiveRngLv - 1) * 0.05);
+        let atkSpdMult = 1 + getAbyssMatrixBonus('atkSpd');
+        let curCd = (TOWER_TYPES[t.type].cd / ((1 + (effectiveSpdLv - 1) * 0.05) * atkSpdMult)) / speedMult;
+        let rangeMult = 1 + getAbyssMatrixBonus('range');
+        let curRange = TOWER_TYPES[t.type].range * (1 + (effectiveRngLv - 1) * 0.05) * rangeMult;
 
         if (t.type === 'gold') {
           if (waveInProgress && enemies.length > 0) {
@@ -4311,7 +4425,11 @@ function handleEditNameClick() {
 
         let waveCrystalBonus = 3 + Math.floor(currentWave / 5);
         let starEnemyBonus = waveStarEnemyKills;
-        let totalCrystalsEarned = waveCrystalBonus + starEnemyBonus;
+        let crystalMult = 1 + getAbyssMatrixBonus('crystalGain');
+        let totalCrystalsEarned = Math.round((waveCrystalBonus + starEnemyBonus) * crystalMult);
+        let particleMult = 1 + getAbyssMatrixBonus('particleGain');
+        let earnedParticles = Math.round(promotedTowerCount * particleMult);
+        starParticles += earnedParticles;
         
         let promotedTowerCount = towers.filter(t => t.isPromoted).length;
         starParticles += promotedTowerCount; window.starParticles = starParticles;
@@ -5022,16 +5140,67 @@ function handleEditNameClick() {
       const abyssViewport = document.getElementById('abyss-hex-viewport');
       const abyssCanvas = document.getElementById('abyss-hex-canvas');
       if (abyssViewport && abyssCanvas) {
-        let isHexDragging = false, hexStartX = 0, hexStartY = 0;
-        const startHexDrag = (cx, cy) => { isHexDragging = true; window._hexDragged = false; hexStartX = cx - hexPanX; hexStartY = cy - hexPanY; abyssViewport.style.cursor = 'grabbing'; };
+        let isHexDragging = false, rawStartX = 0, rawStartY = 0, basePanX = 0, basePanY = 0;
+
+        // 計算安全拖曳邊界（保證至少保留最外圈節點在視窗內，不會把所有項目滑出視窗）
+        const getHexBounds = () => {
+          const vw = abyssViewport.clientWidth || 500;
+          const vh = abyssViewport.clientHeight || 390;
+          return {
+            maxX: Math.max(80, vw * 0.45),
+            maxY: Math.max(80, vh * 0.45)
+          };
+        };
+
+        // 橡皮筋阻力函數：超出安全邊界後，拉得愈遠阻力愈大
+        const applyRubberBand = (val, limit) => {
+          if (val > limit) {
+            let over = val - limit;
+            return limit + over / (1 + over * 0.018);
+          } else if (val < -limit) {
+            let over = -limit - val;
+            return -limit - over / (1 + over * 0.018);
+          }
+          return val;
+        };
+
+        const startHexDrag = (cx, cy) => {
+          isHexDragging = true;
+          window._hexDragged = false;
+          abyssCanvas.style.transition = 'none';
+          rawStartX = cx;
+          rawStartY = cy;
+          basePanX = hexPanX;
+          basePanY = hexPanY;
+          abyssViewport.style.cursor = 'grabbing';
+        };
+
         const moveHexDrag = (cx, cy) => {
           if (!isHexDragging) return;
-          let nx = cx - hexStartX, ny = cy - hexStartY;
-          if (Math.hypot(nx - hexPanX, ny - hexPanY) > 5) window._hexDragged = true;
-          hexPanX = nx; hexPanY = ny;
+          let dx = cx - rawStartX;
+          let dy = cy - rawStartY;
+          if (Math.hypot(dx, dy) > 5) window._hexDragged = true;
+          const bounds = getHexBounds();
+          hexPanX = applyRubberBand(basePanX + dx, bounds.maxX);
+          hexPanY = applyRubberBand(basePanY + dy, bounds.maxY);
           abyssCanvas.style.transform = `translate(${hexPanX}px, ${hexPanY}px)`;
         };
-        const endHexDrag = () => { isHexDragging = false; abyssViewport.style.cursor = 'grab'; setTimeout(() => { window._hexDragged = false; }, 50); };
+
+        const endHexDrag = () => {
+          if (!isHexDragging) return;
+          isHexDragging = false;
+          abyssViewport.style.cursor = 'grab';
+          const bounds = getHexBounds();
+          let clampedX = Math.max(-bounds.maxX, Math.min(bounds.maxX, hexPanX));
+          let clampedY = Math.max(-bounds.maxY, Math.min(bounds.maxY, hexPanY));
+          if (clampedX !== hexPanX || clampedY !== hexPanY) {
+            hexPanX = clampedX;
+            hexPanY = clampedY;
+            abyssCanvas.style.transition = 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
+            abyssCanvas.style.transform = `translate(${hexPanX}px, ${hexPanY}px)`;
+          }
+          setTimeout(() => { window._hexDragged = false; }, 50);
+        };
 
         abyssViewport.addEventListener('mousedown', e => { if (e.button === 0) startHexDrag(e.clientX, e.clientY); });
         window.addEventListener('mousemove', e => moveHexDrag(e.clientX, e.clientY));
