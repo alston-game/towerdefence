@@ -4428,10 +4428,9 @@ function handleEditNameClick() {
         let crystalMult = 1 + getAbyssMatrixBonus('crystalGain');
         let totalCrystalsEarned = Math.round((waveCrystalBonus + starEnemyBonus) * crystalMult);
         let particleMult = 1 + getAbyssMatrixBonus('particleGain');
+        let promotedTowerCount = towers.filter(t => t.isPromoted).length;
         let earnedParticles = Math.round(promotedTowerCount * particleMult);
         starParticles += earnedParticles;
-        
-        let promotedTowerCount = towers.filter(t => t.isPromoted).length;
         starParticles += promotedTowerCount; window.starParticles = starParticles;
         
         crystals += totalCrystalsEarned; window.crystals = crystals;
