@@ -2516,29 +2516,12 @@ function handleEditNameClick() {
         y: (clientY - rect.top) * scaleY
       };
     }
-    
-    function getCanvasLogicalPos(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;   // canvas.width 固定為 1000
-      const scaleY = canvas.height / rect.height; // canvas.height 固定為 600
-      return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-      };
-    }
 
     function handleMove(clientX, clientY) {
       if (!canvas) return;
       if (placingType) {
         dragPos = getCanvasLogicalPos(clientX, clientY);
         updateTouchPlacementControlsPos();
-      }
-    }
-    
-    function handleMove(clientX, clientY) {
-      if (!canvas) return;
-      if (placingType) {
-        dragPos = getCanvasLogicalPos(clientX, clientY);
       }
     }
 
@@ -2598,6 +2581,7 @@ function handleEditNameClick() {
       baseUpg.style.display = selectedTower.type === 'gold' ? 'none' : 'block';
       if (selectedTower.type !== 'gold') {
         let atkMult = 1 + talents.baseAtk.lv * 0.06 + getAbyssMatrixBonus('baseAtk');
+        let rangeMult = 1 + getAbyssMatrixBonus('range'); // 👈 補上這行
         document.getElementById('tu-dmg-val').innerText = (tInfo.damage * (1 + (curDmgLv - 1) * 0.1) * atkMult).toFixed(0);
         document.getElementById('tu-dmg-lv').innerText = curDmgLv + (odBonus ? '⚡' : '');
         document.getElementById('tu-dmg-cost').innerText = Math.floor(getUpgradeCost(50, 1.5, selectedTower.dmgLv) * upgMult);
@@ -4696,7 +4680,8 @@ function handleEditNameClick() {
       ctx.stroke(); ctx.strokeStyle = '#44475a'; ctx.lineWidth = 6; ctx.stroke();
       
       drawPortal(ctx, path[0].x, path[0].y); drawCastle(ctx, 930, 300);
-      
+
+      let rangeMult = 1 + getAbyssMatrixBonus('range'); // 👈 在 towers.forEach(t => { 前方補上這行
       towers.forEach(t => {
         if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
           if (t.drumTimer > 0) {
