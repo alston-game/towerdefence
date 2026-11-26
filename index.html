@@ -5074,8 +5074,8 @@ function handleEditNameClick() {
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
         let color = e.type === 'boss' ? '#ff5555' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
-        let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : (e.type === 'sage' ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))))));
-        
+        let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : ((e.type === 'sage' || e.type === 'thunder_lord') ? 16 : ...
+
         if (e.isCharging) color = '#e5e4e2';
 
         if (e.type === 'boss' && e.isEnraged && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2)) {
@@ -5180,8 +5180,12 @@ function handleEditNameClick() {
           ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
         } else if (e.type === 'sage') {
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#d4af37'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
+          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#d4af37'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
+        } else if (e.type === 'thunder_lord') {
+          ctx.fillStyle = '#2d1b69'; ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#ffe600'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
         }
         if (e.hasteBuffTimer > 0) { ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5; ctx.stroke(); }
 
@@ -5225,6 +5229,24 @@ function handleEditNameClick() {
           ctx.strokeStyle = `rgba(255, 223, 115, ${Math.min(1, whiteGoldAlpha + 0.1).toFixed(3)})`;
           ctx.lineWidth = 1.5;
           ctx.stroke();
+        }
+        if (e.type === 'thunder_lord' && e.thunderChargeTimer > 0 && gameSettings.vfxMode !== 3) {
+          ctx.save(); ctx.strokeStyle = '#ffe600';
+          ctx.shadowColor = '#ffd700';
+          ctx.shadowBlur = 12;
+          ctx.lineWidth = 2.2;
+          for (let b = 0; b < 6; b++) {
+            let ang = Math.random() * Math.PI * 2;
+            let len = size + 10 + Math.random() * 14;
+            let mx = e.x + Math.cos(ang + 0.3) * (len * 0.5);
+            let my = e.y + Math.sin(ang + 0.3) * (len * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(e.x, e.y);
+            ctx.lineTo(mx, my);
+            ctx.lineTo(e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len);
+            ctx.stroke();
+          }
+          ctx.restore();
         }
         // 傳送升空/降落時的本體白光覆蓋層
         if (e.teleportState && e.teleportWhite > 0) {
@@ -5281,24 +5303,6 @@ function handleEditNameClick() {
           ctx.beginPath();
           ctx.arc(tipX, tipY, 3.2, 0, Math.PI * 2);
           ctx.fill();
-        }
-        if (e.type === 'thunder_lord' && e.thunderChargeTimer > 0 && gameSettings.vfxMode !== 3) {
-          ctx.save(); ctx.strokeStyle = '#ffe600';
-          ctx.shadowColor = '#ffd700';
-          ctx.shadowBlur = 12;
-          ctx.lineWidth = 2.2;
-          for (let b = 0; b < 6; b++) {
-            let ang = Math.random() * Math.PI * 2;
-            let len = size + 10 + Math.random() * 14;
-            let mx = e.x + Math.cos(ang + 0.3) * (len * 0.5);
-            let my = e.y + Math.sin(ang + 0.3) * (len * 0.5);
-            ctx.beginPath();
-            ctx.moveTo(e.x, e.y);
-            ctx.lineTo(mx, my);
-            ctx.lineTo(e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len);
-            ctx.stroke();
-          }
-          ctx.restore();
         }
         ctx.restore();
       });
