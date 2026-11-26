@@ -1380,8 +1380,8 @@ window.updateAuthUI = updateAuthUI;
       { id: 'soldier1', name: '1號士兵', group: '1號' }, { id: 'scout1', name: '1號刺客', group: '1號' }, { id: 'heavy1', name: '1號坦克', group: '1號' },
       { id: 'soldier2', name: '2號士兵', group: '2號' }, { id: 'scout2', name: '2號刺客', group: '2號' }, { id: 'heavy2', name: '2號坦克', group: '2號' },
       { id: 'priest', name: '★ 牧師', group: '1星' }, { id: 'monk', name: '★ 祭司', group: '1星' }, { id: 'warlock', name: '★ 巫師', group: '1星' },
-      { id: 'general', name: '★★ 將軍', group: '2星' },{ id: 'mage', name: '★★ 法師', group: '2星' },{ id: 'archmage', name: '★★ 大魔導師', group: '2星' },
-      { id: 'sage', name: '★★★ 賢者', group: '3星' },
+      { id: 'general', name: '★★ 將軍', group: '2星' }, { id: 'mage', name: '★★ 法師', group: '2星' }, { id: 'archmage', name: '★★ 大魔導師', group: '2星' },
+      { id: 'sage', name: '★★★ 賢者', group: '3星' }, { id: 'thunder_lord', name: '★★★ 雷霆領主', group: '3星' },
       { id: 'boss', name: 'BOSS 強敵', group: 'Boss' }, { id: 'abyss_boss', name: '🌌 深淵 BOSS', group: 'AbyssBoss' }
     ];
 
@@ -1556,6 +1556,24 @@ window.updateAuthUI = updateAuthUI;
               o.start(now + idx * 0.03); o.stop(now + 0.58 + idx * 0.03);
             });
           }
+          thunder_strike: () => {
+            // 閃電降下時的爆裂雷鳴音效
+            let bufferSize = Math.floor(audioCtx.sampleRate * 0.35);
+            let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            let data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.08));
+            let noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1400, now);
+            filter.frequency.exponentialRampToValueAtTime(120, now + 0.35);
+            let nGain = audioCtx.createGain();
+            nGain.gain.setValueAtTime(0.45 * vol, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            noise.connect(filter); filter.connect(nGain); nGain.connect(audioCtx.destination);
+            noise.start(now); noise.stop(now + 0.35);
+          }
         };
         if (soundProfiles[type]) soundProfiles[type]();
       } catch(e) {}
@@ -1629,6 +1647,35 @@ window.updateAuthUI = updateAuthUI;
       } catch(e) {}
     }
 
+    let thunderChargeAmbience = null;
+    function updateThunderChargeSound(isCharging) {
+      let vol = getMasterVolume();
+      if (vol <= 0 || !isCharging || !waveInProgress || isPaused) {
+        if (thunderChargeAmbience) {
+          try { thunderChargeAmbience.osc.stop(); thunderChargeAmbience.osc.disconnect(); } catch(e) {}
+          thunderChargeAmbience = null;
+        }
+        return;
+      }
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!thunderChargeAmbience) {
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(115, now);
+          gain.gain.setValueAtTime(0.09 * vol, now);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now);
+          thunderChargeAmbience = { osc, gain };
+        } else {
+          thunderChargeAmbience.gain.gain.setTargetAtTime(0.09 * vol, audioCtx.currentTime, 0.03);
+        }
+      } catch(e) {}
+    }
+    
     function showToast(msg, typeCategory = 'res') {
       let mode = gameSettings.toastMode;
       if (mode === 4) return;
@@ -1793,7 +1840,8 @@ function handleEditNameClick() {
       overdriveState = 'active';
       overdriveTimer = 10.0 + getAbyssMatrixBonus('overdriveDur');
       playSound('overdrive');
-      showToast('⚡ 啟動超能過載！場上所有晉升防禦塔等級暫時 +3，轉速變為 2 倍！', 'towerSkill');
+      showToast('⚡ 啟動超能過載！場上所有晉升防禦塔等級暫時 +3！', 'towerSkill');
+      t.thunderSuppressed = false;
       updateUI();
       if (selectedTower) openTowerOverlay();
     }
@@ -2060,6 +2108,7 @@ function handleEditNameClick() {
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
         archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
         sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。']
+        thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒對有增益效果的防禦塔劈下金色雷霆，使其癱瘓1秒並解除增益效果。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -2204,6 +2253,7 @@ function handleEditNameClick() {
       stopLightShieldAmbience();
       stopBlizzardSound();
       stopHumSound();
+      updateThunderChargeSound(false);
 
       // 2. 還原基礎資源、波次與玩家名稱
       if (data.playerName) { playerName = data.playerName; window.playerName = playerName; }
@@ -2337,6 +2387,9 @@ function handleEditNameClick() {
 
     function togglePause() {
       isPaused = !isPaused;
+      if (isPaused) {
+        updateThunderChargeSound(false);
+      }
       document.getElementById('pause-btn').innerText = isPaused ? '▶ 繼續 [Space]' : '⏸ 暫停 [Space]';
     }
 
@@ -2704,13 +2757,21 @@ function handleEditNameClick() {
         resistances = '所有負面狀態效果降低 20%';
         skills = '【星陣躍遷】每 9 秒繪製範圍 50px 的五芒星陣發，使陣內其他敵人向前傳送 120px';
       } else if (type === 'sage') {
-          hp = (baseHp * 3) * 4; // 0號坦克的4倍
-          atk = baseAtk * 1.8;
-          speed = 0.65; // 0.65 * 60 = 39px / 1s
-          atkSpeedStr = `${Math.floor(atk)}/1s`;
-          moveSpeedPxStr = `39px/1s`;
-          resistances = '所有負面狀態效果降低 40%、降低所受到的傷害 20%';
-          skills = '【聖輝光盾】每 8 秒召喚範圍 65px、持續 3 秒的光盾，使盾內的敵人免疫所有傷害與負面狀態';
+        hp = (baseHp * 3) * 4; // 0號坦克的4倍
+        atk = baseAtk * 1.8;
+        speed = 0.65; // 0.65 * 60 = 39px / 1s
+        atkSpeedStr = `${Math.floor(atk)}/1s`;
+        moveSpeedPxStr = `39px/1s`;
+        resistances = '所有負面狀態效果降低 40%、降低所受到的傷害 20%';
+        skills = '【聖輝光盾】每 8 秒召喚範圍 65px、持續 3 秒的光盾，使盾內的敵人免疫所有傷害與負面狀態';
+      } else if (type === 'thunder_lord') {
+        hp = (baseHp * 3) * 2.8; // 0號坦克的 2.8 倍
+        atk = baseAtk * 1.8;
+        speed = 0.90; // 0.90 * 60 = 54px / 1s
+        vatkSpeedStr = `${Math.floor(atk)}/1s`;
+        moveSpeedPxStr = `54px/1s`;
+        resistances = '所有負面狀態效果降低 40%、降低受到傷害的 20%';
+        skills = '【天罰雷擊】每 3 秒對有增益效果的防禦塔降下金色雷霆，使其癱瘓 1 秒並解除增益效果';
       } else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
