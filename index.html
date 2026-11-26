@@ -3529,7 +3529,7 @@ function handleEditNameClick() {
 
     function applyKnockback(enemy, distPx) {
       if (enemy.dead || enemy.lightShieldImmune) return;
-      let kbEff = enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : (enemy.type === 'sage' ? 0.6 : ((enemy.type === 'general' || enemy.type === 'mage' || enemy.type === 'archmage') ? 0.8 : 1.0));
+      let kbEff = enemy.knockbackEffectiveness !== undefined ? enemy.knockbackEffectiveness : ((enemy.type === 'sage' || enemy.type === 'thunder_lord') ? 0.6 : ((enemy.type === 'general' || enemy.type === 'mage' || enemy.type === 'archmage') ? 0.8 : 1.0));
       let effectiveDist = distPx * kbEff;
       enemy.knockback = { totalDist: effectiveDist, remDist: effectiveDist, duration: 0.5, timer: 0.5 };
     }
@@ -3872,19 +3872,6 @@ function handleEditNameClick() {
             }
           }
         }
-
-          if (e.type === 'soldier2' && e.stunTimer <= 0) {
-            e.cleanseTimer = (e.cleanseTimer || 0) + dt;
-            if (e.cleanseTimer >= 4.0) {
-              e.cleanseTimer = 0; clearNegativeStatuses(e); e.immuneTimer = 1.0;
-              e.isCharging = true; e.chargeTimer = 1.0;
-              addFloatingText(e.x, e.y - 15, '衝鋒!', '#e5e4e2');
-              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
-                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 22, color: '#ffffff', life: 0.4, maxLife: 0.4 });
-              }
-            }
-          }
-
           if (e.isCharging) {
             e.chargeTimer -= dt;
             if (e.chargeTimer <= 0) e.isCharging = false;
@@ -3895,76 +3882,7 @@ function handleEditNameClick() {
             e.hasteBuffTimer -= dt;
             speedMult *= 1.25;
           }
-
-          // ★★ 將軍技能：每 6 秒使範圍 60px 內的敵人移速加快 25%，持續 3 秒
-          if (e.type === 'general' && e.stunTimer <= 0) {
-            e.hasteSkillTimer = (e.hasteSkillTimer || 0) + dt;
-            if (e.hasteSkillTimer >= 6.0) {
-              e.hasteSkillTimer = 0;
-              enemies.forEach(other => {
-                if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= (e.hasteRadius || 60)) {
-                  other.hasteBuffTimer = Math.max(other.hasteBuffTimer || 0, 3.0);
-                }
-              });
-              addFloatingText(e.x, e.y - 18, '疾行軍令!', '#ffaa00', 13);
-              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
-                activeVisualEffects.push({ type: 'generalPulse', x: e.x, y: e.y, r: e.hasteRadius || 60, life: 0.55, maxLife: 0.55 });
-              }
-            }
-          }
-          // ★★ 法師技能：每 8 秒停下 1 秒向最近的防禦塔發射火球
-          if (e.type === 'mage' && e.stunTimer <= 0) {
-            e.fireballTimer = (e.fireballTimer || 0) + dt;
-            if (e.fireballTimer >= 8.0) {
-              e.fireballTimer = 0;
-              e.stopTimer = 1.0;
-              if (towers.length > 0) {
-                let nearestTower = towers.slice().sort((a, b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y))[0];
-                let dist = Math.hypot(nearestTower.x - e.x, nearestTower.y - e.y);
-                // 飛行時間依距離計算（約 0.9 秒 ~ 1.5 秒），讓拋物線軌跡清晰可見
-                let flightDuration = Math.max(0.9, Math.min(1.5, dist / 260));
-                mageFireballs.push({
-                  startX: e.x, startY: e.y,
-                  endX: nearestTower.x, endY: nearestTower.y,
-                  // 較高的拋物線弧度，營造越過地面敵人頭頂的立體感
-                  arcHeight: Math.max(75, dist * 0.38),
-                  progress: 0,
-                  duration: flightDuration
-                });
-              }
-            }
-          }
-          // ★★ 大魔導師技能：每 10 秒停下 1 秒順時針繪製 50px 五芒星陣法
-          if (e.type === 'archmage' && e.stunTimer <= 0 && !e.isDrawingPortal) {
-            e.portalTimer = (e.portalTimer || 0) + dt;
-            if (e.portalTimer >= 9.0) {
-              e.portalTimer = 0;
-              e.stopTimer = 1.0;
-              e.isDrawingPortal = true;
-              archmagePortals.push({
-                caster: e,
-                x: e.x,
-                y: e.y,
-                r: 50,
-                phase: 'drawing', // 'drawing'(1.0s) -> 'flashing'(0.5s)
-                timer: 0
-              });
-            }
-          }
-          // ★★★ 賢者技能【聖輝光盾】：每 8 秒召喚跟隨自身的 55px 金色光盾，持續 3 秒
-          if (e.type === 'sage') {
-            if (e.lightShieldActiveTimer > 0) {
-              e.lightShieldActiveTimer = Math.max(0, e.lightShieldActiveTimer - dt);
-            } else if (e.stunTimer <= 0) {
-              e.lightShieldTimer = (e.lightShieldTimer || 0) + dt;
-              if (e.lightShieldTimer >= 8.0) {
-                e.lightShieldTimer = 0;
-                e.lightShieldActiveTimer = 3.0;
-                playSound('light_shield_cast');
-                addFloatingText(e.x, e.y - 20, '聖輝光盾!', '#ffd700', 13);
-              }
-            }
-          }
+        
           // ★★★ 雷霆領主技能【天罰雷擊】
           if (e.type === 'thunder_lord') {
             if (e.thunderChargeTimer > 0) {
@@ -4023,11 +3941,7 @@ function handleEditNameClick() {
               addFloatingText(e.x, e.y - 12, '+', '#50fa7b', 14);
             }
           }
-          if (e.type === 'monk' && e.stunTimer <= 0) {
-            e.blessTimer += dt;
-            if (e.blessTimer >= 7.0) {
-              e.blessTimer = 0;
-
+        }
 
         if (skillCdRate > 0) {
           if (e.type === 'soldier1' && e.stunTimer <= 0) {
@@ -4053,7 +3967,7 @@ function handleEditNameClick() {
             }
           }
 
-          // ★★ 將軍技能
+          // ★★ 將軍技能：每 6 秒使範圍 60px 內的敵人移速加快 25%，持續 3 秒
           if (e.type === 'general' && e.stunTimer <= 0) {
             e.hasteSkillTimer = (e.hasteSkillTimer || 0) + dt * skillCdRate;
             if (e.hasteSkillTimer >= 6.0) {
@@ -4070,7 +3984,7 @@ function handleEditNameClick() {
             }
           }
 
-          // ★★ 法師技能
+          // ★★ 法師技能：每 8 秒停下 1 秒向最近的防禦塔發射火球
           if (e.type === 'mage' && e.stunTimer <= 0) {
             e.fireballTimer = (e.fireballTimer || 0) + dt * skillCdRate;
             if (e.fireballTimer >= 8.0) {
@@ -4091,7 +4005,7 @@ function handleEditNameClick() {
             }
           }
 
-          // ★★ 大魔導師技能
+          // ★★ 大魔導師技能：每 10 秒停下 1 秒順時針繪製 50px 五芒星陣法
           if (e.type === 'archmage' && e.stunTimer <= 0 && !e.isDrawingPortal) {
             e.portalTimer = (e.portalTimer || 0) + dt * skillCdRate;
             if (e.portalTimer >= 9.0) {
@@ -5034,7 +4948,7 @@ function handleEditNameClick() {
         if (e.teleportState && e.teleportAlpha <= 0.01) return; // 潛行階段全透明不繪製
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
-        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
+        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'thunder_lord' ? '#2d1b69' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
         let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : ((e.type === 'sage' || e.type === 'thunder_lord') ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))))));
         if (e.isCharging) color = '#e5e4e2';
 
