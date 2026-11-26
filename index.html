@@ -3932,16 +3932,6 @@ function handleEditNameClick() {
               }
             }
           }
-          if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
-            e.regenTimer = (e.regenTimer || 0) + dt;
-            if (e.regenTimer >= 1.0) {
-              e.regenTimer = 0;
-              let regenAmount = e.maxHp * 0.05;
-              e.hp = Math.min(e.maxHp, e.hp + regenAmount);
-              addFloatingText(e.x, e.y - 12, '+', '#50fa7b', 14);
-            }
-          }
-        }
 
         if (skillCdRate > 0) {
           if (e.type === 'soldier1' && e.stunTimer <= 0) {
