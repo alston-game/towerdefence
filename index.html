@@ -1555,7 +1555,7 @@ window.updateAuthUI = updateAuthUI;
               o.connect(g); g.connect(audioCtx.destination);
               o.start(now + idx * 0.03); o.stop(now + 0.58 + idx * 0.03);
             });
-          }
+          },
           thunder_strike: () => {
             // 閃電降下時的爆裂雷鳴音效
             let bufferSize = Math.floor(audioCtx.sampleRate * 0.35);
@@ -1841,7 +1841,7 @@ function handleEditNameClick() {
       overdriveTimer = 10.0 + getAbyssMatrixBonus('overdriveDur');
       playSound('overdrive');
       showToast('⚡ 啟動超能過載！場上所有晉升防禦塔等級暫時 +3！', 'towerSkill');
-      t.thunderSuppressed = false;
+      towers.forEach(tower => tower.thunderSuppressed = false);
       updateUI();
       if (selectedTower) openTowerOverlay();
     }
@@ -2107,7 +2107,7 @@ function handleEditNameClick() {
         general: ['★★ 將軍', '特色：生命值很高、移動速度稍快。\n抗性：降低所有負面狀態效果 20%。\n技能【疾行軍令】：每6秒使範圍60px內敵人移速加快25%，持續3秒。'],
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
         archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
-        sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。']
+        sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。'],
         thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒對有增益效果的防禦塔劈下金色雷霆，使其癱瘓1秒並解除增益效果。']
       };
       if (intros[type]) {
@@ -2768,7 +2768,7 @@ function handleEditNameClick() {
         hp = (baseHp * 3) * 2.8; // 0號坦克的 2.8 倍
         atk = baseAtk * 1.8;
         speed = 0.90; // 0.90 * 60 = 54px / 1s
-        vatkSpeedStr = `${Math.floor(atk)}/1s`;
+        atkSpeedStr = `${Math.floor(atk)}/1s`;
         moveSpeedPxStr = `54px/1s`;
         resistances = '所有負面狀態效果降低 40%、降低受到傷害的 20%';
         skills = '【天罰雷擊】每 3 秒對有增益效果的防禦塔降下金色雷霆，使其癱瘓 1 秒並解除增益效果';
@@ -3592,6 +3592,7 @@ function handleEditNameClick() {
     }
 
     function updateGame(dt) {
+      let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?? 1.0)) : 1.0;
       if (waveInProgress) {
         if (overdriveState === 'active') {
           overdriveTimer -= dt;
@@ -3871,18 +3872,6 @@ function handleEditNameClick() {
           }
         }
 
-        if (e.freezeTimer <= 0) {
-          if (e.type === 'soldier1' && e.stunTimer <= 0) {
-            e.cleanseTimer = (e.cleanseTimer || 0) + dt;
-            if (e.cleanseTimer >= 4.0) {
-              e.cleanseTimer = 0; clearNegativeStatuses(e); e.immuneTimer = 1.0;
-              addFloatingText(e.x, e.y - 15, '淨化!', '#ffd700');
-              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
-                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 20, color: '#ffd700', life: 0.4, maxLife: 0.4 });
-              }
-            }
-          }
-
           if (e.type === 'soldier2' && e.stunTimer <= 0) {
             e.cleanseTimer = (e.cleanseTimer || 0) + dt;
             if (e.cleanseTimer >= 4.0) {
@@ -4078,7 +4067,6 @@ function handleEditNameClick() {
           if (e.type === 'priest' && e.stunTimer <= 0) {
             e.healTimer += dt;
             if (e.healTimer >= 5.0) {
-let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?? 1.0)) : 1.0;
 
         if (skillCdRate > 0) {
           if (e.type === 'soldier1' && e.stunTimer <= 0) {
@@ -5294,28 +5282,26 @@ let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?
           ctx.arc(tipX, tipY, 3.2, 0, Math.PI * 2);
           ctx.fill();
         }
-
-        ctx.restore();
-      });
-
-      if (e.type === 'thunder_lord' && e.thunderChargeTimer > 0 && gameSettings.vfxMode !== 3) {
-        ctx.save(); ctx.strokeStyle = '#ffe600';
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 12;
-        ctx.lineWidth = 2.2;
-        for (let b = 0; b < 6; b++) {
-          let ang = Math.random() * Math.PI * 2;
-          let len = size + 10 + Math.random() * 14;
-          let mx = e.x + Math.cos(ang + 0.3) * (len * 0.5);
-          let my = e.y + Math.sin(ang + 0.3) * (len * 0.5);
-          ctx.beginPath();
-          ctx.moveTo(e.x, e.y);
-          ctx.lineTo(mx, my);
-          ctx.lineTo(e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len);
-          ctx.stroke();
+        if (e.type === 'thunder_lord' && e.thunderChargeTimer > 0 && gameSettings.vfxMode !== 3) {
+          ctx.save(); ctx.strokeStyle = '#ffe600';
+          ctx.shadowColor = '#ffd700';
+          ctx.shadowBlur = 12;
+          ctx.lineWidth = 2.2;
+          for (let b = 0; b < 6; b++) {
+            let ang = Math.random() * Math.PI * 2;
+            let len = size + 10 + Math.random() * 14;
+            let mx = e.x + Math.cos(ang + 0.3) * (len * 0.5);
+            let my = e.y + Math.sin(ang + 0.3) * (len * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(e.x, e.y);
+            ctx.lineTo(mx, my);
+            ctx.lineTo(e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len);
+            ctx.stroke();
+          }
+          ctx.restore();
         }
         ctx.restore();
-      }
+      });
       
       barriers.forEach(b => drawBarrierWall(ctx, b));
 
