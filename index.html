@@ -2786,13 +2786,13 @@ function handleEditNameClick() {
       let mageNum = currentWave >= 76 ? Math.min(5, Math.floor((currentWave - 76) / 5) + 1) : 0;
       let archmageNum = currentWave >= 86 ? Math.min(3, Math.floor((currentWave - 86) / 5) + 1) : 0;
       let sageNum = currentWave >= 91 ? Math.min(2, Math.floor((currentWave - 91) / 5) + 1) : 0;
+      let thunderLordNum = currentWave >= 101 ? Math.min(4, Math.floor((currentWave - 101) / 5) + 1) : 0;
 
-      let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum + sageNum, specialIndicesMap = new Map();
+      let totalSpecial = priestNum + monkNum + warlockNum + generalNum + mageNum + archmageNum + sageNum + thunderLordNum, specialIndicesMap = new Map();
       if (totalSpecial > 0) {
         let specialTypes = new Array(totalSpecial).fill(null);
-        let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum, sage: sageNum };
-        // 依照「數量由少到多」排序，讓稀有兵種優先佔據最精準的等分點
-        let sortedOrder = ['sage', 'archmage', 'mage', 'general', 'warlock', 'monk', 'priest']
+        let counts = { priest: priestNum, monk: monkNum, warlock: warlockNum, general: generalNum, mage: mageNum, archmage: archmageNum, sage: sageNum, thunder_lord: thunderLordNum };
+        let sortedOrder = ['thunder_lord', 'sage', 'archmage', 'mage', 'general', 'warlock', 'monk', 'priest']
           .filter(t => counts[t] > 0)
           .sort((a, b) => counts[a] - counts[b]);
           sortedOrder.forEach(type => {
@@ -2831,7 +2831,7 @@ function handleEditNameClick() {
           let sType = specialIndicesMap.get(i);
           let stats = getEnemyStatsForWave(sType, currentWave);
           let reviveCap = Math.min(20, 10 + Math.floor(Math.max(0, currentWave - 51) / 5) * 2);
-          let isThreeStarType = (sType === 'sage');
+          let isThreeStarType = (sType === 'sage' || sType === 'thunder_lord');
           let isTwoStarType = (sType === 'general' || sType === 'mage' || sType === 'archmage');
           let goldMult = isThreeStarType ? 4.5 : (isTwoStarType ? 3.5 : (sType === 'priest' ? 2 : 2.5));
           waveSpawnQueue.push({
@@ -3225,6 +3225,10 @@ function handleEditNameClick() {
       } else if (enemyType === 'sage') {
         cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
         cCtx.fillStyle = '#d4af37'; cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
+      } else if (enemyType === 'thunder_lord') {
+        cCtx.fillStyle = '#2d1b69'; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
+        cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+        cCtx.fillStyle = '#ffe600'; cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
       }
     }
 
@@ -3386,7 +3390,7 @@ function handleEditNameClick() {
       let markBonus = (enemy.marks && enemy.marks.length > 0) ? 0.25 : 0;
       let finalDmg = dmg * baseTechMultiplier * (1 + overchargeTotalBonus + markBonus);
       if (enemy.type === 'sage') finalDmg *= 0.8; // 賢者降低所受傷害 20%
-
+      if (enemy.type === 'sage' || enemy.type === 'thunder_lord') finalDmg *= 0.8; // 降低所受傷害 20%
       enemy.hp -= finalDmg; stats.totalDamage += finalDmg; window.stats = stats;
       
       if (sourceTower) {
@@ -3580,6 +3584,8 @@ function handleEditNameClick() {
             fireballTimer: eData.type === 'mage' ? 8.0 * (0.4 + Math.random() * 0.2) : 0, // 法師冷卻 8s -> 首次 3.2~4.8s 釋放
             portalTimer: eData.type === 'archmage' ? 9.0 * (0.4 + Math.random() * 0.2) : 0, // 大魔導師冷卻 9s -> 首次 3.6~5.4s 釋放
             lightShieldTimer: eData.type === 'sage' ? 8.0 * (0.4 + Math.random() * 0.2) : 0, // 賢者冷卻 8s -> 首次 3.2~4.8s 釋放
+            thunderTimer: eData.type === 'thunder_lord' ? 3.0 * (0.4 + Math.random() * 0.2) : 0,
+            thunderChargeTimer: 0,
             lightShieldActiveTimer: 0, lightShieldGraceTimer: 0, lightShieldSourceId: null, lightShieldImmune: false,
             dead: false,
             shockTimer: eData.shockTimer || 0, shockInterval: shockCdSec, shockRadius: eData.shockRadius || 50,
@@ -3766,6 +3772,8 @@ function handleEditNameClick() {
           continue;
         }
 
+        if (e.thunderChargeTimer > 0) speedMult = 0;
+        
         if (e.stunTimer > 0) {
           speedMult = 0;
         } else if (e.freezeTimer > 0) {
@@ -3793,7 +3801,7 @@ function handleEditNameClick() {
               showToast(`🌌 深淵 BOSS 釋放全場衝擊波！全場防禦塔癱瘓 ${finalStunDur.toFixed(1)} 秒！`, 'enemy');
             }
           } else if (e.stunTimer <= 0) {
-            e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt;
+            e.abyssCycleTimer = (e.abyssCycleTimer || 0) + dt * skillCdRate;
             if (e.abyssCycleTimer >= 7.5) {
               e.abyssCycleTimer = 0;
               e.abyssAbsorbTimer = 3.0;
@@ -3893,19 +3901,68 @@ function handleEditNameClick() {
             }
           }
           // ★★★ 賢者技能【聖輝光盾】：每 8 秒召喚跟隨自身的 55px 金色光盾，持續 3 秒
-        if (e.type === 'sage') {
-          if (e.lightShieldActiveTimer > 0) {
-            e.lightShieldActiveTimer = Math.max(0, e.lightShieldActiveTimer - dt);
-          } else if (e.stunTimer <= 0) {
-            e.lightShieldTimer = (e.lightShieldTimer || 0) + dt;
-            if (e.lightShieldTimer >= 8.0) {
-              e.lightShieldTimer = 0;
-              e.lightShieldActiveTimer = 3.0;
-              playSound('light_shield_cast');
-              addFloatingText(e.x, e.y - 20, '聖輝光盾!', '#ffd700', 13);
+          if (e.type === 'sage') {
+            if (e.lightShieldActiveTimer > 0) {
+              e.lightShieldActiveTimer = Math.max(0, e.lightShieldActiveTimer - dt);
+            } else if (e.stunTimer <= 0) {
+              e.lightShieldTimer = (e.lightShieldTimer || 0) + dt;
+              if (e.lightShieldTimer >= 8.0) {
+                e.lightShieldTimer = 0;
+                e.lightShieldActiveTimer = 3.0;
+                playSound('light_shield_cast');
+                addFloatingText(e.x, e.y - 20, '聖輝光盾!', '#ffd700', 13);
+              }
             }
           }
-        }
+          // ★★★ 雷霆領主技能【天罰雷擊】
+          if (e.type === 'thunder_lord') {
+            if (e.thunderChargeTimer > 0) {
+              e.thunderChargeTimer -= dt;
+              if (e.thunderChargeTimer <= 0) {
+                e.thunderChargeTimer = 0;
+                // 篩選場上有增益效果的防禦塔（建築工人小屋免疫負面狀態除外）
+                let buffedTowers = towers.filter(t => {
+                  if (t.type === 'builder') return false;
+                  let hasDrum = t.drumTimer > 0;
+                  let hasOverdrive = (overdriveState === 'active' && t.isPromoted);
+                  let hasOvercharge = towers.some(ot => ot !== t && ot.type === 'overcharge' && ot.isOvercharged && Math.hypot(t.x - ot.x, t.y - ot.y) <= (TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * (1 + getAbyssMatrixBonus('range'))));
+                  return hasDrum || hasOverdrive || hasOvercharge;
+                });
+
+                if (buffedTowers.length > 0) {
+                  // 隨機選取 1 座有增益的防禦塔作為單一目標
+                  let targetTower = buffedTowers[Math.floor(Math.random() * buffedTowers.length)];
+                  targetTower.disableTimer = Math.max(targetTower.disableTimer || 0, 1.0);
+                  targetTower.drumTimer = 0;
+                  targetTower.thunderSuppressed = true; // 標記被雷擊解除過載/增幅狀態
+
+                  // 若附近有正在提供增幅的超能樞紐，一併解除該超能樞紐的超能增幅
+                  towers.forEach(ot => {
+                    if (ot !== targetTower && ot.type === 'overcharge' && ot.isOvercharged) {
+                      let otR = TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * (1 + getAbyssMatrixBonus('range'));
+                      if (Math.hypot(targetTower.x - ot.x, targetTower.y - ot.y) <= otR) {
+                        ot.isOvercharged = false;
+                        ot.overchargeTimer = 0;
+                        ot.chargeProgress = 0;
+                      }
+                    }
+                  });
+
+                  playSound('thunder_strike');
+                  addFloatingText(targetTower.x, targetTower.y - 22, '⚡天罰雷擊!', '#ffd700', 13);
+                  if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
+                    activeVisualEffects.push({ type: 'goldenThunderBolt', x: targetTower.x, y: targetTower.y, life: 0.45, maxLife: 0.45 });
+                  }
+                }
+              }
+            } else if (e.stunTimer <= 0) {
+              e.thunderTimer = (e.thunderTimer || 0) + dt * skillCdRate;
+              if (e.thunderTimer >= 3.0) {
+                e.thunderTimer = 0;
+                e.thunderChargeTimer = 0.5;
+              }
+            }
+          }
           if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
             e.regenTimer = (e.regenTimer || 0) + dt;
             if (e.regenTimer >= 1.0) {
@@ -3960,6 +4017,157 @@ function handleEditNameClick() {
           if (e.type === 'priest' && e.stunTimer <= 0) {
             e.healTimer += dt;
             if (e.healTimer >= 5.0) {
+let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?? 1.0)) : 1.0;
+
+        if (skillCdRate > 0) {
+          if (e.type === 'soldier1' && e.stunTimer <= 0) {
+            e.cleanseTimer = (e.cleanseTimer || 0) + dt * skillCdRate;
+            if (e.cleanseTimer >= 4.0) {
+              e.cleanseTimer = 0; clearNegativeStatuses(e); e.immuneTimer = 1.0;
+              addFloatingText(e.x, e.y - 15, '淨化!', '#ffd700');
+              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
+                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 20, color: '#ffd700', life: 0.4, maxLife: 0.4 });
+              }
+            }
+          }
+
+          if (e.type === 'soldier2' && e.stunTimer <= 0) {
+            e.cleanseTimer = (e.cleanseTimer || 0) + dt * skillCdRate;
+            if (e.cleanseTimer >= 4.0) {
+              e.cleanseTimer = 0; clearNegativeStatuses(e); e.immuneTimer = 1.0;
+              e.isCharging = true; e.chargeTimer = 1.0;
+              addFloatingText(e.x, e.y - 15, '衝鋒!', '#e5e4e2');
+              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
+                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: 22, color: '#ffffff', life: 0.4, maxLife: 0.4 });
+              }
+            }
+          }
+
+          // ★★ 將軍技能
+          if (e.type === 'general' && e.stunTimer <= 0) {
+            e.hasteSkillTimer = (e.hasteSkillTimer || 0) + dt * skillCdRate;
+            if (e.hasteSkillTimer >= 6.0) {
+              e.hasteSkillTimer = 0;
+              enemies.forEach(other => {
+                if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= (e.hasteRadius || 60)) {
+                  other.hasteBuffTimer = Math.max(other.hasteBuffTimer || 0, 3.0);
+                }
+              });
+              addFloatingText(e.x, e.y - 18, '疾行軍令!', '#ffaa00', 13);
+              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
+                activeVisualEffects.push({ type: 'generalPulse', x: e.x, y: e.y, r: e.hasteRadius || 60, life: 0.55, maxLife: 0.55 });
+              }
+            }
+          }
+
+          // ★★ 法師技能
+          if (e.type === 'mage' && e.stunTimer <= 0) {
+            e.fireballTimer = (e.fireballTimer || 0) + dt * skillCdRate;
+            if (e.fireballTimer >= 8.0) {
+              e.fireballTimer = 0;
+              e.stopTimer = 1.0;
+              if (towers.length > 0) {
+                let nearestTower = towers.slice().sort((a, b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y))[0];
+                let dist = Math.hypot(nearestTower.x - e.x, nearestTower.y - e.y);
+                let flightDuration = Math.max(0.9, Math.min(1.5, dist / 260));
+                mageFireballs.push({
+                  startX: e.x, startY: e.y,
+                  endX: nearestTower.x, endY: nearestTower.y,
+                  arcHeight: Math.max(75, dist * 0.38),
+                  progress: 0,
+                  duration: flightDuration
+                });
+              }
+            }
+          }
+
+          // ★★ 大魔導師技能
+          if (e.type === 'archmage' && e.stunTimer <= 0 && !e.isDrawingPortal) {
+            e.portalTimer = (e.portalTimer || 0) + dt * skillCdRate;
+            if (e.portalTimer >= 9.0) {
+              e.portalTimer = 0;
+              e.stopTimer = 1.0;
+              e.isDrawingPortal = true;
+              archmagePortals.push({
+                caster: e, x: e.x, y: e.y, r: 50,
+                phase: 'drawing', timer: 0
+              });
+            }
+          }
+
+          // ★★★ 賢者技能（冷卻受 skillCdRate 影響，光盾持續 3.0s 維持原 dt）
+          if (e.type === 'sage') {
+            if (e.lightShieldActiveTimer > 0) {
+              e.lightShieldActiveTimer = Math.max(0, e.lightShieldActiveTimer - dt);
+            } else if (e.stunTimer <= 0) {
+              e.lightShieldTimer = (e.lightShieldTimer || 0) + dt * skillCdRate;
+              if (e.lightShieldTimer >= 8.0) {
+                e.lightShieldTimer = 0;
+                e.lightShieldActiveTimer = 3.0;
+                playSound('light_shield_cast');
+                addFloatingText(e.x, e.y - 20, '聖輝光盾!', '#ffd700', 13);
+              }
+            }
+          }
+
+          // 1號/2號坦克自癒
+          if ((e.type === 'heavy1' || e.type === 'heavy2') && e.stunTimer <= 0) {
+            e.regenTimer = (e.regenTimer || 0) + dt * skillCdRate;
+            if (e.regenTimer >= 1.0) {
+              e.regenTimer = 0;
+              e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.05);
+              addFloatingText(e.x, e.y - 12, '+', '#50fa7b', 14);
+            }
+          }
+
+          // 祭司祝福
+          if (e.type === 'monk' && e.stunTimer <= 0) {
+            e.blessTimer += dt * skillCdRate;
+            if (e.blessTimer >= 7.0) {
+              e.blessTimer = 0;
+              enemies.forEach(other => {
+                if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= e.blessRadius) {
+                  clearNegativeStatuses(other); other.immuneTimer = 2.5;
+                  addFloatingText(other.x, other.y - 15, '淨化!', '#8be9fd');
+                }
+              });
+              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
+                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: e.blessRadius, color: '#8be9fd', life: 0.5, maxLife: 0.5 });
+              }
+            }
+          }
+
+          // 巫師復生
+          if (e.type === 'warlock' && e.stunTimer <= 0) {
+            e.resurrectTimer += dt * skillCdRate;
+            if (e.resurrectTimer >= 6.0) {
+              e.resurrectTimer = 0;
+              if (e.resurrectedCount < e.maxResurrectCount && deadEnemyGraveyard.length > 0) {
+                e.stopTimer = 1.0;
+                let deadData = deadEnemyGraveyard.pop();
+                let resStats = getEnemyStatsForWave(deadData.type, currentWave);
+                enemies.push({
+                  id: Date.now() + Math.random(), type: deadData.type, x: e.x, y: e.y,
+                  hp: resStats.hp, maxHp: resStats.hp, atk: resStats.atk || 10, speed: parseFloat(resStats.speed), baseSpeed: parseFloat(resStats.speed), gold: deadData.gold,
+                  freezeEffectiveness: deadData.type.startsWith('scout') ? 0.8 : 1.0,
+                  paralyzeImmunity: deadData.type.startsWith('heavy'),
+                  pathIndex: e.pathIndex, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, dead: false,
+                  cleanseTimer: 0, regenTimer: 0, isEnraged: false, marks: []
+                });
+                e.resurrectedCount++;
+                if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
+                  activeVisualEffects.push({ type: 'warlockCastFlame', x: e.x, y: e.y, r: 28, life: 1.0, maxLife: 1.0 });
+                  activeVisualEffects.push({ type: 'resurrectAura', x: e.x, y: e.y, r: 22, life: 1.0, maxLife: 1.0 });
+                }
+                addFloatingText(e.x, e.y - 15, '復生!', '#9400d3');
+              }
+            }
+          }
+
+          // 牧師治癒
+          if (e.type === 'priest' && e.stunTimer <= 0) {
+            e.healTimer += dt * skillCdRate;
+            if (e.healTimer >= 5.0) {
               e.healTimer = 0;
               enemies.forEach(other => {
                 if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= e.healRadius) {
@@ -3973,12 +4181,13 @@ function handleEditNameClick() {
               }
             }
           }
+
+          // 一般 BOSS 技能
           if (e.type === 'boss' && !e.isAbyssBoss && e.stunTimer <= 0) {
             if (currentWave >= 10) {
-              e.shockTimer += dt;
+              e.shockTimer += dt * skillCdRate;
               let shockCdSec = currentWave >= 70 ? 8 : (currentWave >= 55 ? 9 : 10);
               let shockDisTimer = currentWave >= 70 ? 5.0 : (currentWave >= 55 ? 4.0 : 3.0);
-
               if (e.shockTimer >= shockCdSec) {
                 e.shockTimer = 0; e.stopTimer = 1.0;
                 shockwaves.push({ x: e.x, y: e.y, r: 0, maxR: e.shockRadius, alpha: 1.0 });
@@ -3989,7 +4198,7 @@ function handleEditNameClick() {
               }
             }
             if (currentWave >= 15) {
-              e.beamTimer += dt;
+              e.beamTimer += dt * skillCdRate;
               if (e.beamTimer >= 8) {
                 e.beamTimer = 0;
                 let goldTowers = towers.filter(t => t.type === 'gold').sort((a,b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y));
@@ -4005,6 +4214,17 @@ function handleEditNameClick() {
             }
           }
         }
+        // ⚠️ 原本寫在 if (e.freezeTimer <= 0) 裡面的「技能已啟動後的持續計時器」，必須移到外面用原始 dt 倒數，確保持續時間不受影響：
+        if (e.isCharging) {
+          e.chargeTimer -= dt;
+          if (e.chargeTimer <= 0) e.isCharging = false;
+          else speedMult *= 3.0;
+        }
+        if (e.hasteBuffTimer > 0) {
+          e.hasteBuffTimer -= dt;
+          speedMult *= 1.25;
+        }
+        
         let blocked = false;
         for (let j = barriers.length - 1; j >= 0; j--) {
           let b = barriers[j];
@@ -4139,10 +4359,10 @@ function handleEditNameClick() {
       let odBonus = (overdriveState === 'active') ? 3 : 0;
 
       towers.forEach(t => {
-        let effectiveDmgLv = t.dmgLv + (t.isPromoted ? odBonus : 0);
-        let effectiveRngLv = t.rngLv + (t.isPromoted ? odBonus : 0);
-        let effectiveSpdLv = t.spdLv + (t.isPromoted ? odBonus : 0);
-        let effectiveSpecLv = t.specLv + (t.isPromoted ? odBonus : 0);
+        let effectiveDmgLv = t.dmgLv + (t.isPromoted && !t.thunderSuppressed ? odBonus : 0);
+        let effectiveRngLv = t.rngLv + (t.isPromoted && !t.thunderSuppressed ? odBonus : 0);
+        let effectiveSpdLv = t.spdLv + (t.isPromoted && !t.thunderSuppressed ? odBonus : 0);
+        let effectiveSpecLv = t.specLv + (t.isPromoted && !t.thunderSuppressed ? odBonus : 0);
 
         if (t.type === 'builder') {
           let curRange = TOWER_TYPES.builder.range * (1 + (effectiveRngLv - 1) * 0.05);
@@ -4966,6 +5186,7 @@ function handleEditNameClick() {
         }
         ctx.restore();
       });
+      updateThunderChargeSound(enemies.some(en => !en.dead && en.type === 'thunder_lord' && en.thunderChargeTimer > 0));
 
       // 繪製賢者【聖輝光盾】（圖層在所有敵人之上）
       const shieldNowSec = performance.now() / 1000;
@@ -5015,6 +5236,25 @@ function handleEditNameClick() {
 
         ctx.restore();
       });
+
+      if (e.type === 'thunder_lord' && e.thunderChargeTimer > 0 && gameSettings.vfxMode !== 3) {
+        ctx.save(); ctx.strokeStyle = '#ffe600';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 2.2;
+        for (let b = 0; b < 6; b++) {
+          let ang = Math.random() * Math.PI * 2;
+          let len = size + 10 + Math.random() * 14;
+          let mx = e.x + Math.cos(ang + 0.3) * (len * 0.5);
+          let my = e.y + Math.sin(ang + 0.3) * (len * 0.5);
+          ctx.beginPath();
+          ctx.moveTo(e.x, e.y);
+          ctx.lineTo(mx, my);
+          ctx.lineTo(e.x + Math.cos(ang) * len, e.y + Math.sin(ang) * len);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
       
       barriers.forEach(b => drawBarrierWall(ctx, b));
 
@@ -5127,6 +5367,20 @@ function handleEditNameClick() {
             ctx.strokeStyle = `rgba(255, 200, 40, ${alpha})`;
             ctx.lineWidth = 3.5;
             ctx.beginPath(); ctx.arc(ve.x, ve.y, curR, 0, Math.PI * 2); ctx.stroke();
+          } else if (ve.type === 'goldenThunderBolt' && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1)) {
+            ctx.save();
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 18;
+            // 外層金光粗閃電
+            drawJaggedLine(ctx, ve.x + (Math.random() - 0.5) * 16, 0, ve.x, ve.y, `rgba(255, 215, 0, ${alpha})`);
+            // 內層白金高亮核心
+            ctx.lineWidth = 4;
+            drawJaggedLine(ctx, ve.x, 0, ve.x, ve.y, `rgba(255, 255, 220, ${alpha})`);
+            // 落雷衝擊光圈
+            ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(ve.x, ve.y, 26 * (1.2 - alpha * 0.4), 0, Math.PI * 2); ctx.stroke();
+            ctx.restore();
           }
         });
       }
@@ -5224,28 +5478,28 @@ function handleEditNameClick() {
       if (abyssViewport && abyssCanvas) {
         let isHexDragging = false, rawStartX = 0, rawStartY = 0, basePanX = 0, basePanY = 0;
 
-        // 計算安全拖曳邊界（保證至少保留最外圈節點在視窗內，不會把所有項目滑出視窗）
+        // 放寬安全拖曳邊界，讓深淵矩陣能往外拖曳更遠
         const getHexBounds = () => {
           const vw = abyssViewport.clientWidth || 500;
           const vh = abyssViewport.clientHeight || 390;
           return {
-            maxX: Math.max(80, vw * 0.45),
-            maxY: Math.max(80, vh * 0.45)
+            maxX: Math.max(220, vw * 0.85 + 120),
+            maxY: Math.max(220, vh * 0.85 + 120)
           };
         };
 
-        // 橡皮筋阻力函數：超出安全邊界後，拉得愈遠阻力愈大
+        // 減弱邊緣橡皮筋阻力（係數 0.018 -> 0.005）
         const applyRubberBand = (val, limit) => {
           if (val > limit) {
             let over = val - limit;
-            return limit + over / (1 + over * 0.018);
+            return limit + over / (1 + over * 0.005);
           } else if (val < -limit) {
             let over = -limit - val;
-            return -limit - over / (1 + over * 0.018);
+            return -limit - over / (1 + over * 0.005);
           }
           return val;
         };
-
+        
         const startHexDrag = (cx, cy) => {
           isHexDragging = true;
           window._hexDragged = false;
