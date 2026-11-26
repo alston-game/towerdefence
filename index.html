@@ -2108,7 +2108,8 @@ function handleEditNameClick() {
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
         archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
         sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。'],
-        thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒對有增益效果的防禦塔劈下金色雷霆，使其癱瘓1秒並解除增益效果。']
+        thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒對有增益效果的防禦塔劈下金色雷霆，使其癱瘓1秒並解除增益效果。'],
+        abyss_boss: ['🌌 深淵 BOSS', '特色：深淵降臨的終極霸主，擁有極高生命值與全負面抗性。\n技能【虛空旋渦】：每7.5秒開啟持續3秒的黑色旋渦，免疫所有傷害並將受到傷害的40%轉化為自身治療。\n技能【深淵衝擊波】：旋渦結束時釋放全場衝擊波，使全場防禦塔癱瘓4秒。\n技能【深淵狂暴】：生命值低於25%時觸發，移動速度提升30%。']
       };
       if (intros[type]) {
         document.getElementById('enemy-intro-title').innerText = intros[type][0];
@@ -3592,7 +3593,6 @@ function handleEditNameClick() {
     }
 
     function updateGame(dt) {
-      let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?? 1.0)) : 1.0;
       if (waveInProgress) {
         if (overdriveState === 'active') {
           overdriveTimer -= dt;
@@ -3657,7 +3657,7 @@ function handleEditNameClick() {
             resurrectTimer: eData.type === 'warlock' ? 6.0 * (0.4 + Math.random() * 0.2) : 0, resurrectedCount: 0, maxResurrectCount: eData.maxResurrectCount || 10, // 巫師冷卻 6s -> 首次 2.4~3.6s 釋放
             hasteSkillTimer: eData.type === 'general' ? 6.0 * (0.4 + Math.random() * 0.2) : 0, hasteRadius: eData.hasteRadius || 60, hasteBuffTimer: 0, // 將軍冷卻 6s -> 首次 2.4~3.6s 釋放
             cleanseTimer: 0, regenTimer: 0, chargeTimer: 0, isCharging: false, hasResurrected: false,
-            isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isEnraged: false,
+            isStar: !!eData.isStar, isTwoStar: !!eData.isTwoStar, isThreeStar: !!eData.isThreeStar, isEnraged: false,
             isAbyssBoss: !!eData.isAbyssBoss, abyssCycleTimer: 0, abyssAbsorbTimer: 0, abyssPauseTimer: 0,
             marks: []
           };
@@ -3741,6 +3741,7 @@ function handleEditNameClick() {
 
       for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
+        let skillCdRate = e.freezeTimer > 0 ? Math.max(0, 1.0 - (e.freezeEffectiveness ?? 1.0)) : 1.0;
         if (e.dead) { enemies.splice(i, 1); continue; }
         // 處理大魔導師空間傳送三階段狀態（0.5s漸快升空 -> 0.5s潛行 -> 0.5s漸慢降落）
         if (e.teleportState) {
@@ -4026,47 +4027,7 @@ function handleEditNameClick() {
             e.blessTimer += dt;
             if (e.blessTimer >= 7.0) {
               e.blessTimer = 0;
-              enemies.forEach(other => {
-                if (!other.dead && Math.hypot(other.x - e.x, other.y - e.y) <= e.blessRadius) {
-                  clearNegativeStatuses(other); other.immuneTimer = 2.5;
-                  addFloatingText(other.x, other.y - 15, '淨化!', '#8be9fd');
-                }
-              });
-              if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
-                activeVisualEffects.push({ type: 'blessPulse', x: e.x, y: e.y, r: e.blessRadius, color: '#8be9fd', life: 0.5, maxLife: 0.5 });
-              }
-            }
-          }
-          if (e.type === 'warlock' && e.stunTimer <= 0) {
-            e.resurrectTimer += dt;
-            if (e.resurrectTimer >= 6.0) {
-              e.resurrectTimer = 0;
-              if (e.resurrectedCount < e.maxResurrectCount && deadEnemyGraveyard.length > 0) {
-                e.stopTimer = 1.0;
-                let deadData = deadEnemyGraveyard.pop();
-                let resStats = getEnemyStatsForWave(deadData.type, currentWave);
-                
-                enemies.push({
-                  id: Date.now() + Math.random(), type: deadData.type, x: e.x, y: e.y,
-                  hp: resStats.hp, maxHp: resStats.hp, atk: resStats.atk || 10, speed: parseFloat(resStats.speed), baseSpeed: parseFloat(resStats.speed), gold: deadData.gold,
-                  freezeEffectiveness: deadData.type.startsWith('scout') ? 0.8 : 1.0,
-                  paralyzeImmunity: deadData.type.startsWith('heavy'),
-                  pathIndex: e.pathIndex, freezeTimer: currentBlizzardTimer, stunTimer: 0, immuneTimer: 0, dead: false,
-                  cleanseTimer: 0, regenTimer: 0, isEnraged: false, marks: []
-                });
-                e.resurrectedCount++;
 
-                if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
-                  activeVisualEffects.push({ type: 'warlockCastFlame', x: e.x, y: e.y, r: 28, life: 1.0, maxLife: 1.0 });
-                  activeVisualEffects.push({ type: 'resurrectAura', x: e.x, y: e.y, r: 22, life: 1.0, maxLife: 1.0 });
-                }
-                addFloatingText(e.x, e.y - 15, '復生!', '#9400d3');
-              }
-            }
-          }
-          if (e.type === 'priest' && e.stunTimer <= 0) {
-            e.healTimer += dt;
-            if (e.healTimer >= 5.0) {
 
         if (skillCdRate > 0) {
           if (e.type === 'soldier1' && e.stunTimer <= 0) {
