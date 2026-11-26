@@ -5035,8 +5035,7 @@ function handleEditNameClick() {
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
         let color = e.type === 'boss' ? '#ff5555' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c'))))))));
-        let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : ((e.type === 'sage' || e.type === 'thunder_lord') ? 16 : ...
-
+        let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : ((e.type === 'sage' || e.type === 'thunder_lord') ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))))));
         if (e.isCharging) color = '#e5e4e2';
 
         if (e.type === 'boss' && e.isEnraged && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2)) {
