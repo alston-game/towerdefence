@@ -1874,9 +1874,10 @@ function handleEditNameClick() {
     }
 
     function triggerOverdrive() {
+      const odCost = getOverdriveCost();
       if (overdriveState !== 'ready') return;
       if (!waveInProgress) return showToast('⚠️ 只能在戰鬥進行中啟動超能過載！', 'towerSkill');
-      if (starParticles < odCost) return showToast('🌟 星核微粒不足 (需要${odCost} 個)！', 'res');
+      if (starParticles < odCost) return showToast(`🌟 星核微粒不足 (需要${odCost} 個)！`, 'res');
       let hasPromotedTower = towers.some(t => t.isPromoted);
       if (!hasPromotedTower) return showToast('⚠️ 場上尚無晉升的防禦塔，無法發動超能過載！', 'towerSkill');
 
@@ -3569,7 +3570,6 @@ function handleEditNameClick() {
 
       let markBonus = (enemy.marks && enemy.marks.length > 0) ? 0.25 : 0;
       let finalDmg = dmg * baseTechMultiplier * (1 + overchargeTotalBonus + markBonus);
-      if (enemy.type === 'sage') finalDmg *= 0.8; // 賢者降低所受傷害 20%
       if (enemy.type === 'sage' || enemy.type === 'thunder_lord') finalDmg *= 0.8; // 降低所受傷害 20%
       enemy.hp -= finalDmg; stats.totalDamage += finalDmg; window.stats = stats;
       
