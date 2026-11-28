@@ -3878,6 +3878,9 @@ function handleEditNameClick() {
           if (waveInProgress) {
             let prevTimer = t.disableTimer;
             t.disableTimer = Math.max(0, t.disableTimer - dt);
+            if (prevTimer > 0 && t.disableTimer === 0 && selectedTower === t) {
+              openTowerOverlay();
+            }
             if (t.type === 'inferno' && prevTimer > 0 && t.disableTimer === 0) {
               t.targetLockId = null; t.lockTime = 0; t.infernoStage = 0;
             }
