@@ -759,6 +759,10 @@
         <button class="checkpoint-select-btn" onclick="openLeaderboardModal()" style="color:var(--orange);">
           🏆 玩家排行榜
         </button>
+
+        <button class="checkpoint-select-btn" onclick="openActiveBuffsModal()" style="color:var(--cyan);">
+          📊 當前增益效果
+        </button>
         
         <button class="checkpoint-select-btn" onclick="openCheckpointPanelFromSettings()">
           📜 跳回存檔點
@@ -809,6 +813,16 @@
     </div>
   </div>
 
+  <!-- 當前增益效果總覽 Modal -->
+  <div class="modal" id="active-buffs-modal" style="z-index: 420;">
+    <div class="modal-content" style="width:450px;">
+      <h3 style="color:var(--cyan); margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">📊 當前全局與矩陣增益總覽</h3>
+      <p style="font-size:11px; color:#aaa; margin-bottom:10px;">已自動合併「全局科技」與「深淵矩陣」的相同加成項目</p>
+      <div id="active-buffs-list" style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto;"></div>
+      <button class="btn" onclick="switchModal('active-buffs-modal', 'settings-modal')" style="margin-top:15px; width:100%;">關閉 [Esc]</button>
+    </div>
+  </div>
+  
   <!-- 玩家排行榜成就詳細彈窗 -->
   <div id="player-achievements-modal" class="modal" style="display:none; align-items:center; justify-content:center; z-index: 510;">
     <div class="modal-content" style="max-width:450px; width:90%; border:2px solid var(--purple); text-align:center;">
@@ -2046,6 +2060,68 @@ function handleEditNameClick() {
       }
     }
 
+    function openActiveBuffsModal() {
+      document.getElementById('settings-modal').style.display = 'none';
+      const list = document.getElementById('active-buffs-list');
+      list.innerHTML = '';
+
+      // 合併「全局科技」與「深淵矩陣」的數值
+      const totalKillGold = Math.round((talents.goldBonus.lv * 0.12 + getAbyssMatrixBonus('killGold')) * 100);
+      const totalBaseAtk = Math.round((talents.baseAtk.lv * 0.06 + getAbyssMatrixBonus('baseAtk')) * 100);
+      const totalMaxHp = talents.maxHpBonus.lv * 25;
+      const totalCastleRegen = talents.castleRegen.lv * 5;
+
+      const maxTowersBonus = Math.floor(getAbyssMatrixBonus('maxTowers'));
+      const maxGoldTowersBonus = Math.floor(getAbyssMatrixBonus('maxGoldTowers'));
+      const techCapBonus = Math.floor(getAbyssMatrixBonus('techCapBonus'));
+      const stunReduce = Math.round(getAbyssMatrixBonus('stunReduce') * 100);
+      const skillDur = Math.round(getAbyssMatrixBonus('skillDur') * 100);
+      const skillCd = Math.round(getAbyssMatrixBonus('skillCd') * 100);
+      const overdriveDur = getAbyssMatrixBonus('overdriveDur');
+      const overdriveCostReduce = Math.floor(getAbyssMatrixBonus('overdriveCostReduce'));
+      const upgCostReduce = Math.round(getAbyssMatrixBonus('upgCostReduce') * 100);
+      const crystalGain = Math.round(getAbyssMatrixBonus('crystalGain') * 100);
+      const atkSpd = Math.round(getAbyssMatrixBonus('atkSpd') * 100);
+      const rangeBonus = Math.round(getAbyssMatrixBonus('range') * 100);
+      const particleGain = Math.round(getAbyssMatrixBonus('particleGain') * 100);
+      const goldTowerProd = Math.round(getAbyssMatrixBonus('goldTowerProd') * 100);
+      const voidShardBonus = Math.floor(getAbyssMatrixBonus('voidShardBonus'));
+
+      const buffItems = [
+        { label: '💰 擊殺金幣加成', val: `+${totalKillGold}%`, active: totalKillGold > 0 },
+        { label: '⚔️ 防禦塔基礎攻擊', val: `+${totalBaseAtk}%`, active: totalBaseAtk > 0 },
+        { label: '🏰 主城生命值上限', val: `+${totalMaxHp} 點`, active: totalMaxHp > 0 },
+        { label: '🛠️ 波次結束主城修復', val: `+${totalCastleRegen} 點`, active: totalCastleRegen > 0 },
+        { label: '🗼 防禦塔數量上限', val: `+${maxTowersBonus} 座 (總上限 ${getMaxTowerCount()})`, active: maxTowersBonus > 0 },
+        { label: '🪙 點金之塔數量上限', val: `+${maxGoldTowersBonus} 座 (總上限 ${getMaxGoldTowerCount()})`, active: maxGoldTowersBonus > 0 },
+        { label: '💎 全局科技解放等級', val: `+${techCapBonus} 級 (上限 Lv.${getTechMaxLevel()})`, active: techCapBonus > 0 },
+        { label: '🛡️ 防禦塔癱瘓時間減免', val: `-${stunReduce}%`, active: stunReduce > 0 },
+        { label: '⏳ 主動技能持續時間', val: `+${skillDur}%`, active: skillDur > 0 },
+        { label: '❄️ 主動技能冷卻縮減', val: `-${skillCd}%`, active: skillCd > 0 },
+        { label: '⚡ 超能過載持續時間', val: `+${overdriveDur.toFixed(1)} 秒`, active: overdriveDur > 0 },
+        { label: '🌟 超能過載花費減少', val: `-${overdriveCostReduce} 星核微粒 (需 🌟${getOverdriveCost()})`, active: overdriveCostReduce > 0 },
+        { label: '🔨 防禦塔升級金幣減免', val: `-${upgCostReduce}%`, active: upgCostReduce > 0 },
+        { label: '💠 鑽石獲取加成', val: `+${crystalGain}%`, active: crystalGain > 0 },
+        { label: '🏹 防禦塔攻速加成', val: `+${atkSpd}%`, active: atkSpd > 0 },
+        { label: '🎯 防禦塔射程加成', val: `+${rangeBonus}%`, active: rangeBonus > 0 },
+        { label: '✨ 星核微粒獲取加成', val: `+${particleGain}%`, active: particleGain > 0 },
+        { label: '🏦 點金之塔產金量加成', val: `+${goldTowerProd}%`, active: goldTowerProd > 0 },
+        { label: '🔮 虛空原晶額外獲取', val: `+${voidShardBonus} 個/次`, active: voidShardBonus > 0 }
+      ];
+
+      buffItems.forEach(item => {
+        const row = document.createElement('div');
+        row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:8px 12px; border-radius:6px; border:1px solid ${item.active ? 'var(--purple)' : 'var(--border-color)'}; font-size:12px;`;
+        row.innerHTML = `
+          <span style="color:${item.active ? '#fff' : '#888'}; font-weight:bold;">${item.label}</span>
+          <span style="color:${item.active ? 'var(--primary)' : '#666'}; font-weight:bold;">${item.val}</span>
+        `;
+        list.appendChild(row);
+      });
+
+      document.getElementById('active-buffs-modal').style.display = 'flex';
+    }
+    
     // 顯示玩家獲得的所有成就圖示彈窗 (需求 5)
     function viewPlayerAchievements(pName, achList = [], pUid = '') {
       const modal = document.getElementById('player-achievements-modal');
@@ -2108,7 +2184,7 @@ function handleEditNameClick() {
         mage: ['★★ 法師', '特色：生命值高、移動速度很慢。\n抗性：降低所有負面狀態效果 20%。\n技能【烈焰火球】：每8秒向最近的防禦塔發射火球，使範圍40px內防禦塔癱瘓4秒。'],
         archmage: ['★★ 大魔導師', '特色：生命值高、移動速度慢。\n抗性：降低所有負面狀態效果 20%。\n技能【星陣躍遷】：每9秒繪製五芒星陣法，使陣內友軍向前傳送120px。'],
         sage: ['★★★ 賢者', '特色：生命值很高、移動速度稍慢。\n抗性：降低所有負面狀態效果 40%、降低所受到的傷害 20%。\n技能【聖輝光盾】：每8秒召喚範圍65px、持續3秒金色光盾，使範圍內敵人免疫所有傷害與負面狀態。'],
-        thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒對有增益效果的防禦塔劈下金色雷霆，使其癱瘓1秒並解除增益效果。'],
+        thunder_lord: ['★★★ 雷霆領主', '特色：生命值高、移動速度快。\n抗性：降低所有負面狀態效果 40%、降低受到傷害的 20%。\n技能【天罰雷擊】：每3秒降下兩道雷霆，使其癱瘓2秒並解除增益效果。'],
         abyss_boss: ['🌌 深淵 BOSS', '特色：深淵降臨的終極霸主，擁有極高生命值與全負面抗性。\n技能【虛空旋渦】：每7.5秒開啟持續3秒的黑色旋渦，免疫所有傷害並將受到傷害的40%轉化為自身治療。\n技能【深淵衝擊波】：旋渦結束時釋放全場衝擊波，使全場防禦塔癱瘓4秒。\n技能【深淵狂暴】：生命值低於25%時觸發，移動速度提升30%。']
       };
       if (intros[type]) {
@@ -2189,8 +2265,18 @@ function handleEditNameClick() {
       if (pendingJumpWave === 'restart') {
         restartGame(); showToast('已從頭開始遊戲！', 'res');
       } else if (pendingJumpWave && savedCheckpointsMap[pendingJumpWave]) {
-        loadSnapshotState(savedCheckpointsMap[pendingJumpWave]);
-        showToast(`成功跳回第 ${pendingJumpWave} 波存檔點！`, 'res');
+        const targetW = Number(pendingJumpWave);
+        Object.keys(savedCheckpointsMap).forEach(wKey => {
+          if (Number(wKey) > targetW) {
+            delete savedCheckpointsMap[wKey];
+          }
+        });
+        window.savedCheckpointsMap = savedCheckpointsMap;
+        loadSnapshotState(savedCheckpointsMap[targetW]);
+        if (window.currentUser && typeof window.saveGameToCloud === 'function') {
+          window.saveGameToCloud(window.currentUser);
+        }
+        showToast(`成功跳回第 ${targetW} 波存檔點，後續存檔已清除！`, 'res');
       }
       pendingJumpWave = null;
     }
@@ -2772,7 +2858,7 @@ function handleEditNameClick() {
         atkSpeedStr = `${Math.floor(atk)}/1s`;
         moveSpeedPxStr = `54px/1s`;
         resistances = '所有負面狀態效果降低 40%、降低受到傷害的 20%';
-        skills = '【天罰雷擊】每 3 秒對有增益效果的防禦塔降下金色雷霆，使其癱瘓 1 秒並解除增益效果';
+        skills = '【天罰雷擊】每 3 秒降下兩道金色雷霆，使防禦塔癱瘓 2 秒並解除增益效果';
       } else if (type === 'boss') {
         hp = (w === 5) ? 5000 : (800 + w * 200 + Math.pow(w, 1.5) * 120);
         if (w >= 21 && w <= 30) hp *= (1 + (w - 20) * 0.08);
@@ -3885,51 +3971,57 @@ function handleEditNameClick() {
         
           // ★★★ 雷霆領主技能【天罰雷擊】
           if (e.type === 'thunder_lord') {
+            if (e.stunTimer <= 0) {
+              e.thunderTimer = (e.thunderTimer || 0) + dt * skillCdRate;
+            }
             if (e.thunderChargeTimer > 0) {
               e.thunderChargeTimer -= dt;
               if (e.thunderChargeTimer <= 0) {
                 e.thunderChargeTimer = 0;
-                // 篩選場上有增益效果的防禦塔（建築工人小屋免疫負面狀態除外）
+                let rangeMult = 1 + getAbyssMatrixBonus('range');
+                // 篩選場上有增益效果的防禦塔（建築工人小屋除外）
                 let buffedTowers = towers.filter(t => {
                   if (t.type === 'builder') return false;
                   let hasDrum = t.drumTimer > 0;
-                  let hasOverdrive = (overdriveState === 'active' && t.isPromoted);
-                  let hasOvercharge = towers.some(ot => ot !== t && ot.type === 'overcharge' && ot.isOvercharged && Math.hypot(t.x - ot.x, t.y - ot.y) <= (TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * (1 + getAbyssMatrixBonus('range'))));
+                  let hasOverdrive = (overdriveState === 'active' && t.isPromoted && !t.thunderSuppressed);
+                  let hasOvercharge = towers.some(ot => ot !== t && ot.type === 'overcharge' && ot.isOvercharged && Math.hypot(t.x - ot.x, t.y - ot.y) <= (TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * rangeMult));
                   return hasDrum || hasOverdrive || hasOvercharge;
                 });
 
-                if (buffedTowers.length > 0) {
-                  // 隨機選取 1 座有增益的防禦塔作為單一目標
-                  let targetTower = buffedTowers[Math.floor(Math.random() * buffedTowers.length)];
-                  targetTower.disableTimer = Math.max(targetTower.disableTimer || 0, 1.0);
-                  targetTower.drumTimer = 0;
-                  targetTower.thunderSuppressed = true; // 標記被雷擊解除過載/增幅狀態
+                // 若無增益防禦塔，則從場上可受影響的防禦塔中隨機挑選
+                let candidatePool = buffedTowers.length > 0 ? buffedTowers : towers.filter(t => t.type !== 'builder');
+                if (candidatePool.length > 0) {
+                  let shuffled = candidatePool.slice().sort(() => Math.random() - 0.5);
+                  let selectedTargets = shuffled.slice(0, 2); // 降下兩道雷電
+                  let stunDur = 2.0 * Math.max(0.1, 1 - getAbyssMatrixBonus('stunReduce'));
 
-                  // 若附近有正在提供增幅的超能樞紐，一併解除該超能樞紐的超能增幅
-                  towers.forEach(ot => {
-                    if (ot !== targetTower && ot.type === 'overcharge' && ot.isOvercharged) {
-                      let otR = TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * (1 + getAbyssMatrixBonus('range'));
-                      if (Math.hypot(targetTower.x - ot.x, targetTower.y - ot.y) <= otR) {
-                        ot.isOvercharged = false;
-                        ot.overchargeTimer = 0;
-                        ot.chargeProgress = 0;
+                  selectedTargets.forEach(targetTower => {
+                    targetTower.disableTimer = Math.max(targetTower.disableTimer || 0, stunDur);
+                    targetTower.drumTimer = 0;
+                    targetTower.thunderSuppressed = true;
+
+                    towers.forEach(ot => {
+                      if (ot !== targetTower && ot.type === 'overcharge' && ot.isOvercharged) {
+                        let otR = TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * rangeMult;
+                        if (Math.hypot(targetTower.x - ot.x, targetTower.y - ot.y) <= otR) {
+                          ot.isOvercharged = false;
+                          ot.overchargeTimer = 0;
+                          ot.chargeProgress = 0;
+                        }
                       }
+                    });
+
+                    addFloatingText(targetTower.x, targetTower.y - 22, '⚡天罰雷擊!', '#ffd700', 13);
+                    if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
+                      activeVisualEffects.push({ type: 'goldenThunderBolt', x: targetTower.x, y: targetTower.y, life: 0.45, maxLife: 0.45 });
                     }
                   });
-
                   playSound('thunder_strike');
-                  addFloatingText(targetTower.x, targetTower.y - 22, '⚡天罰雷擊!', '#ffd700', 13);
-                  if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 1) {
-                    activeVisualEffects.push({ type: 'goldenThunderBolt', x: targetTower.x, y: targetTower.y, life: 0.45, maxLife: 0.45 });
-                  }
                 }
               }
-            } else if (e.stunTimer <= 0) {
-              e.thunderTimer = (e.thunderTimer || 0) + dt * skillCdRate;
-              if (e.thunderTimer >= 3.0) {
-                e.thunderTimer = 0;
-                e.thunderChargeTimer = 0.5;
-              }
+            } else if (e.stunTimer <= 0 && e.thunderTimer >= 3.0) {
+              e.thunderTimer = 0; // 重置 3.0s 週期，接下來 0.5s 蓄力計入此 3.0s 內（降雷後剩 2.5s）
+              e.thunderChargeTimer = 0.5;
             }
           }
 
@@ -5589,7 +5681,8 @@ function handleEditNameClick() {
         'codex-detail-modal',
         'codex-modal',
         'gameover-modal',
-        'abyss-matrix-modal'
+        'abyss-matrix-modal',
+        'active-buffs-modal'
       ];
       return modalIds.some(id => isModalOpen(id));
     }
@@ -5695,6 +5788,12 @@ function handleEditNameClick() {
         if (isModalOpen('achievements-modal')) {
           e.preventDefault();
           switchModal('achievements-modal', 'settings-modal');
+          return;
+        }
+        // 當前增益效果總覽 -> 返回「設定」
+        if (isModalOpen('active-buffs-modal')) {
+          e.preventDefault();
+          switchModal('active-buffs-modal', 'settings-modal');
           return;
         }
         // (5) 跳回存檔點列表 -> 返回「設定」
