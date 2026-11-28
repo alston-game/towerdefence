@@ -1042,8 +1042,6 @@ async function loadGameFromCloud(user) {
     console.error("雲端讀檔/初始化失敗：", e);
     return false;
   }
-  let nextCost = t.lv >= 50 ? (46 + (t.lv - 50)) : (t.cost + t.lv);
-
 }
 
     // 綁定至 window 供全域與主遊戲邏輯呼叫
@@ -1238,12 +1236,18 @@ window.updateAuthUI = updateAuthUI;
       return ABYSS_NODES.some(other => purchasedAbyssNodes.has(other.id) && isHexAdjacent(node, other));
     }
 
-    function getAbyssMatrixBonus(type) {
-      let sum = 0;
+    let abyssBonusCache = {};
+    function rebuildAbyssBonusCache() {
+      abyssBonusCache = {};
       ABYSS_NODES.forEach(n => {
-        if (purchasedAbyssNodes.has(n.id) && n.type === type) sum += n.val;
+        if (purchasedAbyssNodes.has(n.id)) {
+          abyssBonusCache[n.type] = (abyssBonusCache[n.type] || 0) + n.val;
+        }
       });
-      return sum;
+    }
+
+    function getAbyssMatrixBonus(type) {
+      return abyssBonusCache[type] || 0;
     }
 
     function getMaxTowerCount() {
@@ -1336,6 +1340,7 @@ window.updateAuthUI = updateAuthUI;
           window.starParticles = starParticles;
           purchasedAbyssNodes.add(node.id);
           window.purchasedAbyssNodes = purchasedAbyssNodes;
+          rebuildAbyssBonusCache();
           playSound('overdrive');
           renderAbyssMatrix();
           updateUI();
@@ -2382,6 +2387,7 @@ function handleEditNameClick() {
       starParticles = data.starParticles ?? 0; window.starParticles = starParticles;
       voidShards = data.voidShards ?? 0; window.voidShards = voidShards;
       purchasedAbyssNodes = new Set(data.purchasedAbyssNodes || []); window.purchasedAbyssNodes = purchasedAbyssNodes;
+      rebuildAbyssBonusCache();
 
       // 3. 還原超能過載狀態與剩餘/冷卻時間
       overdriveState = data.overdriveState || 'ready';
@@ -2467,6 +2473,7 @@ function handleEditNameClick() {
       starParticles = 0; window.starParticles = starParticles;
       voidShards = 0; window.voidShards = voidShards;
       purchasedAbyssNodes = new Set(); window.purchasedAbyssNodes = purchasedAbyssNodes;
+      rebuildAbyssBonusCache();
       currentWave = 0; window.currentWave = currentWave;
 
       seenEnemyTypes = new Set(); window.seenEnemyTypes = seenEnemyTypes;
@@ -2516,62 +2523,89 @@ function handleEditNameClick() {
       document.getElementById('speed-btn').innerText = `⚡ ${gameSpeed}x 速度 [F]`;
     }
 
+    let domCache = null;
+    function getDomCache() {
+      if (!domCache) {
+        domCache = {
+          hpVal: document.getElementById('hp-val'),
+          maxHpVal: document.getElementById('max-hp-val'),
+          goldVal: document.getElementById('gold-val'),
+          crystalVal: document.getElementById('crystal-val'),
+          starVal: document.getElementById('star-particle-val'),
+          towerCountVal: document.getElementById('tower-count-val'),
+          waveVal: document.getElementById('wave-val'),
+          codexBadge: document.getElementById('codex-btn-badge'),
+          achieveBadge: document.getElementById('achievements-btn-badge'),
+          settingsBadge: document.getElementById('settings-btn-badge'),
+          startBtn: document.getElementById('start-wave-btn'),
+          odBtn: document.getElementById('overdrive-btn'),
+          odText: document.getElementById('od-text'),
+          odGold: document.getElementById('od-gold-fill'),
+          odGreen: document.getElementById('od-green-fill'),
+          odLightning: document.getElementById('od-lightning'),
+          voidVal: document.getElementById('void-shard-val'),
+          matVoidVal: document.getElementById('matrix-void-val')
+        };
+      }
+      return domCache;
+    }
+
     function updateUI() {
+      const ui = getDomCache();
       maxHp = 100 + talents.maxHpBonus.lv * 25;
       if (hp > maxHp) hp = maxHp;
-      document.getElementById('hp-val').innerText = Math.max(0, Math.floor(hp));
-      document.getElementById('max-hp-val').innerText = maxHp;
-      document.getElementById('gold-val').innerText = Math.floor(gold);
-      document.getElementById('crystal-val').innerText = crystals;
-      document.getElementById('star-particle-val').innerText = starParticles;
-      document.getElementById('tower-count-val').innerText = towers.length;
-      document.getElementById('wave-val').innerText = currentWave;
 
-      const codexBadge = document.getElementById('codex-btn-badge');
-      if (codexBadge) codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
+      ui.hpVal.innerText = Math.max(0, Math.floor(hp));
+      ui.maxHpVal.innerText = maxHp;
+      ui.goldVal.innerText = Math.floor(gold);
+      ui.crystalVal.innerText = crystals;
+      ui.starVal.innerText = starParticles;
+      ui.waveVal.innerText = currentWave;
 
-      const achieveBadge = document.getElementById('achievements-btn-badge');
-      const settingsBadge = document.getElementById('settings-btn-badge');
+      // 僅更新防禦塔數量文字，不重建整個 parentElement.innerHTML
+      const countContainer = ui.towerCountVal.parentElement;
+      const maxT = getMaxTowerCount();
+      if (countContainer && countContainer.dataset.maxT !== String(maxT)) {
+        countContainer.dataset.maxT = String(maxT);
+        countContainer.innerHTML = `<span class="res-icon">🗼</span> 防禦塔: <span id="tower-count-val">${towers.length}</span>/${maxT}`;
+        ui.towerCountVal = document.getElementById('tower-count-val');
+      } else {
+        ui.towerCountVal.innerText = towers.length;
+      }
+
+      if (ui.codexBadge) ui.codexBadge.style.display = newCodexAlerts.size > 0 ? 'flex' : 'none';
       const hasAchAlert = newAchievementAlerts.size > 0;
-      
-      if (achieveBadge) achieveBadge.style.display = hasAchAlert ? 'flex' : 'none';
-      if (settingsBadge) settingsBadge.style.display = hasAchAlert ? 'flex' : 'none';
-      
-      const startBtn = document.getElementById('start-wave-btn');
-      startBtn.classList.toggle('disabled-wave', waveInProgress);
+      if (ui.achieveBadge) ui.achieveBadge.style.display = hasAchAlert ? 'flex' : 'none';
+      if (ui.settingsBadge) ui.settingsBadge.style.display = hasAchAlert ? 'flex' : 'none';
 
-      const odBtn = document.getElementById('overdrive-btn');
-      const odText = document.getElementById('od-text');
-      const odGold = document.getElementById('od-gold-fill');
-      const odGreen = document.getElementById('od-green-fill');
-      const odLightning = document.getElementById('od-lightning');
-      const voidEl = document.getElementById('void-shard-val');
-      if (voidEl) voidEl.innerText = voidShards;
-      const matVoidEl = document.getElementById('matrix-void-val');
-      if (matVoidEl) matVoidEl.innerText = voidShards;
-      document.getElementById('tower-count-val').parentElement.innerHTML = `<span class="res-icon">🗼</span> 防禦塔: <span id="tower-count-val">${towers.length}</span>/${getMaxTowerCount()}`;
+      ui.startBtn.classList.toggle('disabled-wave', waveInProgress);
+
+      if (ui.voidVal) ui.voidVal.innerText = voidShards;
+      if (ui.matVoidVal) ui.matVoidVal.innerText = voidShards;
 
       if (overdriveState === 'ready') {
         const odCost = getOverdriveCost();
-        odBtn.className = starParticles >= odCost ? 'btn ready-to-activate' : 'btn';
-        odText.innerText = `⚡ 超能過載 (🌟${odCost})`;
-        odGold.style.width = '0%'; odGreen.style.width = '0%'; odLightning.style.display = 'none';
+        ui.odBtn.className = starParticles >= odCost ? 'btn ready-to-activate' : 'btn';
+        ui.odText.innerText = `⚡ 超能過載 (🌟${odCost})`;
+        ui.odGold.style.width = '0%';
+        ui.odGreen.style.width = '0%';
+        ui.odLightning.style.display = 'none';
       } else if (overdriveState === 'active') {
         let maxOdDur = 10.0 + getAbyssMatrixBonus('overdriveDur');
-        odBtn.className = 'btn';
+        ui.odBtn.className = 'btn';
         let p = (overdriveTimer / maxOdDur) * 100;
-        odText.innerText = `過載中 (${overdriveTimer.toFixed(1)}s)`;
-        odGold.style.width = `${p}%`;
-        odLightning.style.display = 'block';
-        odLightning.style.left = `calc(${p}% - 2px)`;
-        odGreen.style.width = '0%';
+        ui.odText.innerText = `過載中 (${overdriveTimer.toFixed(1)}s)`;
+        ui.odGold.style.width = `${p}%`;
+        ui.odLightning.style.display = 'block';
+        ui.odLightning.style.left = `calc(${p}% - 2px)`;
+        ui.odGreen.style.width = '0%';
       } else if (overdriveState === 'cooldown') {
-        odBtn.className = 'btn btn-disabled-gray';
+        ui.odBtn.className = 'btn btn-disabled-gray';
         let p = ((10.0 - overdriveTimer) / 10.0) * 100;
-        odText.innerText = `冷卻中 (${overdriveTimer.toFixed(1)}s)`;
-        odGold.style.width = '0%';
-        odLightning.style.display = 'none';
-        odGreen.style.width = `${p}%`;
+        ui.odText.innerText = `冷卻中 (${overdriveTimer.toFixed(1)}s)`;
+        ui.odGold.style.width = '0%';
+        ui.odLightning.style.display = 'none';
+        ui.odGreen.style.width = `${p}%`;
       }
     }
 
@@ -3332,26 +3366,25 @@ function handleEditNameClick() {
       } else showToast('鑽石不足！', 'res');
     }
 
-    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
+    function drawEnemyBaseVisual(cCtx, enemyType, cx, cy, size, isCharging = false) {
       if (enemyType === 'abyss_boss') {
-        let size = 17;
         cCtx.save();
-        cCtx.translate(cx, cy + 3);
-        let abyssGrad = cCtx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 1.3);
+        cCtx.translate(cx, cy);
+        let abyssGrad = cCtx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 1.35);
         abyssGrad.addColorStop(0, '#140824');
         abyssGrad.addColorStop(0.65, '#09050f');
         abyssGrad.addColorStop(1, 'rgba(138, 43, 226, 0)');
         cCtx.fillStyle = abyssGrad;
-        cCtx.beginPath(); cCtx.arc(0, 0, size * 1.3, 0, Math.PI * 2); cCtx.fill();
+        cCtx.beginPath(); cCtx.arc(0, 0, size * 1.35, 0, Math.PI * 2); cCtx.fill();
 
         cCtx.fillStyle = '#0b0b10';
         cCtx.strokeStyle = '#9d4edd';
-        cCtx.lineWidth = 2.5;
+        cCtx.lineWidth = size > 20 ? 3 : 2.5;
         cCtx.beginPath(); cCtx.arc(0, 0, size, 0, Math.PI * 2); cCtx.fill(); cCtx.stroke();
 
         cCtx.fillStyle = '#1f1135';
         cCtx.strokeStyle = '#e0aaff';
-        cCtx.lineWidth = 1.5;
+        cCtx.lineWidth = size > 20 ? 2 : 1.5;
         [-1, 1].forEach(dir => {
           cCtx.beginPath();
           cCtx.moveTo(dir * size * 0.38, -size * 0.6);
@@ -3368,11 +3401,18 @@ function handleEditNameClick() {
         cCtx.restore();
         return;
       }
-      let size = enemyType === 'boss' ? 20 : ((enemyType === 'sage' || enemyType === 'thunder_lord') ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
-      let color = enemyType === 'boss' ? '#ff5555' : (enemyType === 'sage' ? '#fff3b0' : (enemyType === 'mage' ? '#d63031' : (enemyType === 'archmage' ? '#6c5ce7' : (enemyType === 'general' ? '#ff8800' : ((enemyType.startsWith('scout')) ? '#f1fa8c' : ((enemyType.startsWith('heavy')) ? '#bd93f9' : (enemyType === 'warlock' ? '#9400d3' : (enemyType === 'priest' ? '#50fa7b' : (enemyType === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
-      
-      cCtx.fillStyle = color; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
-      
+
+      const colorMap = {
+        boss: '#ff5555', thunder_lord: '#2d1b69', sage: '#fff3b0',
+        general: '#ff8800', mage: '#d63031', archmage: '#6c5ce7',
+        warlock: '#9400d3', priest: '#50fa7b', monk: '#8be9fd'
+      };
+      let color = colorMap[enemyType] || (enemyType.startsWith('scout') ? '#f1fa8c' : (enemyType.startsWith('heavy') ? '#bd93f9' : '#ffb86c'));
+      if (isCharging) color = '#e5e4e2';
+
+      cCtx.fillStyle = color;
+      cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
+
       if (enemyType === 'soldier1') {
         cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 1.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 2, 0, Math.PI * 2); cCtx.stroke();
       } else if (enemyType === 'soldier2') {
@@ -3394,23 +3434,25 @@ function handleEditNameClick() {
         cCtx.fillStyle = '#ff00ff'; cCtx.font = 'bold 12px sans-serif'; cCtx.fillText('★', cx - 5, cy + 4);
       } else if (enemyType === 'priest' || enemyType === 'monk') {
         cCtx.fillStyle = '#f1fa8c'; cCtx.font = 'bold 12px sans-serif'; cCtx.fillText('★', cx - 5, cy + 4);
-      } else if (enemyType === 'general') {
-        cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.fillStyle = '#fff200'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
-      } else if (enemyType === 'mage') {
-        cCtx.strokeStyle = '#ff7675'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.fillStyle = '#ffeaa7'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
-      } else if (enemyType === 'archmage') {
-        cCtx.strokeStyle = '#a29bfe'; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.fillStyle = '#dfe6e9'; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
-      } else if (enemyType === 'sage') {
+      } else if (enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') {
+        const ringMap = { general: '#ffd700', mage: '#ff7675', archmage: '#a29bfe' };
+        const starMap = { general: '#fff200', mage: '#ffeaa7', archmage: '#dfe6e9' };
+        cCtx.strokeStyle = ringMap[enemyType]; cCtx.lineWidth = 2.5; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
+        cCtx.fillStyle = starMap[enemyType]; cCtx.font = 'bold 10px sans-serif'; cCtx.fillText('★★', cx - 10, cy + 4);
+      } else if (enemyType === 'sage' || enemyType === 'thunder_lord') {
         cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.fillStyle = '#d4af37'; cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
-      } else if (enemyType === 'thunder_lord') {
-        cCtx.fillStyle = '#2d1b69'; cCtx.beginPath(); cCtx.arc(cx, cy, size, 0, Math.PI * 2); cCtx.fill();
-        cCtx.strokeStyle = '#ffd700'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.arc(cx, cy, size + 3, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.fillStyle = '#ffe600'; cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
+        cCtx.fillStyle = enemyType === 'sage' ? '#d4af37' : '#ffe600';
+        cCtx.font = 'bold 9px sans-serif'; cCtx.fillText('★★★', cx - 13, cy + 3);
       }
+    }
+
+    function drawEnemyIconOnCanvas(cCtx, enemyType, cx, cy) {
+      if (enemyType === 'abyss_boss') {
+        drawEnemyBaseVisual(cCtx, enemyType, cx, cy + 3, 17);
+        return;
+      }
+      let size = enemyType === 'boss' ? 20 : ((enemyType === 'sage' || enemyType === 'thunder_lord') ? 16 : ((enemyType === 'general' || enemyType === 'mage' || enemyType === 'archmage') ? 15 : ((enemyType.startsWith('scout')) ? 7 : (enemyType.startsWith('heavy') ? 14 : ((enemyType === 'warlock' || enemyType === 'priest' || enemyType === 'monk') ? 13 : 10)))));
+      drawEnemyBaseVisual(cCtx, enemyType, cx, cy, size);
     }
 
     function ctxStrokeShieldCross(cCtx, cx, cy, size) {
@@ -3555,18 +3597,7 @@ function handleEditNameClick() {
       }
 
       let baseTechMultiplier = (1 + talents.baseAtk.lv * 0.06 + getAbyssMatrixBonus('baseAtk'));
-      let overchargeTotalBonus = 0;
-
-      if (sourceTower) {
-        towers.forEach(ot => {
-          if (ot.type === 'overcharge' && ot.isOvercharged) {
-            let otRange = TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05);
-            if (Math.hypot(sourceTower.x - ot.x, sourceTower.y - ot.y) <= otRange) {
-              overchargeTotalBonus += (0.30 + (ot.specLv - 1) * 0.05);
-            }
-          }
-        });
-      }
+      let overchargeTotalBonus = sourceTower ? (sourceTower.overchargeBonus || 0) : 0;
 
       let markBonus = (enemy.marks && enemy.marks.length > 0) ? 0.25 : 0;
       let finalDmg = dmg * baseTechMultiplier * (1 + overchargeTotalBonus + markBonus);
@@ -3732,9 +3763,9 @@ function handleEditNameClick() {
         }
       }
 
-      if (selectedTower && document.getElementById('tower-upgrade-overlay').style.display === 'block') {
+      /*if (selectedTower && document.getElementById('tower-upgrade-overlay').style.display === 'block') {
         openTowerOverlay();
-      }
+      }*/  // 僅在狀態實際變動時才刷新升級面板，避免每幀重建 DOM 文字
 
       let blizzardEffect = activeVisualEffects.find(ve => ve.type === 'blizzard');
       let currentBlizzardTimer = blizzardEffect ? blizzardEffect.life : 0;
@@ -3990,17 +4021,7 @@ function handleEditNameClick() {
             }
           }
         }
-          if (e.isCharging) {
-            e.chargeTimer -= dt;
-            if (e.chargeTimer <= 0) e.isCharging = false;
-            else speedMult *= 3.0;
-          }
-          // 受到將軍【疾行軍令】加速狀態
-          if (e.hasteBuffTimer > 0) {
-            e.hasteBuffTimer -= dt;
-            speedMult *= 1.25;
-          }
-        
+          
           // ★★★ 雷霆領主技能【天罰雷擊】
           if (e.type === 'thunder_lord') {
             if (e.stunTimer <= 0) {
@@ -4029,6 +4050,7 @@ function handleEditNameClick() {
 
                   selectedTargets.forEach(targetTower => {
                     targetTower.disableTimer = Math.max(targetTower.disableTimer || 0, stunDur);
+                    if (selectedTower === targetTower) openTowerOverlay();
                     targetTower.drumTimer = 0;
                     targetTower.thunderSuppressed = true;
 
@@ -4383,14 +4405,45 @@ function handleEditNameClick() {
         }
       } else bossHpContainer.style.display = 'none';
 
-      shockwaves.forEach((sw, idx) => { sw.r += (sw.isFullScreen ? 1400 : 60) * dt; sw.alpha -= (sw.isFullScreen ? 1.2 : 1.0) * dt; if (sw.alpha <= 0) shockwaves.splice(idx, 1); });
-      bossBeams.forEach((bm, idx) => { bm.alpha -= 1.5 * dt; if (bm.alpha <= 0) bossBeams.splice(idx, 1); });
-      cannonExplosions.forEach((ex, idx) => { ex.alpha -= 2.0 * dt; if (ex.alpha <= 0) cannonExplosions.splice(idx, 1); });
-      activeVisualEffects.forEach((ve, idx) => {
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        let sw = shockwaves[i];
+        sw.r += (sw.isFullScreen ? 1400 : 60) * dt;
+        sw.alpha -= (sw.isFullScreen ? 1.2 : 1.0) * dt;
+        if (sw.alpha <= 0) shockwaves.splice(i, 1);
+      }
+      for (let i = bossBeams.length - 1; i >= 0; i--) {
+        let bm = bossBeams[i];
+        bm.alpha -= 1.5 * dt;
+        if (bm.alpha <= 0) bossBeams.splice(i, 1);
+      }
+      for (let i = cannonExplosions.length - 1; i >= 0; i--) {
+        let ex = cannonExplosions[i];
+        ex.alpha -= 2.0 * dt;
+        if (ex.alpha <= 0) cannonExplosions.splice(i, 1);
+      }
+      for (let i = activeVisualEffects.length - 1; i >= 0; i--) {
+        let ve = activeVisualEffects[i];
         if (waveInProgress || (ve.type !== 'warDrum' && ve.type !== 'overchargeBurst')) {
           ve.life -= dt;
         }
-        if (ve.life <= 0) activeVisualEffects.splice(idx, 1);
+        if (ve.life <= 0) activeVisualEffects.splice(i, 1);
+      }
+
+      // 統一預先計算每座防禦塔受到的超能樞紐增幅總和
+      let globalRangeMult = 1 + getAbyssMatrixBonus('range');
+      let activeOverchargers = towers.filter(ot => ot.type === 'overcharge' && ot.isOvercharged);
+      towers.forEach(t => {
+        let bonus = 0;
+        for (let k = 0; k < activeOverchargers.length; k++) {
+          let ot = activeOverchargers[k];
+          if (ot === t) continue;
+          let otRange = TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05) * globalRangeMult;
+          let dx = t.x - ot.x, dy = t.y - ot.y;
+          if (dx * dx + dy * dy <= otRange * otRange) {
+            bonus += 0.30 + (ot.specLv - 1) * 0.05;
+          }
+        }
+        t.overchargeBonus = bonus;
       });
 
       let highestHumFreq = 120, maxHumVolume = 0.04, anyInfernoActive = false;
@@ -4554,7 +4607,7 @@ function handleEditNameClick() {
               let maxMult = 3.0 + (effectiveSpecLv - 1) * 0.4;
               let currentDmgMult = newStage === 0 ? 1.0 : (newStage === 1 ? maxMult * 0.7 : maxMult);
               let currentFreq = newStage === 0 ? 120 : (newStage === 1 ? 160 : 220);
-              let currentVol = newStage === 0 ? 0.04 : (newStage === 0 ? 0.06 : 0.09);
+              let currentVol = newStage === 0 ? 0.04 : (newStage === 1 ? 0.06 : 0.09);
 
               if (newStage > t.infernoStage) { t.infernoStage = newStage; playSound('infernoPromote'); }
               if (currentFreq > highestHumFreq) highestHumFreq = currentFreq;
@@ -4948,8 +5001,7 @@ function handleEditNameClick() {
             ctx.beginPath(); ctx.arc(t.x, t.y, 22, 0, Math.PI * 2); ctx.stroke();
           }
 
-          let isBuffedByOvercharge = towers.some(ot => ot !== t && ot.type === 'overcharge' && ot.isOvercharged && Math.hypot(t.x - ot.x, t.y - ot.y) <= (TOWER_TYPES.overcharge.range * (1 + (ot.rngLv - 1) * 0.05)));
-          if (isBuffedByOvercharge) {
+          if (t.overchargeBonus > 0) {
             ctx.strokeStyle = 'rgba(0, 229, 255, 0.9)'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(t.x, t.y, 24, 0, Math.PI * 2); ctx.stroke();
           }
@@ -5062,9 +5114,7 @@ function handleEditNameClick() {
         if (e.teleportState && e.teleportAlpha <= 0.01) return; // 潛行階段全透明不繪製
         ctx.save();
         if (e.teleportState) ctx.globalAlpha = e.teleportAlpha;
-        let color = e.type === 'boss' ? '#ff5555' : (e.type === 'thunder_lord' ? '#2d1b69' : (e.type === 'sage' ? '#fff3b0' : (e.type === 'general' ? '#ff8800' : (e.type === 'mage' ? '#d63031' : (e.type === 'archmage' ? '#6c5ce7' : ((e.type.startsWith('scout')) ? '#f1fa8c' : ((e.type.startsWith('heavy') || e.type === 'warlock') ? '#bd93f9' : (e.type === 'priest' ? '#50fa7b' : (e.type === 'monk' ? '#8be9fd' : '#ffb86c')))))))));
         let size = e.isAbyssBoss ? 26 : (e.type === 'boss' ? 20 : ((e.type === 'sage' || e.type === 'thunder_lord') ? 16 : ((e.type === 'general' || e.type === 'mage' || e.type === 'archmage') ? 15 : ((e.type.startsWith('scout')) ? 7 : (e.type.startsWith('heavy') ? 14 : ((e.type === 'priest' || e.type === 'warlock' || e.type === 'monk') ? 13 : 10))))));
-        if (e.isCharging) color = '#e5e4e2';
 
         if (e.type === 'boss' && e.isEnraged && (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2)) {
           let tNow = performance.now() * 0.006;
@@ -5081,103 +5131,35 @@ function handleEditNameClick() {
           ctx.restore();
         }
 
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.fill();
-        if (e.isAbyssBoss) {
+        drawEnemyBaseVisual(ctx, e.type, e.x, e.y, size, e.isCharging);
+
+        // 深淵 BOSS 吸收期間的逆時針內旋旋渦特效
+        if (e.isAbyssBoss && e.abyssAbsorbTimer > 0) {
           ctx.save();
           ctx.translate(e.x, e.y);
-          // 暗黑深淵能量外暈
-          let abyssGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 1.35);
-          abyssGrad.addColorStop(0, '#140824');
-          abyssGrad.addColorStop(0.65, '#09050f');
-          abyssGrad.addColorStop(1, 'rgba(138, 43, 226, 0)');
-          ctx.fillStyle = abyssGrad;
-          ctx.beginPath(); ctx.arc(0, 0, size * 1.35, 0, Math.PI * 2); ctx.fill();
-
-          // 黑曜石主體與紫金鑲邊
-          ctx.fillStyle = '#0b0b10';
-          ctx.strokeStyle = '#9d4edd';
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-          // 華麗頭飾：雙側黑曜石彎角 + 中央紫晶三叉王冠
-          ctx.fillStyle = '#1f1135';
-          ctx.strokeStyle = '#e0aaff';
-          ctx.lineWidth = 2;
-          [-1, 1].forEach(dir => {
+          let swirlT = performance.now() * 0.008;
+          for (let arm = 0; arm < 4; arm++) {
             ctx.beginPath();
-            ctx.moveTo(dir * size * 0.38, -size * 0.6);
-            ctx.quadraticCurveTo(dir * size * 1.25, -size * 1.1, dir * size * 0.92, -size * 1.48);
-            ctx.quadraticCurveTo(dir * size * 0.72, -size * 0.88, dir * size * 0.18, -size * 0.82);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-          });
-          ctx.fillStyle = '#c77dff';
-          ctx.beginPath();
-          ctx.moveTo(-size * 0.25, -size * 0.85);
-          ctx.lineTo(0, -size * 1.48);
-          ctx.lineTo(size * 0.25, -size * 0.85);
-          ctx.closePath(); ctx.fill();
-
-          // 吸收期間：黑色逆時針內旋旋渦（持續 3 秒）
-          if (e.abyssAbsorbTimer > 0) {
-            let swirlT = performance.now() * 0.008;
-            for (let arm = 0; arm < 4; arm++) {
-              ctx.beginPath();
-              for (let step = 0; step <= 24; step++) {
-                let prog = step / 24;
-                let dist = size * 1.85 * (1 - prog);
-                let ang = -swirlT + (arm * Math.PI / 2) + prog * 3.5; // 負號：逆時針內旋
-                let vx = Math.cos(ang) * dist;
-                let vy = Math.sin(ang) * dist;
-                if (step === 0) ctx.moveTo(vx, vy);
-                else ctx.lineTo(vx, vy);
-              }
-              ctx.strokeStyle = arm % 2 === 0 ? 'rgba(8, 4, 14, 0.94)' : 'rgba(157, 78, 221, 0.78)';
-              ctx.lineWidth = 4;
-              ctx.stroke();
+            for (let step = 0; step <= 24; step++) {
+              let prog = step / 24;
+              let dist = size * 1.85 * (1 - prog);
+              let ang = -swirlT + (arm * Math.PI / 2) + prog * 3.5;
+              let vx = Math.cos(ang) * dist;
+              let vy = Math.sin(ang) * dist;
+              if (step === 0) ctx.moveTo(vx, vy);
+              else ctx.lineTo(vx, vy);
             }
+            ctx.strokeStyle = arm % 2 === 0 ? 'rgba(8, 4, 14, 0.94)' : 'rgba(157, 78, 221, 0.78)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
           }
           ctx.restore();
         }
-        
-        if (e.type === 'soldier1') {
-          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
-        } else if (e.type === 'soldier2') {
-          ctx.strokeStyle = '#e5e4e2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★', e.x - 4, e.y + 3);
-        } else if (e.type === 'scout1') {
-          ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x - 2, e.y - 2, size + 1, 0, Math.PI * 2); ctx.stroke();
-        } else if (e.type === 'scout2') {
-          ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(e.x, e.y, 3, 0, Math.PI * 2); ctx.fill();
-        } else if (e.type === 'heavy1') {
-          ctx.strokeStyle = '#8a2be2'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 2, 0, Math.PI * 2); ctx.stroke();
-          ctx.strokeStyle = '#d8bfd8'; ctx.lineWidth = 1.5; ctxStrokeShieldCross(ctx, e.x, e.y, size);
-        } else if (e.type === 'heavy2') {
-          ctx.strokeStyle = '#d8bfd8'; ctx.lineWidth = 3.0; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 1.5; ctxStrokeShieldCross(ctx, e.x, e.y, size);
-        } else if (e.type === 'warlock') {
-          ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4);
-        } else if (e.type === 'general') {
-          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#fff200'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
-        } else if (e.type === 'mage') {
-          ctx.strokeStyle = '#ff7675'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#ffeaa7'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
-        } else if (e.type === 'archmage') {
-          ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#dfe6e9'; ctx.font = 'bold 10px sans-serif'; ctx.fillText('★★', e.x - 10, e.y + 4);
-        } else if (e.type === 'sage') {
-          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#d4af37'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
-        } else if (e.type === 'thunder_lord') {
-          ctx.fillStyle = '#2d1b69'; ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, size + 3, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = '#ffe600'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('★★★', e.x - 13, e.y + 3);
-        }
-        if (e.hasteBuffTimer > 0) { ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5; ctx.stroke(); }
 
-        if (e.isStar && !e.type.startsWith('soldier2') && e.type !== 'warlock') { ctx.fillStyle = '#f1fa8c'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('★', e.x - 5, e.y + 4); }
+        if (e.hasteBuffTimer > 0) {
+          ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(e.x, e.y, size, 0, Math.PI * 2); ctx.stroke();
+        }
         
         if (gameSettings.vfxMode === 0 || gameSettings.vfxMode === 2) {
           if (e.freezeTimer > 0) { ctx.strokeStyle = '#8be9fd'; ctx.lineWidth = 3; ctx.stroke(); }
@@ -5681,7 +5663,6 @@ function handleEditNameClick() {
       // 在 window.onload 結尾處加上全域導出
       window.updateUI = updateUI;
       window.updateAuthUI = updateAuthUI;
-      window.loadSnapshotState = loadSnapshotState;
 
       updateSkillUI(); updateTechUI(); updateSettingsUI(); updateUI();
       requestAnimationFrame(gameLoop);
