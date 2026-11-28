@@ -1185,26 +1185,48 @@ window.updateAuthUI = updateAuthUI;
     const ABYSS_NODES = [
       // 第一層（中心）
       { id: 'L1_1', q: 0, r: 0,  name: '防禦塔上限 +1', cost: 1, type: 'maxTowers', val: 1 },
-      // 第二層（自正上方順時針 1~6 號）
+
+      // 第二層（自正上方順時針 1~6 號，花費皆為 2 虛空原晶）
       { id: 'L2_1', q: 0, r: -1, name: '擊殺金幣 +10%', cost: 2, type: 'killGold', val: 0.10 },
-      { id: 'L2_2', q: 1, r: -1, name: '防禦塔癱瘓時間 -10%', cost: 2, type: 'stunReduce', val: 0.10 },
-      { id: 'L2_3', q: 1, r: 0,  name: '主動技能時間 +10%', cost: 3, type: 'skillDur', val: 0.10 },
+      { id: 'L2_2', q: 1, r: -1, name: '防禦塔癱瘓時間 -5%', cost: 2, type: 'stunReduce', val: 0.05 },
+      { id: 'L2_3', q: 1, r: 0,  name: '主動技能時間 +5%', cost: 2, type: 'skillDur', val: 0.05 },
       { id: 'L2_4', q: 0, r: 1,  name: '防禦塔基礎攻擊 +10%', cost: 2, type: 'baseAtk', val: 0.10 },
       { id: 'L2_5', q: -1, r: 1, name: '超能過載時間 +1秒', cost: 2, type: 'overdriveDur', val: 1.0 },
-      { id: 'L2_6', q: -1, r: 0, name: '升級塔金幣 -10%', cost: 3, type: 'upgCostReduce', val: 0.10 },
+      { id: 'L2_6', q: -1, r: 0, name: '升級塔金幣 -5%', cost: 2, type: 'upgCostReduce', val: 0.05 },
+
       // 第三層（自正上方順時針 1~12 號）
       { id: 'L3_1',  q: 0, r: -2,  name: '擊殺金幣 +15%', cost: 4, type: 'killGold', val: 0.15 },
-      { id: 'L3_2',  q: 1, r: -2,  name: '鑽石獲取 +10%', cost: 4, type: 'crystalGain', val: 0.10 },
-      { id: 'L3_3',  q: 2, r: -2,  name: '癱瘓時間 -15%', cost: 4, type: 'stunReduce', val: 0.15 },
-      { id: 'L3_4',  q: 2, r: -1,  name: '防禦塔攻速 +10%', cost: 5, type: 'atkSpd', val: 0.10 },
-      { id: 'L3_5',  q: 2, r: 0,   name: '主動技能時間 +15%', cost: 5, type: 'skillDur', val: 0.15 },
-      { id: 'L3_6',  q: 1, r: 1,   name: '主動技能冷卻 -10%', cost: 5, type: 'skillCd', val: 0.10 },
+      { id: 'L3_2',  q: 1, r: -2,  name: '鑽石獲取 +5%', cost: 5, type: 'crystalGain', val: 0.05 },
+      { id: 'L3_3',  q: 2, r: -2,  name: '癱瘓時間 -10%', cost: 4, type: 'stunReduce', val: 0.10 },
+      { id: 'L3_4',  q: 2, r: -1,  name: '防禦塔攻速 +5%', cost: 5, type: 'atkSpd', val: 0.05 },
+      { id: 'L3_5',  q: 2, r: 0,   name: '主動技能時間 +10%', cost: 4, type: 'skillDur', val: 0.10 },
+      { id: 'L3_6',  q: 1, r: 1,   name: '主動技能冷卻 -5%', cost: 5, type: 'skillCd', val: 0.05 },
       { id: 'L3_7',  q: 0, r: 2,   name: '防禦塔基礎攻擊 +15%', cost: 4, type: 'baseAtk', val: 0.15 },
       { id: 'L3_8',  q: -1, r: 2,  name: '全局科技解放等級 +10', cost: 10, type: 'techCapBonus', val: 10 },
-      { id: 'L3_9',  q: -2, r: 2,  name: '超能過載時間 +1.5秒', cost: 5, type: 'overdriveDur', val: 1.5 },
+      { id: 'L3_9',  q: -2, r: 2,  name: '超能過載時間 +1.5秒', cost: 4, type: 'overdriveDur', val: 1.5 },
       { id: 'L3_10', q: -2, r: 1,  name: '星核微粒獲取 +15%', cost: 5, type: 'particleGain', val: 0.15 },
-      { id: 'L3_11', q: -2, r: 0,  name: '升級塔金幣 -15%', cost: 5, type: 'upgCostReduce', val: 0.15 },
-      { id: 'L3_12', q: -1, r: -1, name: '防禦塔射程 +10%', cost: 4, type: 'range', val: 0.10 }
+      { id: 'L3_11', q: -2, r: 0,  name: '升級塔金幣 -10%', cost: 4, type: 'upgCostReduce', val: 0.10 },
+      { id: 'L3_12', q: -1, r: -1, name: '防禦塔射程 +5%', cost: 5, type: 'range', val: 0.05 },
+
+      // 第四層（自正上方順時針 1~18 號）
+      { id: 'L4_1',  q: 0, r: -3,  name: '擊殺金幣 +20%', cost: 5, type: 'killGold', val: 0.20 },
+      { id: 'L4_2',  q: 1, r: -3,  name: '全局科技解放等級 +10', cost: 10, type: 'techCapBonus', val: 10 },
+      { id: 'L4_3',  q: 2, r: -3,  name: '點金之塔產金量 +100%', cost: 6, type: 'goldTowerProd', val: 1.00 },
+      { id: 'L4_4',  q: 3, r: -3,  name: '防禦塔癱瘓時間 -15%', cost: 5, type: 'stunReduce', val: 0.15 },
+      { id: 'L4_5',  q: 3, r: -2,  name: '星核微粒獲取 +20%', cost: 6, type: 'particleGain', val: 0.20 },
+      { id: 'L4_6',  q: 3, r: -1,  name: '虛空原晶獲取量 +1', cost: 6, type: 'voidShardBonus', val: 1 },
+      { id: 'L4_7',  q: 3, r: 0,   name: '主動技能時間 +15%', cost: 5, type: 'skillDur', val: 0.15 },
+      { id: 'L4_8',  q: 2, r: 1,   name: '防禦塔射程 +10%', cost: 6, type: 'range', val: 0.10 },
+      { id: 'L4_9',  q: 1, r: 2,   name: '超能過載花費 -5', cost: 6, type: 'overdriveCostReduce', val: 5 },
+      { id: 'L4_10', q: 0, r: 3,   name: '防禦塔基礎攻擊 +20%', cost: 5, type: 'baseAtk', val: 0.20 },
+      { id: 'L4_11', q: -1, r: 3,  name: '鑽石獲取 +10%', cost: 6, type: 'crystalGain', val: 0.10 },
+      { id: 'L4_12', q: -2, r: 3,  name: '防禦塔上限 +1', cost: 10, type: 'maxTowers', val: 1 },
+      { id: 'L4_13', q: -3, r: 3,  name: '超能過載時間 +2秒', cost: 5, type: 'overdriveDur', val: 2.0 },
+      { id: 'L4_14', q: -3, r: 2,  name: '防禦塔攻速 +10%', cost: 6, type: 'atkSpd', val: 0.10 },
+      { id: 'L4_15', q: -3, r: 1,  name: '虛空原晶獲取量 +1', cost: 6, type: 'voidShardBonus', val: 1 },
+      { id: 'L4_16', q: -3, r: 0,  name: '升級塔金幣 -15%', cost: 5, type: 'upgCostReduce', val: 0.15 },
+      { id: 'L4_17', q: -2, r: -1, name: '主動技能冷卻 -10%', cost: 6, type: 'skillCd', val: 0.10 },
+      { id: 'L4_18', q: -1, r: -2, name: '點金之塔數量上限 +1', cost: 6, type: 'maxGoldTowers', val: 1 }
     ];
 
     function isHexAdjacent(a, b) {
@@ -1226,6 +1248,14 @@ window.updateAuthUI = updateAuthUI;
 
     function getMaxTowerCount() {
       return MAX_TOWER_COUNT + Math.floor(getAbyssMatrixBonus('maxTowers'));
+    }
+
+    function getMaxGoldTowerCount() {
+      return 5 + Math.floor(getAbyssMatrixBonus('maxGoldTowers'));
+    }
+
+    function getOverdriveCost() {
+      return Math.max(5, 25 - Math.floor(getAbyssMatrixBonus('overdriveCostReduce')));
     }
 
     function toggleVoidShardDropdown() {
@@ -1273,7 +1303,7 @@ window.updateAuthUI = updateAuthUI;
         const y = vertSpacing * (node.r + node.q / 2);
         const isPurchased = purchasedAbyssNodes.has(node.id);
         const isUnlocked = isAbyssNodeUnlocked(node);
-        const particleCost = node.cost * 30;
+        const particleCost = node.cost * 25;
         const canAfford = !isPurchased && isUnlocked && voidShards >= node.cost && starParticles >= particleCost;
 
         const el = document.createElement('div');
@@ -1846,11 +1876,11 @@ function handleEditNameClick() {
     function triggerOverdrive() {
       if (overdriveState !== 'ready') return;
       if (!waveInProgress) return showToast('⚠️ 只能在戰鬥進行中啟動超能過載！', 'towerSkill');
-      if (starParticles < 25) return showToast('🌟 星核微粒不足 (需要 25 個)！', 'res');
+      if (starParticles < odCost) return showToast('🌟 星核微粒不足 (需要${odCost} 個)！', 'res');
       let hasPromotedTower = towers.some(t => t.isPromoted);
       if (!hasPromotedTower) return showToast('⚠️ 場上尚無晉升的防禦塔，無法發動超能過載！', 'towerSkill');
 
-      starParticles -= 25;
+      starParticles -= odCost;
       overdriveState = 'active';
       overdriveTimer = 10.0 + getAbyssMatrixBonus('overdriveDur');
       playSound('overdrive');
@@ -2521,8 +2551,9 @@ function handleEditNameClick() {
       document.getElementById('tower-count-val').parentElement.innerHTML = `<span class="res-icon">🗼</span> 防禦塔: <span id="tower-count-val">${towers.length}</span>/${getMaxTowerCount()}`;
 
       if (overdriveState === 'ready') {
-        odBtn.className = starParticles >= 25 ? 'btn ready-to-activate' : 'btn';
-        odText.innerText = '⚡ 超能過載 (🌟25)';
+        const odCost = getOverdriveCost();
+        odBtn.className = starParticles >= odCost ? 'btn ready-to-activate' : 'btn';
+        odText.innerText = `⚡ 超能過載 (🌟${odCost})`;
         odGold.style.width = '0%'; odGreen.style.width = '0%'; odLightning.style.display = 'none';
       } else if (overdriveState === 'active') {
         let maxOdDur = 10.0 + getAbyssMatrixBonus('overdriveDur');
@@ -2578,7 +2609,7 @@ function handleEditNameClick() {
     
     function startPlacement(type) {
       if (towers.length >= getMaxTowerCount()) return showToast(`防禦塔數量已達上限 (${getMaxTowerCount()}座)！`, 'towerSkill');
-      if (type === 'gold' && towers.filter(t => t.type === 'gold').length >= 5) return showToast('點金之塔上限為 5 座！', 'towerSkill');
+      if (type === 'gold' && towers.filter(t => t.type === 'gold').length >= getMaxGoldTowerCount()) return showToast(`點金之塔上限為 ${getMaxGoldTowerCount()} 座！`, 'towerSkill');
       if (gold < TOWER_TYPES[type].cost) return showToast('金幣不足！', 'res');
       placingType = type; dragPos = { x: 500, y: 300 };
       
@@ -2748,7 +2779,7 @@ function handleEditNameClick() {
         tesla: `彈跳次數: ${curSpecLv} 次`,
         knockback: `擊退距離: ${5 + (curSpecLv - 1)}px (範圍擊退)`,
         builder: `工人移速: +${(curSpecLv - 1) * 15}%`,
-        gold: `產金週期: 💰${15 + (curSpecLv - 1) * 10} / ${tInfo.cd.toFixed(1)}s`,
+        gold: `產金週期: 💰${Math.round((15 + (curSpecLv - 1) * 10) * (1 + getAbyssMatrixBonus('goldTowerProd')))} / ${tInfo.cd.toFixed(1)}s`,
         inferno: selectedTower.infernoMode === 1 ? `型態一: 最高增傷 ${300 + (curSpecLv - 1) * 40}%` : `型態二: 同時發射 ${4 + (curSpecLv - 1)} 條射線`,
         overcharge: `攻擊力提升 +${30 + (curSpecLv - 1) * 5}% (可多塔疊加)`
       };
@@ -3288,10 +3319,11 @@ function handleEditNameClick() {
 
         // 達到 50 級或 100 級時，獲得 10 個虛空原晶
         if (t.lv === 50 || t.lv === 100) {
-          voidShards += 10;
+          let shardGain = 10 + Math.floor(getAbyssMatrixBonus('voidShardBonus'));
+          voidShards += shardGain;
           window.voidShards = voidShards;
           playSound('overdrive');
-          showToast(`🌌 【${t.name}】達成 Lv.${t.lv} 里程碑！獲得 🔮+10 虛空原晶！`, 'res');
+          showToast(`🌌 【${t.name}】達成 Lv.${t.lv} 里程碑！獲得 🔮+${shardGain} 虛空原晶！`, 'res');
         }
 
         syncActiveCheckpointIfNeeded();
@@ -3598,7 +3630,7 @@ function handleEditNameClick() {
 
         if (isBossType(enemy.type)) {
           if (enemy.isAbyssBoss) {
-            let shardReward = Math.floor((currentWave - 100) / 5);
+            let shardReward = Math.floor((currentWave - 100) / 5) + Math.floor(getAbyssMatrixBonus('voidShardBonus'));
             let abyssCrystalReward = Math.round((5 + Math.floor((100 - 5) / 5) * 2) * (1 + getAbyssMatrixBonus('crystalGain')));
             voidShards += shardReward; window.voidShards = voidShards;
             crystals += abyssCrystalReward; window.crystals = crystals;
@@ -4418,7 +4450,7 @@ function handleEditNameClick() {
           if (waveInProgress && enemies.length > 0) {
             t.cooldown += dt;
             if (t.cooldown >= curCd) {
-              t.cooldown = 0; let earned = 15 + (effectiveSpecLv - 1) * 10;
+              t.cooldown = 0; let earned = Math.round((15 + (effectiveSpecLv - 1) * 10) * (1 + getAbyssMatrixBonus('goldTowerProd')));
               gold += earned; window.gold = gold; stats.totalGoldEarned += earned; window.stats = stats;
               t.totalGoldEarned = (t.totalGoldEarned || 0) + earned;
               checkTowerPromotion(t);
